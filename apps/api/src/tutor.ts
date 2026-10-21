@@ -1,6 +1,6 @@
 // POST /api/tutor: validate the browser's request, add the tutor's instructions, call the learner's model
 // once, and return its message. Stateless: the browser keeps the conversation, so the server scales out.
-// Any provider works: a model that can't use tools still chats (Vasi just can't operate the computer), and
+// Any provider works: a model that can't use tools still chats (Vasu just can't operate the computer), and
 // a provider with a small limit gets the recent part of the conversation.
 
 import { SYSTEM_PROMPT } from './prompt.ts';
@@ -24,7 +24,7 @@ const ROLES = new Set(['user', 'assistant', 'tool']);
 const RECENT_MESSAGES = 24;
 
 export async function handleTutor(body: unknown, ai: AiCall | undefined, fetcher?: typeof fetch): Promise<Reply> {
-  if (!ai) return failure(503, 'Vasi needs your AI provider and API key. Add them in Settings → AI.');
+  if (!ai) return failure(503, 'Vasu needs your AI provider and API key. Add them in Settings → AI.');
   const problem = invalid(body);
   if (problem) return failure(400, problem);
   const { messages, tools } = body as { messages: unknown[]; tools: unknown[] };
@@ -64,7 +64,7 @@ export async function handleTutor(body: unknown, ai: AiCall | undefined, fetcher
         content: message.content ?? null,
         ...(useTools && message.tool_calls?.length ? { tool_calls: message.tool_calls } : {}),
       },
-      // Tells the browser this model can only chat, so it can say why Vasi isn't using the computer.
+      // Tells the browser this model can only chat, so it can say why Vasu isn't using the computer.
       ...(tools.length && !useTools ? { toolsUnsupported: true } : {}),
     },
   };

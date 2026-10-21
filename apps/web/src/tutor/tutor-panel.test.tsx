@@ -66,10 +66,10 @@ describe('tutor panel', () => {
     await system.boot('ada');
     const transport = scripted({ role: 'assistant', content: 'should not be asked' });
     render(<Desktop system={system} tutor={transport} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasu, your Linux tutor' }, { timeout: 4000 }));
     expect(screen.getByText(/being rebuilt/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Open Settings' })).toBeNull();
-    fireEvent.change(screen.getByLabelText('Ask Vasi'), { target: { value: 'what does pwd do?' } });
+    fireEvent.change(screen.getByLabelText('Ask Vasu'), { target: { value: 'what does pwd do?' } });
     fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
     expect(await screen.findByText(/Print the/i)).toBeTruthy();
     expect(transport.requests).toHaveLength(0);
@@ -88,15 +88,15 @@ describe('tutor panel', () => {
     });
     await system.boot('ada');
     render(<Desktop system={system} tutor={scripted()} />);
-    await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 });
+    await screen.findByRole('button', { name: 'Ask Vasu, your Linux tutor' }, { timeout: 4000 });
     const shell = await system.createTerminal();
     await shell.run('nope');
     await shell.run('nope');
     // Past the introduction's delay (1.2 s) and his first stroll (2.5 s).
     await new Promise((resolve) => setTimeout(resolve, 3000));
-    expect(screen.queryByRole('dialog', { name: 'Vasi introduces himself' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Vasu introduces himself' })).toBeNull();
     expect(screen.queryByText(/didn't work either/)).toBeNull();
-    expect(document.querySelector('.vasi-actor.walking')).toBeNull();
+    expect(document.querySelector('.vasu-actor.walking')).toBeNull();
   }, 10_000);
 
   it('answers a question, showing what the tutor did on the way', async () => {
@@ -106,8 +106,8 @@ describe('tutor panel', () => {
       { role: 'assistant', content: 'Use `pwd` to see **where** you are.' },
     );
     render(<Desktop system={system} tutor={transport} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 }));
-    fireEvent.change(screen.getByLabelText('Ask Vasi'), { target: { value: 'where am I?' } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasu, your Linux tutor' }, { timeout: 4000 }));
+    fireEvent.change(screen.getByLabelText('Ask Vasu'), { target: { value: 'where am I?' } });
     fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
 
     expect(await screen.findByText('pwd', { selector: 'code' })).toBeTruthy();
@@ -124,8 +124,8 @@ describe('tutor panel', () => {
     );
     render(<Desktop system={system} tutor={transport} />);
     await screen.findByText('Terminal', {}, { timeout: 4000 });
-    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 }));
-    fireEvent.change(screen.getByLabelText('Ask Vasi'), { target: { value: 'where is the terminal?' } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasu, your Linux tutor' }, { timeout: 4000 }));
+    fireEvent.change(screen.getByLabelText('Ask Vasu'), { target: { value: 'where is the terminal?' } });
     fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
     expect(await screen.findByText('Here!')).toBeTruthy();
     expect(document.querySelector('.tutor-pointer')).not.toBeNull();
@@ -140,8 +140,8 @@ describe('tutor panel', () => {
     );
     const verifySudo = async (password: string) => password === 'hunter2';
     render(<Desktop system={system} tutor={transport} verifySudo={verifySudo} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 }));
-    fireEvent.change(screen.getByLabelText('Ask Vasi'), { target: { value: 'show me shadow' } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasu, your Linux tutor' }, { timeout: 4000 }));
+    fireEvent.change(screen.getByLabelText('Ask Vasu'), { target: { value: 'show me shadow' } });
     fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
     const dialog = await screen.findByRole('dialog', { name: 'Authentication required' });
     expect(dialog.textContent).toContain('To show you how /etc/shadow stores passwords.');
@@ -165,8 +165,8 @@ describe('tutor panel', () => {
     const system = await boot();
     const transport = scripted(uses('request_sudo', { reason: 'To show you root.' }), { role: 'assistant', content: 'Thanks!' });
     render(<Desktop system={system} tutor={transport} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 }));
-    fireEvent.change(screen.getByLabelText('Ask Vasi'), { target: { value: 'root please' } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasu, your Linux tutor' }, { timeout: 4000 }));
+    fireEvent.change(screen.getByLabelText('Ask Vasu'), { target: { value: 'root please' } });
     fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
     expect((await screen.findByRole('dialog', { name: 'Authentication required' })).textContent).toContain('You are a guest');
     fireEvent.click(screen.getByRole('button', { name: 'Allow' }));
@@ -175,15 +175,15 @@ describe('tutor panel', () => {
     expect(system.tutor().can('user:switch')).toBe(true);
   });
 
-  it('tells Vasi when the learner denies sudo', async () => {
+  it('tells Vasu when the learner denies sudo', async () => {
     const system = await boot();
     const transport = scripted(
       uses('request_sudo', { reason: 'To fix your system.' }),
       { role: 'assistant', content: 'Fair enough, I am but a humble penguin.' },
     );
     render(<Desktop system={system} tutor={transport} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 }));
-    fireEvent.change(screen.getByLabelText('Ask Vasi'), { target: { value: 'fix it' } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasu, your Linux tutor' }, { timeout: 4000 }));
+    fireEvent.change(screen.getByLabelText('Ask Vasu'), { target: { value: 'fix it' } });
     fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Deny' }));
     expect(await screen.findByText(/humble penguin/)).toBeTruthy();
@@ -193,13 +193,13 @@ describe('tutor panel', () => {
     expect(system.tutor().can('user:switch')).toBe(false);
   });
 
-  it('shows a Stop control while Vasi works, and stops when pressed', async () => {
+  it('shows a Stop control while Vasu works, and stops when pressed', async () => {
     const system = await boot();
     let release: (reply: Assistant) => void = () => undefined;
     const transport: Transport = { complete: () => new Promise<Assistant>((resolve) => { release = resolve; }) };
     render(<Desktop system={system} tutor={transport} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 }));
-    fireEvent.change(screen.getByLabelText('Ask Vasi'), { target: { value: 'set up an exercise' } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasu, your Linux tutor' }, { timeout: 4000 }));
+    fireEvent.change(screen.getByLabelText('Ask Vasu'), { target: { value: 'set up an exercise' } });
     fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
     fireEvent.click(await screen.findByRole('button', { name: /Stop/ }));
     await act(async () => { release(uses('look_at_screen', {})); });
@@ -211,21 +211,21 @@ describe('tutor panel', () => {
     const system = await boot();
     const transport = scripted();
     render(<Desktop system={system} tutor={transport} />);
-    const intro = await screen.findByRole('dialog', { name: 'Vasi introduces himself' }, { timeout: 5000 });
+    const intro = await screen.findByRole('dialog', { name: 'Vasu introduces himself' }, { timeout: 5000 });
     expect(intro.textContent).toContain('your Linux teacher');
     fireEvent.click(within(intro).getByRole('button', { name: 'Can you become root?' }));
     expect(intro.textContent).toContain('Only if you let me');
     fireEvent.click(within(intro).getByRole('button', { name: 'Close' }));
-    expect(screen.queryByRole('dialog', { name: 'Vasi introduces himself' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Vasu introduces himself' })).toBeNull();
     // He only introduces himself once; nothing was sent to the AI.
-    expect(localStorage.getItem('tuxos.vasi.met.ada')).toBe('1');
+    expect(localStorage.getItem('tuxos.vasu.met.ada')).toBe('1');
     expect(transport.requests).toHaveLength(0);
   }, 15_000);
 
   it('opens Learn Linux from his introduction', async () => {
     const system = await boot();
     render(<Desktop system={system} tutor={scripted()} />);
-    const intro = await screen.findByRole('dialog', { name: 'Vasi introduces himself' }, { timeout: 5000 });
+    const intro = await screen.findByRole('dialog', { name: 'Vasu introduces himself' }, { timeout: 5000 });
     const open = vi.spyOn(system, 'openApp');
     fireEvent.click(within(intro).getByRole('button', { name: "Let's start learning" }));
     expect(open).toHaveBeenCalledWith('learn-linux');
@@ -234,8 +234,8 @@ describe('tutor panel', () => {
   it('shows the service error in plain words', async () => {
     const system = await boot();
     render(<Desktop system={system} tutor={scripted()} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 }));
-    fireEvent.change(screen.getByLabelText('Ask Vasi'), { target: { value: 'hello' } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasu, your Linux tutor' }, { timeout: 4000 }));
+    fireEvent.change(screen.getByLabelText('Ask Vasu'), { target: { value: 'hello' } });
     fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
     expect((await screen.findByRole('alert')).textContent).toBe('The tutor service is not reachable.');
   });
@@ -244,7 +244,7 @@ describe('tutor panel', () => {
     const system = await boot();
     const transport = scripted({ role: 'assistant', content: 'You need sudo for that file.' });
     render(<Desktop system={system} tutor={transport} />);
-    await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 });
+    await screen.findByRole('button', { name: 'Ask Vasu, your Linux tutor' }, { timeout: 4000 });
     const terminal = await system.createTerminal();
     await act(async () => {
       await terminal.run('cat /etc/shadow');

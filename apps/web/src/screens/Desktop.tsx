@@ -26,7 +26,7 @@ export function Desktop({ system, tutor, onPower, verifySudo = null }: {
   system: SystemClient;
   tutor?: Transport;
   onPower?(action: PowerAction): void;
-  /** Checks the account's password for Vasi's sudo request; null for guests, who have no password. */
+  /** Checks the account's password for Vasu's sudo request; null for guests, who have no password. */
   verifySudo?: ((password: string) => Promise<boolean>) | null;
 }) {
   const { apps, session, user, loaded } = useSession(system);

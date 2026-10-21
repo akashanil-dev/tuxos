@@ -1,4 +1,4 @@
-// Vasi without AI: when AI is off (Settings → AI) or there is no key, he answers from this offline guide
+// Vasu without AI: when AI is off (Settings → AI) or there is no key, he answers from this offline guide
 // instead. It knows the shell's own help for every installed command, explains the learner's last failed
 // command from its error, and covers the main topics of the courses. Nothing leaves the browser.
 
@@ -62,7 +62,7 @@ const TOPICS: { pattern: RegExp; text: string }[] = [
   },
 ];
 
-/** Vasi's offline answer to a question, from the commands' help and the learner's recent commands. */
+/** Vasu's offline answer to a question, from the commands' help and the learner's recent commands. */
 export function offlineAnswer(question: string, commands: GuideCommand[], recent: KernelEvent[]): string {
   const asked = question.trim();
   const byName = new Map(commands.map((command) => [command.name, command]));

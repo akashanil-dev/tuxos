@@ -4,14 +4,16 @@ Notable changes, newest first. Older entries were written while TuxOS was built 
 the DevDay Exchange Community Hackathon in Kochi; they mention event files (AI_USAGE.md, SUBMISSION.md) that
 have since been removed.
 
-## 2026-10-21 — Vasi in 3D, and long command lines fixed
+## 2026-10-21 — The tutor is now called Vasu, and drawn in 3D
 
-- Changed: Vasi is a 3D penguin (three.js, built from shapes, no model file): he breathes, blinks, waddles with
+- Changed: the AI tutor's name is now Vasu, everywhere (his prompt, the interface, the code and these notes).
+  The repository's old name, `ayalvasis`, is unchanged.
+- Changed: Vasu is a 3D penguin (three.js, built from shapes, no model file): he breathes, blinks, waddles with
   flapping flippers, tilts his head and talks while thinking, taps away while he uses the computer, points and
   waves. three.js loads only when he first appears; without WebGL the drawn penguin is shown.
-- Changed: Vasi only walks around, introduces himself and offers help when AI is enabled with a key. Otherwise he
+- Changed: Vasu only walks around, introduces himself and offers help when AI is enabled with a key. Otherwise he
   stays in his corner, and clicking him opens his offline guide.
-- Fixed: a command longer than the terminal is wide was printed again for every key typed (a line typed by Vasi
+- Fixed: a command longer than the terminal is wide was printed again for every key typed (a line typed by Vasu
   appeared dozens of times). The line editor now redraws wrapped lines in place.
 
 ## 2026-10-21 — Any AI provider, network safety, and AI off while it is rebuilt
@@ -43,7 +45,7 @@ have since been removed.
   learners enter their key once more. Sessions from before this change must sign in again to save or use a key.
 - Added: an **AI features** switch in Settings → AI, kept with the account (the server then refuses to use the
   key) or, for guests, in the browser. With AI off or no key, no AI request is made. An AI lab in progress
-  pauses, and the built-in course takes over with its own progress, then resumes when AI is back on. Vasi
+  pauses, and the built-in course takes over with its own progress, then resumes when AI is back on. Vasu
   answers from an offline guide (command help, the last error, course topics).
 - Why: learners pay only for their own use, the server holds no key that could be abused, and AI is an
   explicit choice.
@@ -111,7 +113,7 @@ have since been removed.
     Tab completion leave out programs that aren't installed.
   - Learn Linux: a seventh built-in lesson, "Installing software with apt". A new lesson CI test replays every
     built-in lesson's solution with apt loaded.
-  - Vasi's instructions and the trainer's syllabus prompt mention apt and its packages.
+  - Vasu's instructions and the trainer's syllabus prompt mention apt and its packages.
   - The built-in course (no AI key) no longer starts a lesson on its own: the learner picks one. Before this,
     every terminal judged commands as soon as the desktop started. The wrong-answer line no longer repeats
     the terminal's own hint text.
@@ -144,7 +146,7 @@ have since been removed.
     the account, and keeps a guest's in this browser. `packages/system` exposes it as `system.ai()` and sends
     the guest header with learning requests; the tutor transport does the same.
   - `modules/settings`: an **AI** section to add, replace or remove the key, with clear errors.
-  - `apps/web/src/tutor/TutorPanel.tsx`: without a key, Vasi explains how to add one, with an Open Settings
+  - `apps/web/src/tutor/TutorPanel.tsx`: without a key, Vasu explains how to add one, with an Open Settings
     button. The chat input and the "stuck" nudge are off, and nothing is sent.
   - `packages/lessons/src/ai.ts`: without AI, an AI course uses its reviewed built-in lessons, now checked by
     each step's own rules (`ran`, `cwd`, `exists`...) with a ✓/✗ verdict in the terminal. Learn Linux included,
@@ -156,10 +158,10 @@ have since been removed.
 - Why: running AI on the project's own credits doesn't scale; learners can use their own key, and the rest of
   TuxOS stays useful without one.
 - Validation: `npm run check` passed (313 tests), with new tests for sealing and opening keys, the secret file,
-  the key routes, the browser key store (guest and account), Vasi without a key, and Learn Linux built-in to
+  the key routes, the browser key store (guest and account), Vasu without a key, and Learn Linux built-in to
   AI and back. A real browser run with no server key confirmed:
   - the built-in lesson accepts `whoami`,
-  - Vasi shows the add-a-key message,
+  - Vasu shows the add-a-key message,
   - Settings rejects a fake key with OpenAI's real reply.
 
   Against a stand-in for OpenAI, the API saved an account key encrypted (no plaintext in the database), used it
@@ -238,7 +240,7 @@ have since been removed.
 - Validation: `npm run check` passed (294 tests), with new tests for the gated `/answer`, the early-answer guard,
   the reveal prompt after five misses, and failure-count validation. Not checked against the live model.
 - Limitations: the guard only catches the answer written out in full; a model could still describe it in other
-  words, which the prompt forbids. The Vasi tutor is a separate agent and is not bound by the five-try rule.
+  words, which the prompt forbids. The Vasu tutor is a separate agent and is not bound by the five-try rule.
 
 ## 2026-10-11T08:13:00+05:30 — Learn Linux syllabus no longer thrown away over one flawed task
 
@@ -260,7 +262,7 @@ have since been removed.
 - Changed:
   - README: corrected the sudo description (real account password; guests only confirm), the Node requirement
     (22.18 or newer, also in `package.json` engines), Learn Linux having no offline fallback, and the terminal
-    palette; added accounts, unlock, session restore, teach-first labs, themed course windows, Vasi's walk and
+    palette; added accounts, unlock, session restore, teach-first labs, themed course windows, Vasu's walk and
     introduction, the live demo link, and credits for fonts and icon themes; updated the AI-testing limitation.
   - SUBMISSION.md: filled in the project, repository, final implementation commit, demo, run steps, walkthrough,
     checks, limitations and libraries. The team table and the checklist are left for the team to complete.
@@ -287,12 +289,12 @@ have since been removed.
 - Validation: `npm run typecheck` passed; 26 test files and 291 tests passed (new: feedback formatting; the course
   test now checks the verdict field and the lesson text). In Chromium with a test syllabus: the lesson card, then a
   wrong `ls` showing the "Not quite" block.
-- Limitations: Learn Linux feedback is still cut at 110 characters (the trainer is asked to stay under that). Vasi's
+- Limitations: Learn Linux feedback is still cut at 110 characters (the trainer is asked to stay under that). Vasu's
   first-meeting bubble can cover the lab's "I'm ready" button until it is closed.
 
-## 2026-10-11T07:40:45+05:30 — Vasi walks sideways and rests facing you
+## 2026-10-11T07:40:45+05:30 — Vasu walks sideways and rests facing you
 
-- Changed: Vasi has a side view for walking (facing the way he goes, mirrored for left) with a forward-leaning strut
+- Changed: Vasu has a side view for walking (facing the way he goes, mirrored for left) with a forward-leaning strut
   and stepping feet, and turns to face the learner when he rests. Walks and rests are random: a random spot along the
   bottom, then a 3–9 second rest. Clicking him (or anything that needs him) sends him hurrying back to his corner.
   (`apps/web/src/tutor/Puppet.tsx`, `useStroll.ts`, `styles/tutor.css`)
@@ -301,10 +303,10 @@ have since been removed.
   front view while resting, and a click sent him home (2.4 s from the far left).
 - Limitations: none known.
 
-## 2026-10-11T07:34:03+05:30 — Vasi in 3D: he walks, and introduces himself
+## 2026-10-11T07:34:03+05:30 — Vasu in 3D: he walks, and introduces himself
 
 - Changed:
-  - Vasi is redrawn as a shaded, rounded penguin (lit from the top left, glossy eyes, a soft shadow and a
+  - Vasu is redrawn as a shaded, rounded penguin (lit from the top left, glossy eyes, a soft shadow and a
     teacher's graduation cap), built from separate parts so CSS can animate him (`apps/web/src/tutor/Puppet.tsx`).
   - He strolls along the bottom of the screen when nobody needs him: a penguin waddle with alternating steps,
     swinging wings and eyes looking where he is going; he walks home and faces the learner whenever his chat,
@@ -312,11 +314,11 @@ have since been removed.
     him still.
   - The first time a learner meets him, he introduces himself in a speech bubble and answers questions about
     what he can teach, using the computer, watching your work, sudo and how to stop him; "Let's start learning"
-    opens Learn Linux and "Ask me something" opens his chat. "About me" in his chat brings it back (`VasiIntro.tsx`).
-- Why: The team wants Vasi to feel like a teacher living in the computer, and new learners to know what he can do.
+    opens Learn Linux and "Ask me something" opens his chat. "About me" in his chat brings it back (`VasuIntro.tsx`).
+- Why: The team wants Vasu to feel like a teacher living in the computer, and new learners to know what he can do.
 - Validation: `npm run typecheck` passed; 26 test files and 290 tests passed (new: the introduction shows once and
   sends nothing to the AI; "Let's start learning" opens Learn Linux). In Chromium: the introduction, an answer, and
-  Vasi mid-walk were screenshotted.
+  Vasu mid-walk were screenshotted.
 - Limitations: "3D" is shaded 2D artwork, not a 3D model. The introduction is remembered per user in this browser.
 
 ## 2026-10-11T07:26:17+05:30 — Learn Linux, Learn Docker and chmod Arcade follow each desktop's theme
@@ -362,7 +364,7 @@ have since been removed.
   - All four login screens offer Create account, Sign in, "Continue as <name>" for a signed-in browser, and
     "Try without an account" (progress stays in the browser, as before). A guest who signs up with the same name
     brings their progress into the account. Logging out saves, then ends the account's session.
-  - Vasi's sudo dialog checks the signed-in account's real password ("Sorry, try again." otherwise); guests have no
+  - Vasu's sudo dialog checks the signed-in account's real password ("Sorry, try again." otherwise); guests have no
     password, so they only confirm.
   - Desktop icons and the wallpaper are fetched while the login screen and desktop splash are showing, instead of
     popping in after the desktop appears.
@@ -493,33 +495,33 @@ have since been removed.
 - Validation: `npm run check` passed (23 test files, 254 tests); `npm run build` passed; `git diff --check` passed.
 - Limitations: Existing local `.env` model overrides are not modified automatically; restart the API after updating configuration.
 
-## 2026-10-11T05:00:28+05:30 — Vasi becomes a teaching agent with full control
+## 2026-10-11T05:00:28+05:30 — Vasu becomes a teaching agent with full control
 
 - Changed:
-  - Vasi has a teacher persona: kind, patient, shows then hands the keyboard back, never does lesson steps for
+  - Vasu has a teacher persona: kind, patient, shows then hands the keyboard back, never does lesson steps for
     the learner, may set up exercises and rescue a broken system (`apps/api/src/prompt.ts`).
-  - The Guide / Demo / Drive autonomy switch is gone: Vasi always has every tool.
+  - The Guide / Demo / Drive autonomy switch is gone: Vasu always has every tool.
   - New agent tools (`packages/tutor/src/tools.ts`): `look_at_screen` now lists clickable and typeable elements
-    with ids; `click`, `type_text`, `press_keys`, `type_in_terminal` (types live into a visible "Vasi's
+    with ids; `click`, `type_text`, `press_keys`, `type_in_terminal` (types live into a visible "Vasu's
     terminal" whose commands run as the tutor), `manage_window`, `change_appearance` and `request_sudo`.
   - The browser side (`apps/web/src/tutor/screen-agent.ts`) reads the screen like a screen reader and acts with
-    Vasi's own drawn pointer (gliding arrow with a name tag and click ripple) and synthetic events.
-  - Sudo: `request_sudo` shows an authentication dialog with Vasi's reason, then a password prompt; allowing it
-    grants `user:switch` until logout or Revoke. Denial is reported to Vasi, who is told to take it with humour.
-  - A "Vasi is using the computer · Stop (Esc)" bar; Stop ends the current answer without further actions.
+    Vasu's own drawn pointer (gliding arrow with a name tag and click ripple) and synthetic events.
+  - Sudo: `request_sudo` shows an authentication dialog with Vasu's reason, then a password prompt; allowing it
+    grants `user:switch` until logout or Revoke. Denial is reported to Vasu, who is told to take it with humour.
+  - A "Vasu is using the computer · Stop (Esc)" bar; Stop ends the current answer without further actions.
   - Longer agent turns: up to 16 model rounds per question, the current question is always kept in the request
     even when trimming history, and the API accepts up to 160 messages and 60 tools.
-  - Terminal app: a `tuxos:terminal-type` window event lets Vasi type into a terminal; windows opened with
-    `owner: 'vasi'` run a tutor shell and are titled "Vasi's terminal".
+  - Terminal app: a `tuxos:terminal-type` window event lets Vasu type into a terminal; windows opened with
+    `owner: 'vasu'` run a tutor shell and are titled "Vasu's terminal".
   - Fixed: `sudo` read options meant for the command (`sudo head -n 2 f` failed); options now end at the command.
-- Why: The team wants Vasi to act like a teacher at the learner's shoulder who can use the computer himself.
+- Why: The team wants Vasu to act like a teacher at the learner's shoulder who can use the computer himself.
 - Validation: `npm run typecheck` passed. `npx vitest run`: 24 test files, 270 tests passed (new tests for the
   agent tools, sudo granted/denied/revoked, Stop, long turns, the screen agent and sudo option parsing).
-  `npm run build` passed. In headless Chromium with a scripted stand-in for the model API: Vasi looked at the
+  `npm run build` passed. In headless Chromium with a scripted stand-in for the model API: Vasu looked at the
   screen, double-clicked Files, typed `ls -l /etc` in his terminal, asked for sudo (allowed with a password, then
   ran `sudo head -n 2 /etc/shadow`) and, in a second run, was denied and answered with a joke.
 - Limitations: not yet tried against the real model, so how well it follows the persona and uses element ids is
-  untested. Any password is accepted because TuxOS accounts have none. Clicks and typing outside Vasi's own
+  untested. Any password is accepted because TuxOS accounts have none. Clicks and typing outside Vasu's own
   terminal run as the learner, so the persona (not the kernel) keeps him from doing lesson work through the UI.
   `head` and `tail` still accept only `-n N`, not the `-N` shorthand.
 
@@ -599,8 +601,8 @@ have since been removed.
     wallpaper, Tux avatar, session menus). Every login screen can start any of the four desktops.
   - Settings is one page with a card per desktop (no locks) and a wallpaper grid; About details moved there.
   - Restyled GRUB, boot log, power-off, per-desktop splash screens, Plasma panel/Kickoff/KRunner, GNOME bar and
-    overview, Files, Text Editor, Terminal palette, course view and Vasi's panel, which now takes each
-    desktop's colours. Vasi's puppet is unchanged.
+    overview, Files, Text Editor, Terminal palette, course view and Vasu's panel, which now takes each
+    desktop's colours. Vasu's puppet is unchanged.
   - Closing a window goes through the desktop, so keyboard close (Hyprland Alt+C) still respects the Text
     Editor's unsaved-changes prompt.
 - Why: The team wanted a complete visual redesign and all four desktop environments open to every learner.
@@ -680,7 +682,7 @@ have since been removed.
 - Limitations: only the listed Docker commands and images; a few commands inside containers; no interactive
   container shells yet.
 
-## 2026-10-11T02:07:45+05:30 — AI tutor (Vasi)
+## 2026-10-11T02:07:45+05:30 — AI tutor (Vasu)
 
 - Changed:
   - New `packages/tutor`: the agent loop (`TutorSession`), tools that run through the kernel as the `tutor`
@@ -690,8 +692,8 @@ have since been removed.
   - New `apps/api`: a dependency-free Node server (`npm run api`) with `/api/health` and `/api/tutor`. It
     holds the OpenAI key, adds the tutor's instructions, validates requests, rate-limits per client and
     turns upstream failures into readable errors. `.env.example` lists its settings.
-  - Desktop: the Vasi puppet and chat panel, an autonomy switch, tool actions shown inline, a highlight for
-    things Vasi points at (lifting icons above windows), and a help nudge after two failed commands. The
+  - Desktop: the Vasu puppet and chat panel, an autonomy switch, tool actions shown inline, a highlight for
+    things Vasu points at (lifting icons above windows), and a help nudge after two failed commands. The
     Vite dev server forwards `/api` to the API server.
   - System client: `tutor()` access with its own shell, app opening, capability grants and recent events.
   - Lesson checks now count only the learner's actions, so the tutor's demonstrations don't complete steps.
@@ -701,7 +703,7 @@ have since been removed.
   including scripted-model tutor tests against a real system and UI tests. `npm run build` passed. The API
   server was started and its health, missing-key, bad-JSON and 404 responses checked with curl. In Chromium,
   through the dev server and the API server pointed at a local stand-in for the OpenAI API: two failed
-  commands showed the nudge, and asking Vasi checked recent commands, highlighted the Terminal icon and
+  commands showed the nudge, and asking Vasu checked recent commands, highlighted the Terminal icon and
   answered, with no console errors.
 - Limitations: not yet run against a real OpenAI model here (no key in this environment); no long-term
   learner memory; the in-memory rate limit is per server process.

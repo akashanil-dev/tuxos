@@ -130,7 +130,7 @@ export interface SystemClient {
   createTerminal(options?: TerminalOptions): Promise<TerminalSession>;
   /** The AI tutor's own, permission-limited access to the system. */
   tutor(): TutorAccess;
-  /** The shell's installed commands with their help text (Vasi's offline guide reads it). */
+  /** The shell's installed commands with their help text (Vasu's offline guide reads it). */
   commands?(): { name: string; summary: string; usage?: string }[];
   /** The learner's AI key, when this system has a key store (the browser app does; tests may not). */
   ai(): AiKeyStore | null;

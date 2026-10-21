@@ -4,7 +4,7 @@ import { Penguin } from './Penguin';
 import type { SudoRequest } from './useTutor';
 
 /**
- * Vasi asking for root, like the authentication dialog a Linux desktop shows when a program needs admin
+ * Vasu asking for root, like the authentication dialog a Linux desktop shows when a program needs admin
  * rights: first the reason with Allow or Deny, then the account's real password. Guests have no password,
  * so for them Allow is the whole answer.
  */
@@ -55,13 +55,13 @@ export function SudoDialog({ system, request, verify }: {
         <span className="sudo-avatar"><Penguin /></span>
         <div>
           <h2>Authentication required</h2>
-          <p>Vasi wants to run commands as the administrator (root) with <code>sudo</code>.</p>
+          <p>Vasu wants to run commands as the administrator (root) with <code>sudo</code>.</p>
         </div>
       </div>
       <blockquote className="sudo-reason">{request.reason}</blockquote>
       {step === 'ask'
         ? <p className="sudo-note">
-          With sudo, Vasi can change anything on this system until you log out or revoke it.
+          With sudo, Vasu can change anything on this system until you log out or revoke it.
           {!verify && ' You are a guest, so there is no password to ask for: create an account to protect sudo with one.'}
         </p>
         : <>

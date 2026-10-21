@@ -5,12 +5,12 @@ const MARGIN = 14;
 /** Walking speed, in pixels per second: an unhurried waddle, and a hurry when he is called back to his corner. */
 const SPEED = 70;
 const HURRY_SPEED = 420;
-/** How long Vasi rests (facing the learner) between walks: a random few seconds each time. */
+/** How long Vasu rests (facing the learner) between walks: a random few seconds each time. */
 const PAUSE_MS = { min: 3_000, max: 9_000 };
 const FIRST_PAUSE_MS = 2_500;
 
 export interface Stroll {
-  /** Vasi's left edge, in pixels from the left of the screen. */
+  /** Vasu's left edge, in pixels from the left of the screen. */
   x: number;
   facing: 'left' | 'right' | 'front';
   walking: boolean;
@@ -21,7 +21,7 @@ export interface Stroll {
 const home = () => Math.max(MARGIN, globalThis.innerWidth - SIZE - MARGIN);
 
 /**
- * Vasi's stroll along the bottom of the screen. While `free` he now and then waddles to another spot, and back home
+ * Vasu's stroll along the bottom of the screen. While `free` he now and then waddles to another spot, and back home
  * to the right corner; as soon as he is needed (a chat, a nudge, his introduction, his work) he walks home and turns
  * to face the learner. Reduced motion keeps him at home.
  */

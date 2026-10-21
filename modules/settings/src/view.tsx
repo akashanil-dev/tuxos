@@ -77,7 +77,7 @@ export default function SettingsView({ system }: AppViewProps) {
 const REBUILDING = 'AI features are being rebuilt for a better experience. They will be back soon.';
 
 /**
- * The AI switch and the learner's own AI provider, model and key, which together turn on Vasi and the AI
+ * The AI switch and the learner's own AI provider, model and key, which together turn on Vasu and the AI
  * trainers. While the server doesn't offer AI, the whole section is greyed out and the switch stays off.
  */
 function AiKeySection({ store }: { store: AiKeyStore }) {
@@ -127,21 +127,21 @@ function AiKeySection({ store }: { store: AiKeyStore }) {
     void run(async () => {
       setStatus(await store.save({ provider, model, key: key.trim() || undefined, baseUrl: provider === 'custom' ? baseUrl : undefined }));
       setKey('');
-    }, status.on ? 'Checked and saved. Vasi and the AI trainers are on.' : 'Checked and saved. Turn AI on to use it.');
+    }, status.on ? 'Checked and saved. Vasu and the AI trainers are on.' : 'Checked and saved. Turn AI on to use it.');
   };
   const toggle = () => {
     if (!available || busy) return;
     void run(async () => setStatus(await store.setOn(!status.on)), status.on
-      ? 'AI is off. Vasi and the courses now work offline, without your key.'
+      ? 'AI is off. Vasu and the courses now work offline, without your key.'
       : own ? 'AI is on.' : 'AI is on. Choose a provider and add your key to start using it.');
   };
 
   return <>
     <h3>AI</h3>
     <p className="settings-intro">
-      Vasi and the AI trainers use an AI provider you choose, with your own API key, so you only pay for what you
+      Vasu and the AI trainers use an AI provider you choose, with your own API key, so you only pay for what you
       use (several providers have free plans). With AI off, everything still works: the courses use their built-in
-      lessons and Vasi answers from his offline guide.
+      lessons and Vasu answers from his offline guide.
     </p>
     <div className={`ai-key ${available ? '' : 'unavailable'}`}>
       <div className="ai-switch">
@@ -216,7 +216,7 @@ function AiKeySection({ store }: { store: AiKeyStore }) {
         {status.signedIn
           ? 'It is encrypted with a key that only your password unlocks, so nobody running TuxOS can read it. It is used only for your own requests and never shown again.'
           : 'As a guest, it is kept only in this browser and sent with your own AI requests. Sign in to keep it with an account.'}
-        {' '}Vasi works best with a model that supports tool calling; with one that doesn&apos;t, he can chat but not use the computer.
+        {' '}Vasu works best with a model that supports tool calling; with one that doesn&apos;t, he can chat but not use the computer.
       </p>
     </div>
   </>;

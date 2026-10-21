@@ -1,4 +1,4 @@
-// Vasi in 3D: a small, round, cartoon penguin built from smooth shapes with three.js (no model file), so every
+// Vasu in 3D: a small, round, cartoon penguin built from smooth shapes with three.js (no model file), so every
 // part can move on its own. He breathes and blinks when idle, waddles with flapping flippers and stepping feet
 // when he walks, tilts his head and talks while thinking, taps his flippers while he uses the computer, raises
 // one to point, and waves when the pointer comes near. This file is loaded only when he is first shown, and
@@ -104,7 +104,7 @@ function buildPenguin(ramp: DataTexture): Rig {
   jaw.rotation.x = Math.PI / 2;
   jaw.scale.set(1.1, 1, 0.6);
 
-  // The teacher's cap, kept from the drawn Vasi: a flat board, a band and a gold tassel.
+  // The teacher's cap, kept from the drawn Vasu: a flat board, a band and a gold tassel.
   const cap = new Group();
   cap.position.set(0, 0.62, -0.02);
   cap.rotation.set(-0.12, 0, 0.1);
@@ -212,7 +212,7 @@ function animate(rig: Rig, pose: PenguinPose, t: number, wave: number, still: bo
   footRight.position.z = 0.22 + stepRight * 0.08;
 }
 
-/** Vasi in 3D. Calls `onFail` if WebGL can't start, so the caller can show the drawn penguin instead. */
+/** Vasu in 3D. Calls `onFail` if WebGL can't start, so the caller can show the drawn penguin instead. */
 export default function Penguin3D({ pose, onFail }: { pose: PenguinPose; onFail(): void }) {
   const holder = useRef<HTMLDivElement>(null);
   const current = useRef(pose);

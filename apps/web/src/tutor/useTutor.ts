@@ -14,7 +14,7 @@ export interface Pointer {
   at: number;
 }
 
-/** Where Vasi's own pointer is drawn, and whether it is mid-click. */
+/** Where Vasu's own pointer is drawn, and whether it is mid-click. */
 export interface CursorState {
   x: number;
   y: number;
@@ -28,7 +28,7 @@ export interface SudoRequest {
   answer(granted: boolean): void;
 }
 
-/** Real browsers animate Vasi's pointer and typing; tests (and reduced motion) run instantly. */
+/** Real browsers animate Vasu's pointer and typing; tests (and reduced motion) run instantly. */
 const instant = () => typeof matchMedia !== 'function' || matchMedia('(prefers-reduced-motion: reduce)').matches;
 const MOVE_MS = 450;
 const CLICK_MS = 180;
@@ -36,7 +36,7 @@ const TYPE_MS = 45;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * The tutor conversation for this desktop: messages, tool actions, busy state, where Vasi is pointing,
+ * The tutor conversation for this desktop: messages, tool actions, busy state, where Vasu is pointing,
  * his on-screen pointer, sudo requests, and the learner's Stop.
  */
 export function useTutor(system: SystemClient, transport: Transport) {

@@ -9,7 +9,7 @@ export interface AccountsClient {
   register(username: string, password: string): Promise<void>;
   login(username: string, password: string): Promise<void>;
   logout(): Promise<void>;
-  /** Checks the signed-in account's password, for Vasi's sudo request. */
+  /** Checks the signed-in account's password, for Vasu's sudo request. */
   verify(password: string): Promise<boolean>;
   /** Storage that keeps the saved system in the account. */
   storage(): KeyValueStorage;

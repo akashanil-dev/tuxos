@@ -31,7 +31,7 @@ const THEME = {
 };
 
 /**
- * Typing into a terminal from elsewhere on the page (Vasi, the tutor): dispatch this event on `window` with
+ * Typing into a terminal from elsewhere on the page (Vasu, the tutor): dispatch this event on `window` with
  * the target window id and the keystrokes. The terminal sets `accepted` once it is ready to take them.
  */
 export const TERMINAL_TYPE_EVENT = 'tuxos:terminal-type';
@@ -51,8 +51,8 @@ export function TerminalSurface({ system, windowId, args, learningModule, inputI
   /** The id that TERMINAL_TYPE_EVENT uses to type here; a window's terminal uses its window id. */
   inputId?: string;
 }) {
-  // Vasi's own terminal runs his commands as the tutor, so they never count towards the learner's lessons.
-  const owner = args?.owner === 'vasi' ? 'vasi' : 'learner';
+  // Vasu's own terminal runs his commands as the tutor, so they never count towards the learner's lessons.
+  const owner = args?.owner === 'vasu' ? 'vasu' : 'learner';
   const container = useRef<HTMLDivElement>(null);
   const [error, setError] = useState('');
 
@@ -93,7 +93,7 @@ export function TerminalSurface({ system, windowId, args, learningModule, inputI
       close: () => { if (windowId) void system.dispatch('session.close', { id: windowId }); },
       setTitle: (title: string) => {
         if (windowId) void system.dispatch('session.setTitle', {
-          id: windowId, title: owner === 'vasi' ? `Vasi's terminal — ${title}` : title,
+          id: windowId, title: owner === 'vasu' ? `Vasu's terminal — ${title}` : title,
         });
       },
     };
@@ -103,7 +103,7 @@ export function TerminalSurface({ system, windowId, args, learningModule, inputI
       get cols() { return term.cols; },
     };
     void (async () => {
-      const session = owner === 'vasi'
+      const session = owner === 'vasu'
         ? await system.tutor().createTerminal()
         : await system.createTerminal(learningModule ? { learningModule } : undefined);
       if (disposed) return;

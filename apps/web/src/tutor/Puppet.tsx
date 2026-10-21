@@ -1,12 +1,12 @@
 import { useId } from 'react';
 
 /**
- * Vasi, a penguin teacher, drawn with shading so he reads as a rounded, 3D figure: lit from the top left, with a
+ * Vasu, a penguin teacher, drawn with shading so he reads as a rounded, 3D figure: lit from the top left, with a
  * soft shadow under his feet and a graduation cap. His wings, feet and eyes are separate parts so CSS can make him
  * waddle, step, wave and blink (see tutor.css).
  */
 export function Puppet({ facing = 'front' }: { facing?: 'left' | 'right' | 'front' }) {
-  // Gradient ids must be unique on the page: Vasi can appear twice (his button and the sudo dialog).
+  // Gradient ids must be unique on the page: Vasu can appear twice (his button and the sudo dialog).
   const id = useId().replace(/:/g, '');
   // Walking, he turns sideways and faces where he is going; resting, he faces the learner.
   if (facing !== 'front') return <SideView id={id} facing={facing} />;
@@ -44,7 +44,7 @@ export function Puppet({ facing = 'front' }: { facing?: 'left' | 'right' | 'fron
   </svg>;
 }
 
-/** Vasi in profile, facing right (mirrored to face left), for walking. */
+/** Vasu in profile, facing right (mirrored to face left), for walking. */
 function SideView({ id, facing }: { id: string; facing: 'left' | 'right' }) {
   return <svg viewBox="0 0 80 96" aria-hidden="true" className="puppet-svg puppet-side">
     <Shading id={id} />
@@ -77,7 +77,7 @@ function SideView({ id, facing }: { id: string; facing: 'left' | 'right' }) {
   </svg>;
 }
 
-/** The gradients that shade Vasi; shared by his front and side views. */
+/** The gradients that shade Vasu; shared by his front and side views. */
 function Shading({ id }: { id: string }) {
   return <defs>
     <radialGradient id={`${id}-body`} cx="38%" cy="28%" r="78%">

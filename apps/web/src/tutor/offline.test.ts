@@ -14,7 +14,7 @@ const ran = (line: string, code: number, stderr = '', actor: 'user' | 'tutor' = 
   action: { type: 'shell.ran', payload: { line, code, stdout: '', stderr, commands: [line.split(' ')[0]] } },
 } as unknown as KernelEvent);
 
-describe("Vasi's offline guide", () => {
+describe("Vasu's offline guide", () => {
   it('explains commands from their own help', () => {
     expect(offlineAnswer('what does ls do?', commands, [])).toBe('`ls`: List directory contents. Usage: `ls [-la] [PATH ...]`');
     // Everyday words that are also commands count only when quoted or asked alone.

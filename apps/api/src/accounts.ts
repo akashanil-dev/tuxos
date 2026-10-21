@@ -4,7 +4,7 @@
 //   POST /api/auth/login    {username, password}  -> signs in
 //   POST /api/auth/logout                         -> signs out
 //   GET  /api/auth/me                             -> {username} of the signed-in account
-//   POST /api/auth/verify   {password}            -> checks the signed-in account's password (Vasi's sudo)
+//   POST /api/auth/verify   {password}            -> checks the signed-in account's password (Vasu's sudo)
 //   GET  /api/save                                -> {data, version}
 //   PUT  /api/save          {data, version}       -> saves if version matches, else 409 (changed elsewhere)
 // It also keeps each account's own AI settings (provider, model, key) and whether its AI is on (ai-keys.ts).

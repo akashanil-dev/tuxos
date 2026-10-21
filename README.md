@@ -1,7 +1,7 @@
 # TuxOS
 
 A pretend Linux computer that runs in the browser and teaches newcomers Linux and its ecosystem. An AI tutor,
-Vasi the penguin, guides each learner and can operate the system himself. Every activity (Learn Linux, Learn
+Vasu the penguin, guides each learner and can operate the system himself. Every activity (Learn Linux, Learn
 Docker, games) is a module that shows up as a desktop icon.
 
 **Live:** https://tuxos.akashanil.dev
@@ -37,19 +37,19 @@ Docker, games) is a module that shows up as a desktop icon.
 - **Learn Docker.** A simulated `docker` CLI (`run`, `ps`, `images`, `logs`, `exec`, published ports with
   `curl`...) with an AI-designed lab, or five built-in lessons when no AI is available.
 - **chmod Arcade.** A 60-second game for reading and writing file permissions.
-- **Vasi, the AI tutor.** A penguin who walks along the bottom of the screen and answers questions. He can see
+- **Vasu, the AI tutor.** A penguin who walks along the bottom of the screen and answers questions. He can see
   the screen and your recent commands. He can also use the computer: he moves his own pointer, clicks, types
   into his own terminal and opens apps. He runs as a normal user and has to ask for sudo, with your password,
   before he can act as root. Every action shows in the chat, and **Stop** (or Esc) takes control back.
 - **Accounts.** Sign up to save your system and continue on any device, or try it without an account and keep
   everything in the browser.
-- **Any AI provider, your own key, with an off switch.** Vasi and the AI trainers use a provider the learner
+- **Any AI provider, your own key, with an off switch.** Vasu and the AI trainers use a provider the learner
   chooses in **Settings → AI** (Groq, NVIDIA, OpenRouter, Google Gemini, Cerebras, Mistral, OpenAI, DeepSeek or
   Together; several have free plans), with the learner's own key and a model picked from the provider's list.
   The server has no key. A signed-in learner's settings are encrypted with a key only their password unlocks, so
   not even the people running TuxOS can read them; a guest's stay in their browser. The **AI features** switch is
   off until the learner turns it on. With AI off, nothing is sent to an AI: the courses teach their built-in
-  lessons and Vasi answers from his offline guide. *AI is currently switched off on the live site while it is
+  lessons and Vasu answers from his offline guide. *AI is currently switched off on the live site while it is
   rebuilt (`AI_FEATURES`).*
 
 ## Architecture
@@ -75,7 +75,7 @@ modules/      terminal, files, editor, settings, apt, learn-linux, learn-docker,
   line is logged as a `shell.ran` event, which lessons check.
 - **SDK and module host** (`packages/sdk`, `packages/module-host`): a module declares its apps, commands and
   capabilities in a manifest, and its code loads only when first used. Every module action also becomes a tool
-  for Vasi, so new modules extend the tutor without tutor changes.
+  for Vasu, so new modules extend the tutor without tutor changes.
 - **Package manager** (`modules/apt`): a catalogue of packages (`catalog.ts`) with real versions, sizes and
   dependencies; dpkg's database lives in the simulated filesystem (`dpkg.ts`), so installs are saved with the
   learner's system; each package's program is written in TypeScript (`programs.ts`), since there are no real
@@ -91,9 +91,9 @@ modules/      terminal, files, editor, settings, apt, learn-linux, learn-docker,
   immediate app-list updates. The bundled catalog works offline; custom packages are imported locally.
   `PluginWindowFrame` and `PluginRPCGateway` provide the restricted iframe and permission-checked bridge.
 - **AI tutor** (`packages/tutor`, `apps/web/src/tutor`, `apps/api`): the browser keeps the conversation and
-  runs the agent's tools (look at the screen, click, type, files, windows, module actions). The API adds Vasi's
+  runs the agent's tools (look at the screen, click, type, files, windows, module actions). The API adds Vasu's
   instructions and makes one model call per request with the learner's key, so it is stateless. Everything
-  Vasi does is recorded as the `tutor` actor, so lessons count only the learner's own work.
+  Vasu does is recorded as the `tutor` actor, so lessons count only the learner's own work.
 - **API** (`apps/api`): a dependency-free Node server. `/api/tutor` serves the tutor, `/api/learning/*`
   (`plan`, `evaluate`, `hint`, `answer`) the trainers, and `/api/auth/*` and `/api/save` accounts. Model
   responses are validated before use. Passwords are stored as salted scrypt hashes and session tokens are
@@ -102,7 +102,7 @@ modules/      terminal, files, editor, settings, apt, learn-linux, learn-docker,
 - **AI providers** (`apps/api/src/providers.ts`): every provider speaks OpenAI's chat-completions format at its
   own address. Keys are checked without spending anything where possible (listing models; OpenRouter's key
   endpoint; for NVIDIA, whose model list is public, a one-token request). Weaker models are handled: a model
-  without tool calling still chats (Vasi can't operate the computer), the trainers retry without JSON mode and
+  without tool calling still chats (Vasu can't operate the computer), the trainers retry without JSON mode and
   read the JSON out of the reply, and a too-large conversation is retried with its recent part. OpenAI-only
   options (such as `reasoning_effort`) go only to OpenAI.
 - **Network safety** (`apps/api/src/net-guard.ts`, `deploy/tuxos-api.service`): every request to a provider is
@@ -125,7 +125,7 @@ modules/      terminal, files, editor, settings, apt, learn-linux, learn-docker,
   browser stops sending it. With AI off, or without a key,
   no AI request leaves the browser, and every module uses its own offline behaviour: Learn Linux, Learn Docker
   and the chmod trainer teach their built-in lessons with rule-based checks (an AI lab in progress is kept and
-  resumes when AI is back on), `/hint` and `/answer` use each task's own hints, and Vasi answers from an offline
+  resumes when AI is back on), `/hint` and `/answer` use each task's own hints, and Vasu answers from an offline
   guide built from the shell's help and the learner's last error. Plugins never have AI or network access.
 
 ## Run locally
@@ -193,7 +193,7 @@ Production runs on an Ubuntu 24.04 server behind Cloudflare and Caddy. The files
   removed.
 - The Docker simulation covers the commands and images listed above. Interactive container shells
   (`-it ... sh`) are not available.
-- Vasi's agent flow was tested with a scripted model and in a real browser. The quality of his answers against
+- Vasu's agent flow was tested with a scripted model and in a real browser. The quality of his answers against
   the real model has not been reviewed systematically, and he has no memory between conversations.
 - Accounts have no password reset.
 - The provider flow was tested against stand-ins and each provider's real endpoints (without a valid key), not

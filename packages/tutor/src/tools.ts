@@ -1,4 +1,4 @@
-// The tutor's tools. Vasi is a teacher with full control of the computer: he can look, click, type, run
+// The tutor's tools. Vasu is a teacher with full control of the computer: he can look, click, type, run
 // commands and change files. Everything still goes through the kernel as the `tutor` actor, so lessons
 // only count the learner's own work, and he acts as root only after the learner grants him sudo.
 
@@ -6,11 +6,11 @@ import type { KernelEvent } from '@tuxos/sdk';
 import type { ActionInfo, TerminalSession, TutorAccess } from '@tuxos/system';
 import type { ToolSpec } from './protocol';
 
-/** What Vasi may always do. Root (`user:switch`) is added only while the learner has granted sudo. */
+/** What Vasu may always do. Root (`user:switch`) is added only while the learner has granted sudo. */
 export const CAPABILITIES = ['fs:read', 'fs:write', 'session:control', 'shell:exec', 'lessons:read', 'lessons:write'];
 const SUDO = 'user:switch';
 
-/** Something on screen Vasi can click or type into, named the way a screen reader would name it. */
+/** Something on screen Vasu can click or type into, named the way a screen reader would name it. */
 export interface ScreenElement {
   id: string;
   role: string;
@@ -24,7 +24,7 @@ export interface PuppetUi {
   pointAt(target: string, note?: string): void;
   /** The things on screen right now that can be clicked or typed into, each with a fresh id. */
   describeScreen(): ScreenElement[];
-  /** Move Vasi's pointer to an element and click it. Throws if the element is gone. */
+  /** Move Vasu's pointer to an element and click it. Throws if the element is gone. */
   click(elementId: string, double: boolean): Promise<void>;
   /** Type into a text field letter by letter, then optionally press Enter. */
   typeText(elementId: string, text: string, submit: boolean): Promise<void>;
@@ -67,7 +67,7 @@ export class Toolbox {
     return this.sudo;
   }
 
-  /** The learner takes sudo back (or a new session starts): Vasi is an ordinary user again. */
+  /** The learner takes sudo back (or a new session starts): Vasu is an ordinary user again. */
   revokeSudo(): void {
     this.sudo = false;
     this.access.setCapabilities(CAPABILITIES);
@@ -110,7 +110,7 @@ export class Toolbox {
           desktop: session.desktop,
           windows: session.windows.map(({ id, appId, title, minimized, args }) => ({
             id, app: appId, title, minimized, focused: id === session.focusedId,
-            ...(args?.owner === 'vasi' ? { yours: true } : {}),
+            ...(args?.owner === 'vasu' ? { yours: true } : {}),
           })),
           elements: ui.describeScreen(),
         };
@@ -140,7 +140,7 @@ export class Toolbox {
         return { ok: true };
       }, ['keys']),
       tool('type_in_terminal', 'Type a command into a terminal so the learner watches it happen, then wait for its '
-        + 'output. Without window_id it uses your own terminal, "Vasi\'s terminal", opening it if needed: commands '
+        + 'output. Without window_id it uses your own terminal, "Vasu\'s terminal", opening it if needed: commands '
         + 'there are yours and never count towards the learner\'s lessons. Use sudo only after request_sudo.',
       {
         command: { type: 'string' },
@@ -232,15 +232,15 @@ export class Toolbox {
     return { window_id: target, exit_code: done.code, stdout: cap(done.stdout), stderr: cap(done.stderr) };
   }
 
-  /** Vasi's own terminal window, opened (or restored) when he needs it. */
+  /** Vasu's own terminal window, opened (or restored) when he needs it. */
   private async ownTerminal(): Promise<string> {
     const session = await this.session();
-    const mine = session.windows.find((window) => window.appId === 'terminal' && window.args?.owner === 'vasi');
+    const mine = session.windows.find((window) => window.appId === 'terminal' && window.args?.owner === 'vasu');
     if (mine) {
       await this.access.dispatch('session.focus', { id: mine.id });
       return mine.id;
     }
-    const opened = await this.access.openApp('terminal', { owner: 'vasi' });
+    const opened = await this.access.openApp('terminal', { owner: 'vasu' });
     if (!opened.ok) throw new Error(opened.error.message);
     return opened.value;
   }

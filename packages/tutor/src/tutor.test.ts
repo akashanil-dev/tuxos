@@ -55,7 +55,7 @@ function scripted(...replies: Assistant[]): Transport & { requests: CompletionRe
   };
 }
 
-/** A pretend screen that records what Vasi did. Typing into a terminal runs the line in a tutor shell. */
+/** A pretend screen that records what Vasu did. Typing into a terminal runs the line in a tutor shell. */
 function fakeScreen(system: SystemClient, sudoAnswer: boolean) {
   const did: string[] = [];
   const ui: PuppetUi = {
@@ -151,7 +151,7 @@ describe('TutorSession', () => {
     const { system, tutor, events, did } = await setup(transport);
     await tutor.ask('show me whoami');
     const windows = (await system.session()).windows;
-    expect(windows).toMatchObject([{ appId: 'terminal', args: { owner: 'vasi' } }]);
+    expect(windows).toMatchObject([{ appId: 'terminal', args: { owner: 'vasu' } }]);
     expect(did).toEqual([`terminal ${windows[0]!.id} whoami`]);
     expect(toolResults(events)[0]?.result).toMatchObject({ exit_code: 0, stdout: 'ada\n' });
   });

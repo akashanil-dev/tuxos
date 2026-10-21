@@ -1,5 +1,5 @@
-/* Vasi on the desktop: he walks along the bottom of the screen (the transform is set from useStroll). */
-.vasi-actor {
+/* Vasu on the desktop: he walks along the bottom of the screen (the transform is set from useStroll). */
+.vasu-actor {
   position: absolute;
   z-index: 10002;
   bottom: calc(var(--area-bottom, 0px) + 14px);
@@ -48,7 +48,7 @@
 }
 
 /* Standing: a gentle breath and a blink now and then. */
-.vasi-actor:not(.walking) .tutor-puppet:not(.busy) .puppet-body {
+.vasu-actor:not(.walking) .tutor-puppet:not(.busy) .puppet-body {
   animation: puppet-breathe 3.2s ease-in-out infinite;
 }
 
@@ -67,46 +67,46 @@
 }
 
 /* Walking: a penguin waddle, rocking side to side while the feet take turns and the wings swing. */
-.vasi-actor.walking .puppet-body {
+.vasu-actor.walking .puppet-body {
   animation: puppet-waddle 0.46s ease-in-out infinite alternate;
 }
 
-.vasi-actor.walking .puppet-foot-left {
+.vasu-actor.walking .puppet-foot-left {
   animation: puppet-step 0.46s ease-in-out infinite alternate;
 }
 
-.vasi-actor.walking .puppet-foot-right {
+.vasu-actor.walking .puppet-foot-right {
   animation: puppet-step 0.46s ease-in-out infinite alternate-reverse;
 }
 
-.vasi-actor.walking .puppet-wing-left {
+.vasu-actor.walking .puppet-wing-left {
   transform-origin: 90% 10%;
   animation: puppet-swing 0.46s ease-in-out infinite alternate;
 }
 
-.vasi-actor.walking .puppet-wing-right {
+.vasu-actor.walking .puppet-wing-right {
   transform-origin: 10% 10%;
   animation: puppet-swing 0.46s ease-in-out infinite alternate-reverse;
 }
 
-.vasi-actor.walking .puppet-shadow {
+.vasu-actor.walking .puppet-shadow {
   animation: puppet-shadow 0.46s ease-in-out infinite alternate;
 }
 
 /* Side view (walking): a bob and a forward lean, feet stepping one after the other. */
-.vasi-actor.walking .puppet-side .puppet-body {
+.vasu-actor.walking .puppet-side .puppet-body {
   animation: puppet-strut 0.4s ease-in-out infinite alternate;
 }
 
-.vasi-actor.walking .puppet-side .puppet-foot-left {
+.vasu-actor.walking .puppet-side .puppet-foot-left {
   animation: puppet-stride 0.4s ease-in-out infinite alternate;
 }
 
-.vasi-actor.walking .puppet-side .puppet-foot-right {
+.vasu-actor.walking .puppet-side .puppet-foot-right {
   animation: puppet-stride 0.4s ease-in-out infinite alternate-reverse;
 }
 
-.vasi-actor.walking .puppet-side .puppet-wing-left {
+.vasu-actor.walking .puppet-side .puppet-wing-left {
   transform-origin: 70% 5%;
   animation: puppet-flap 0.4s ease-in-out infinite alternate;
 }
@@ -164,8 +164,8 @@
   to { transform: rotate(-60deg); }
 }
 
-/* Vasi's speech bubble: above him, kept on screen whichever side he stands. */
-.vasi-bubble {
+/* Vasu's speech bubble: above him, kept on screen whichever side he stands. */
+.vasu-bubble {
   position: absolute;
   right: 0;
   bottom: calc(100% + 12px);
@@ -179,36 +179,36 @@
   font-family: var(--font-ui);
   font-size: 13.5px;
   line-height: 1.5;
-  animation: vasi-bubble-in 220ms cubic-bezier(0.2, 0.8, 0.3, 1.2);
+  animation: vasu-bubble-in 220ms cubic-bezier(0.2, 0.8, 0.3, 1.2);
   transform-origin: bottom right;
 }
 
-.on-left .vasi-bubble {
+.on-left .vasu-bubble {
   right: auto;
   left: 0;
   border-radius: 16px 16px 16px 4px;
   transform-origin: bottom left;
 }
 
-@keyframes vasi-bubble-in {
+@keyframes vasu-bubble-in {
   from { opacity: 0; transform: translateY(6px) scale(0.96); }
 }
 
-.vasi-bubble p {
+.vasu-bubble p {
   margin: 0 0 8px;
 }
 
-.vasi-bubble-hello {
+.vasu-bubble-hello {
   font-size: 16px;
   font-weight: 700;
 }
 
-.vasi-bubble-question {
+.vasu-bubble-question {
   color: var(--accent);
   font-weight: 700;
 }
 
-.vasi-bubble-close {
+.vasu-bubble-close {
   position: absolute;
   top: 6px;
   right: 8px;
@@ -218,14 +218,14 @@
   font-size: 18px;
 }
 
-.vasi-bubble-topics {
+.vasu-bubble-topics {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin: 4px 0 10px;
 }
 
-.vasi-bubble-topics button {
+.vasu-bubble-topics button {
   padding: 4px 10px;
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -234,20 +234,20 @@
   font-size: 12px;
 }
 
-.vasi-bubble-topics button:hover {
+.vasu-bubble-topics button:hover {
   border-color: var(--accent);
 }
 
-.vasi-bubble-topics button.asked {
+.vasu-bubble-topics button.asked {
   color: var(--muted);
 }
 
-.vasi-bubble-actions {
+.vasu-bubble-actions {
   display: flex;
   gap: 8px;
 }
 
-.vasi-bubble-actions button {
+.vasu-bubble-actions button {
   padding: 7px 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-small);
@@ -256,7 +256,7 @@
   font-weight: 600;
 }
 
-.vasi-bubble-actions button.primary {
+.vasu-bubble-actions button.primary {
   border-color: transparent;
   background: var(--accent);
   color: var(--accent-fg);
@@ -270,17 +270,17 @@
   font-size: 11.5px !important;
 }
 
-.de-cde .vasi-bubble {
+.de-cde .vasu-bubble {
   border: 0;
   border-radius: 0;
   box-shadow: var(--shadow);
 }
 
-.de-hyprland .vasi-bubble {
+.de-hyprland .vasu-bubble {
   border: 2px solid #cba6f7;
 }
 
-/* Vasi's panel takes each desktop's own colours, corners and type, like any other app on it. */
+/* Vasu's panel takes each desktop's own colours, corners and type, like any other app on it. */
 .tutor-panel {
   position: absolute;
   z-index: 10001;
@@ -351,7 +351,7 @@
   color: var(--accent-fg);
 }
 
-/* Vasi's own words sit in a speech bubble. */
+/* Vasu's own words sit in a speech bubble. */
 .tutor-message.assistant,
 .tutor-hello {
   margin-right: 24px;
@@ -360,7 +360,7 @@
   background: var(--surface-2);
 }
 
-/* Without an API key, Vasi says so and points to Settings. */
+/* Without an API key, Vasu says so and points to Settings. */
 .tutor-no-key button {
   display: block;
   margin-top: 8px;
@@ -568,8 +568,8 @@
   font-weight: 700;
 }
 
-/* Vasi's own pointer: an arrow in his accent colour with a name tag, gliding between targets. */
-.vasi-cursor {
+/* Vasu's own pointer: an arrow in his accent colour with a name tag, gliding between targets. */
+.vasu-cursor {
   position: fixed;
   z-index: 30000;
   top: 0;
@@ -578,7 +578,7 @@
   transition: transform 450ms cubic-bezier(0.3, 0.8, 0.3, 1);
 }
 
-.vasi-cursor svg {
+.vasu-cursor svg {
   display: block;
   width: 24px;
   height: 24px;
@@ -590,7 +590,7 @@
   filter: drop-shadow(0 2px 3px rgb(0 0 0 / 45%));
 }
 
-.vasi-cursor span {
+.vasu-cursor span {
   position: absolute;
   top: 20px;
   left: 14px;
@@ -603,7 +603,7 @@
 }
 
 /* The click ripple. */
-.vasi-cursor::before {
+.vasu-cursor::before {
   content: "";
   position: absolute;
   top: -14px;
@@ -616,17 +616,17 @@
   transform: scale(0.3);
 }
 
-.vasi-cursor.clicking::before {
-  animation: vasi-click 300ms ease-out;
+.vasu-cursor.clicking::before {
+  animation: vasu-click 300ms ease-out;
 }
 
-@keyframes vasi-click {
+@keyframes vasu-click {
   from { opacity: 1; transform: scale(0.3); }
   to { opacity: 0; transform: scale(1.4); }
 }
 
-/* While Vasi works: what he is doing, and the learner's Stop. */
-.vasi-control {
+/* While Vasu works: what he is doing, and the learner's Stop. */
+.vasu-control {
   position: absolute;
   z-index: 29000;
   top: calc(var(--area-top, 0px) + 10px);
@@ -645,19 +645,19 @@
   animation: splash-in 200ms ease;
 }
 
-.vasi-control-dot {
+.vasu-control-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: #f5a524;
-  animation: vasi-pulse 1.2s ease-in-out infinite;
+  animation: vasu-pulse 1.2s ease-in-out infinite;
 }
 
-@keyframes vasi-pulse {
+@keyframes vasu-pulse {
   50% { opacity: 0.3; }
 }
 
-.vasi-control button {
+.vasu-control button {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -669,7 +669,7 @@
   font-weight: 700;
 }
 
-.vasi-control kbd {
+.vasu-control kbd {
   padding: 0 4px;
   border-radius: 3px;
   background: rgb(0 0 0 / 25%);
@@ -780,7 +780,7 @@
 }
 
 .de-cde .sudo-dialog,
-.de-cde .vasi-control {
+.de-cde .vasu-control {
   border: 0;
   border-radius: 0;
 }
@@ -796,11 +796,11 @@
 }
 
 .de-hyprland .sudo-dialog,
-.de-hyprland .vasi-control {
+.de-hyprland .vasu-control {
   border: 2px solid #cba6f7;
 }
 
-/* The 3D Vasi (Penguin3D.tsx) fills his button, like the drawn one. */
+/* The 3D Vasu (Penguin3D.tsx) fills his button, like the drawn one. */
 .penguin-3d {
   width: 100%;
   height: 100%;

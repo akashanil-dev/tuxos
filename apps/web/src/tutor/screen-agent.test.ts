@@ -13,7 +13,7 @@ afterEach(() => {
 });
 
 describe('screen agent', () => {
-  it('lists what can be clicked or typed into, skipping hidden things and Vasi\'s own controls', () => {
+  it('lists what can be clicked or typed into, skipping hidden things and Vasu\'s own controls', () => {
     document.body.innerHTML = `<main class="desktop-screen">
       <button title="Open Terminal">Terminal</button>
       <section class="app-window" aria-label="Notes"><input aria-label="Name" value="todo"></section>

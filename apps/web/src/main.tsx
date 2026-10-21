@@ -91,7 +91,7 @@ const system = createLocalSystem({
     },
   },
 });
-// With AI switched off (or no key), Vasi's requests never leave the browser.
+// With AI switched off (or no key), Vasu's requests never leave the browser.
 const tutor = httpTransport('/api/tutor', async (url, init) => {
   if (!ai.status().enabled) throw new Error('AI is turned off. Turn it on in Settings → AI.');
   return fetch(url, { ...init, headers: { ...init?.headers as Record<string, string>, ...ai.headers() } });

@@ -2,7 +2,7 @@ import { lazy, Suspense, useCallback, useState } from 'react';
 import type { PenguinPose } from './Penguin3D';
 import { Puppet } from './Puppet';
 
-// three.js is loaded only when Vasi is first shown, so it never slows down the first page load.
+// three.js is loaded only when Vasu is first shown, so it never slows down the first page load.
 const Penguin3D = lazy(() => import('./Penguin3D'));
 
 /** Whether this browser can draw WebGL. Test environments (jsdom) can't. */
@@ -18,7 +18,7 @@ function webglAvailable(): boolean {
 
 let supported: boolean | undefined;
 
-/** Vasi: the 3D penguin where WebGL works, the drawn one otherwise (and while the 3D one loads). */
+/** Vasu: the 3D penguin where WebGL works, the drawn one otherwise (and while the 3D one loads). */
 export function Penguin(pose: Partial<PenguinPose>) {
   const full: PenguinPose = { facing: pose.facing ?? 'front', walking: pose.walking ?? false, mood: pose.mood ?? 'idle' };
   const [failed, setFailed] = useState(() => !(supported ??= webglAvailable()));

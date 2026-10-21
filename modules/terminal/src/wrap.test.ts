@@ -27,7 +27,7 @@ describe('wrapped lines', () => {
   it('shows a long line typed one key at a time exactly once', async () => {
     const { editor, write, rows, type } = screen();
     await write(editor.start(PROMPT, []));
-    const command = 'echo "this is a long line that Vasi types one key at a time, wrapping twice"';
+    const command = 'echo "this is a long line that Vasu types one key at a time, wrapping twice"';
     await type([...command]);
     expect(rows().join('')).toBe(PROMPT + command);
     expect(rows()).toHaveLength(Math.ceil((PROMPT + command).length / 40));

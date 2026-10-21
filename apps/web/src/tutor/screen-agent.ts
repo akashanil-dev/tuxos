@@ -1,10 +1,10 @@
-// How Vasi uses the screen: he reads it like a screen reader would (buttons, fields, icons with their names),
-// and acts on it with his own pointer and keyboard. A web page can't move the real mouse, so Vasi's pointer is
+// How Vasu uses the screen: he reads it like a screen reader would (buttons, fields, icons with their names),
+// and acts on it with his own pointer and keyboard. A web page can't move the real mouse, so Vasu's pointer is
 // drawn by the page and his clicks and keys are events sent to the elements themselves.
 
 import type { ScreenElement } from '@tuxos/tutor';
 
-/** Vasi's on-screen pointer. */
+/** Vasu's on-screen pointer. */
 export interface Cursor {
   moveTo(x: number, y: number): Promise<void>;
   click(): Promise<void>;
@@ -15,10 +15,10 @@ const TERMINAL_TYPE_EVENT = 'tuxos:terminal-type';
 
 const INTERACTIVE = 'button, input, textarea, select, a[href], [role="menuitem"], [role="option"], [role="radio"], '
   + '[role="tab"], [role="checkbox"]';
-/** Vasi's own controls, and terminals (which he types into with typeInTerminal). */
-const IGNORED = '.tutor-panel, .tutor-puppet, .tutor-nudge, .tutor-pointer, .vasi-cursor, .vasi-control, .sudo-dialog, '
+/** Vasu's own controls, and terminals (which he types into with typeInTerminal). */
+const IGNORED = '.tutor-panel, .tutor-puppet, .tutor-nudge, .tutor-pointer, .vasu-cursor, .vasu-control, .sudo-dialog, '
   + '.xterm';
-const ID_ATTRIBUTE = 'data-vasi-id';
+const ID_ATTRIBUTE = 'data-vasu-id';
 const MAX_ELEMENTS = 150;
 const TERMINAL_READY_MS = 8000;
 

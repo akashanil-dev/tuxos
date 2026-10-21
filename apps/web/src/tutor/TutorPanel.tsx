@@ -8,7 +8,7 @@ import { SudoDialog } from './SudoDialog';
 import { useStroll } from './useStroll';
 import { useStuckNudge } from './useStuckNudge';
 import { useTutor, type CursorState, type Entry } from './useTutor';
-import { hasMetVasi, rememberMetVasi, VasiIntro } from './VasiIntro';
+import { hasMetVasu, rememberMetVasu, VasuIntro } from './VasuIntro';
 
 export function TutorPanel({ system, transport, verifySudo = null }: {
   system: SystemClient;
@@ -25,24 +25,24 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
   const [intro, setIntro] = useState(false);
   const ai = useAiStatus(system);
   const aiOn = ai?.enabled ?? true;
-  // Without AI, Vasi answers from his offline guide; that conversation is kept apart from the AI one.
+  // Without AI, Vasu answers from his offline guide; that conversation is kept apart from the AI one.
   const [offline, setOffline] = useState<Entry[]>([]);
   const entries = aiOn ? tutor.entries : offline;
 
-  // The first time a learner meets Vasi with AI on, he introduces himself once the desktop has settled. Without
+  // The first time a learner meets Vasu with AI on, he introduces himself once the desktop has settled. Without
   // AI he stays quietly in his corner: no introduction, no strolls, no nudges, until he is clicked.
   useEffect(() => {
     let active = true;
     void system.user().then((name) => {
       if (!active) return;
       setUser(name);
-      if (aiOn && !hasMetVasi(name)) setTimeout(() => { if (active) setIntro(true); }, 1200);
+      if (aiOn && !hasMetVasu(name)) setTimeout(() => { if (active) setIntro(true); }, 1200);
     });
     return () => { active = false; };
   }, [system, aiOn]);
   const closeIntro = () => {
     setIntro(false);
-    rememberMetVasi(user);
+    rememberMetVasu(user);
   };
 
   // With AI on, he strolls along the bottom of the screen whenever nobody needs him.
@@ -52,7 +52,7 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
     log.current?.lastElementChild?.scrollIntoView?.({ block: 'end' });
   }, [entries.length, tutor.busy]);
 
-  // Escape takes back control. Only a real key press counts: Vasi's own key presses are synthetic.
+  // Escape takes back control. Only a real key press counts: Vasu's own key presses are synthetic.
   const { busy, stop } = tutor;
   useEffect(() => {
     if (!busy) return;
@@ -74,28 +74,28 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
 
   return <>
     <PointerOverlay pointer={tutor.pointer} onDone={tutor.clearPointer} />
-    <VasiCursor cursor={tutor.cursor} />
-    {tutor.busy && <div className="vasi-control" role="status">
-      <span className="vasi-control-dot" />
-      <span>{tutor.acting ? 'Vasi is using the computer' : 'Vasi is thinking…'}</span>
+    <VasuCursor cursor={tutor.cursor} />
+    {tutor.busy && <div className="vasu-control" role="status">
+      <span className="vasu-control-dot" />
+      <span>{tutor.acting ? 'Vasu is using the computer' : 'Vasu is thinking…'}</span>
       <button onClick={tutor.stop}>Stop <kbd>Esc</kbd></button>
     </div>}
     {tutor.sudoRequest && <SudoDialog system={system} request={tutor.sudoRequest} verify={verifySudo} />}
-    {open && <section className="tutor-panel" aria-label="Vasi, your Linux tutor">
+    {open && <section className="tutor-panel" aria-label="Vasu, your Linux tutor">
       <header>
-        <strong>Vasi</strong>
+        <strong>Vasu</strong>
         <span>your Linux teacher</span>
         {tutor.hasSudo && <button
           className="tutor-sudo"
-          title="Vasi can use sudo. Click to take it back."
+          title="Vasu can use sudo. Click to take it back."
           onClick={tutor.revokeSudo}
         >sudo · Revoke</button>}
-        <button className="tutor-about" title="What can Vasi do?" onClick={() => { setOpen(false); setIntro(true); }}>About me</button>
+        <button className="tutor-about" title="What can Vasu do?" onClick={() => { setOpen(false); setIntro(true); }}>About me</button>
         <button aria-label="Close tutor" onClick={() => setOpen(false)}>×</button>
       </header>
       <ol className="tutor-log" ref={log}>
         {!aiOn && <li className="tutor-hello tutor-no-key">
-          Hi! I&apos;m Vasi. {ai?.available === false
+          Hi! I&apos;m Vasu. {ai?.available === false
             ? 'My AI features are being rebuilt for a better experience, so for now'
             : `AI is ${ai?.on === false ? 'turned off' : 'not set up yet (it needs your AI provider and key)'}, so`}
           {' '}I&apos;m answering from my offline guide: ask me what a command does, why your last command failed, or about
@@ -106,11 +106,11 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
           </>}
         </li>}
         {aiOn && !tutor.entries.length && <li className="tutor-hello">
-          Hi! I&apos;m Vasi, your Linux teacher. Ask me anything, or ask me to show you how something works.
+          Hi! I&apos;m Vasu, your Linux teacher. Ask me anything, or ask me to show you how something works.
           I can use this computer too, but you&apos;ll do the learning.
         </li>}
         {entries.map((entry, index) => <EntryView key={index} entry={entry} />)}
-        {tutor.busy && <li className="tutor-thinking" role="status">Vasi is thinking…</li>}
+        {tutor.busy && <li className="tutor-thinking" role="status">Vasu is thinking…</li>}
       </ol>
       <form onSubmit={(event) => {
         event.preventDefault();
@@ -119,8 +119,8 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
         setDraft('');
       }}>
         <input
-          aria-label="Ask Vasi"
-          placeholder={tutor.busy ? 'Vasi is answering…' : !aiOn ? 'Ask about a command or an error…' : 'Ask about a command, an error, a lesson…'}
+          aria-label="Ask Vasu"
+          placeholder={tutor.busy ? 'Vasu is answering…' : !aiOn ? 'Ask about a command or an error…' : 'Ask about a command, an error, a lesson…'}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
         />
@@ -128,13 +128,13 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
       </form>
     </section>}
     {nudge && !open && aiOn && <button className="tutor-nudge" onClick={() => ask(nudge.question)}>
-      {nudge.text} <span>Ask Vasi</span>
+      {nudge.text} <span>Ask Vasu</span>
     </button>}
     <div
-      className={`vasi-actor ${stroll.walking ? 'walking' : ''} ${stroll.x < globalThis.innerWidth / 2 ? 'on-left' : ''}`}
+      className={`vasu-actor ${stroll.walking ? 'walking' : ''} ${stroll.x < globalThis.innerWidth / 2 ? 'on-left' : ''}`}
       style={{ transform: `translateX(${stroll.x}px)`, transitionDuration: `${stroll.durationMs}ms` }}
     >
-      {intro && <VasiIntro
+      {intro && <VasuIntro
         user={user}
         onClose={closeIntro}
         onChat={() => { closeIntro(); setOpen(true); }}
@@ -142,7 +142,7 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
       />}
       <button
         className={`tutor-puppet ${tutor.busy ? 'busy' : ''} ${tutor.pointer ? 'pointing' : ''}`}
-        aria-label={open ? 'Hide Vasi' : 'Ask Vasi, your Linux tutor'}
+        aria-label={open ? 'Hide Vasu' : 'Ask Vasu, your Linux tutor'}
         aria-expanded={open}
         onClick={() => { if (intro) closeIntro(); setOpen(!open); }}
       >
@@ -156,7 +156,7 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
   </>;
 }
 
-/** Whether Vasi can use AI: the switch is on and there is a key. Null without a key store (tests, other hosts). */
+/** Whether Vasu can use AI: the switch is on and there is a key. Null without a key store (tests, other hosts). */
 function useAiStatus(system: SystemClient): AiStatus | null {
   const store = system.ai();
   const [status, setStatus] = useState<AiStatus | null>(() => store?.status() ?? null);
@@ -167,16 +167,16 @@ function useAiStatus(system: SystemClient): AiStatus | null {
   return status;
 }
 
-/** Vasi's own pointer: it glides to what he is about to click, and ripples when he clicks. */
-function VasiCursor({ cursor }: { cursor: CursorState }) {
+/** Vasu's own pointer: it glides to what he is about to click, and ripples when he clicks. */
+function VasuCursor({ cursor }: { cursor: CursorState }) {
   if (!cursor.visible) return null;
   return <div
-    className={`vasi-cursor ${cursor.clicking ? 'clicking' : ''}`}
+    className={`vasu-cursor ${cursor.clicking ? 'clicking' : ''}`}
     style={{ transform: `translate(${cursor.x}px, ${cursor.y}px)` }}
     aria-hidden="true"
   >
     <svg viewBox="0 0 24 24"><path d="M4 2l15 11-6.5 1.2L9.8 21z" /></svg>
-    <span>Vasi</span>
+    <span>Vasu</span>
   </div>;
 }
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-/** What learners can ask Vasi about himself. The answers are written here, so they work without the AI. */
+/** What learners can ask Vasu about himself. The answers are written here, so they work without the AI. */
 const TOPICS: { id: string; question: string; answer: string[] }[] = [
   {
     id: 'teach',
@@ -49,10 +49,10 @@ const TOPICS: { id: string; question: string; answer: string[] }[] = [
 ];
 
 /**
- * Vasi introduces himself the first time a learner meets him, in a speech bubble, then lets them ask about what
+ * Vasu introduces himself the first time a learner meets him, in a speech bubble, then lets them ask about what
  * he can do, start learning, or chat with him.
  */
-export function VasiIntro({ user, onChat, onLearn, onClose }: {
+export function VasuIntro({ user, onChat, onLearn, onClose }: {
   user: string;
   onChat(): void;
   onLearn(): void;
@@ -67,39 +67,39 @@ export function VasiIntro({ user, onChat, onLearn, onClose }: {
     setAsked((list) => (list.includes(id) ? list : [...list, id]));
   };
 
-  return <div className="vasi-bubble" role="dialog" aria-label="Vasi introduces himself">
-    <button className="vasi-bubble-close" aria-label="Close" onClick={onClose}>×</button>
+  return <div className="vasu-bubble" role="dialog" aria-label="Vasu introduces himself">
+    <button className="vasu-bubble-close" aria-label="Close" onClick={onClose}>×</button>
     {current
       ? <>
-        <p className="vasi-bubble-question">{current.question}</p>
+        <p className="vasu-bubble-question">{current.question}</p>
         {current.answer.map((line) => <p key={line}>{line}</p>)}
       </>
       : <>
-        <p className="vasi-bubble-hello">Hi {user || 'there'}! I&apos;m Vasi 🐧</p>
+        <p className="vasu-bubble-hello">Hi {user || 'there'}! I&apos;m Vasu 🐧</p>
         <p>
           I&apos;m your Linux teacher, and I live in this computer. I&apos;ll help you learn Linux by doing: I explain,
           I show you, and then you try.
         </p>
         <p>Ask me anything about myself:</p>
       </>}
-    <div className="vasi-bubble-topics">
+    <div className="vasu-bubble-topics">
       {TOPICS.filter((each) => each.id !== topic).map((each) => <button
         key={each.id}
         className={asked.includes(each.id) ? 'asked' : ''}
         onClick={() => ask(each.id)}
       >{each.question}</button>)}
     </div>
-    <div className="vasi-bubble-actions">
+    <div className="vasu-bubble-actions">
       <button className="primary" onClick={onLearn}>Let&apos;s start learning</button>
       <button onClick={onChat}>Ask me something</button>
     </div>
   </div>;
 }
 
-const MET_KEY = 'tuxos.vasi.met.';
+const MET_KEY = 'tuxos.vasu.met.';
 
-/** Whether this learner has met Vasi in this browser (his introduction shows once per user). */
-export function hasMetVasi(user: string): boolean {
+/** Whether this learner has met Vasu in this browser (his introduction shows once per user). */
+export function hasMetVasu(user: string): boolean {
   try {
     return localStorage.getItem(MET_KEY + user) === '1';
   } catch {
@@ -107,7 +107,7 @@ export function hasMetVasi(user: string): boolean {
   }
 }
 
-export function rememberMetVasi(user: string): void {
+export function rememberMetVasu(user: string): void {
   try {
     localStorage.setItem(MET_KEY + user, '1');
   } catch {
