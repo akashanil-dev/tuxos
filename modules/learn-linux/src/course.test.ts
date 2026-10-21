@@ -288,6 +288,52 @@ describe('Learn Linux course', () => {
     expect(await status(system)).toMatchObject({ builtIn: { aiOff: true }, active: null, lessons: course.lessons.map((lesson) => ({ id: lesson.id })) });
   });
 
+  it('pauses the AI lab when AI is switched off, teaches the built-in course offline, and resumes the lab when it is back on', async () => {
+    let aiOn = true;
+    const requests: string[] = [];
+    const fixture = aiLearning();
+    const system = createLocalSystem({
+      storage: memory(),
+      learning: {
+        available: () => aiOn,
+        request: async (path, body) => {
+          if (!aiOn) throw new Error('AI is off: nothing may reach the API');
+          requests.push(path);
+          return fixture.request(path, body);
+        },
+      },
+      modules: [
+        { manifest: learnLinux.manifest, load: async () => learnLinux },
+        { manifest: terminal.manifest, load: async () => terminal },
+      ],
+    });
+    await system.boot('ada');
+    await rate(system);
+    const shell = await system.createTerminal({ learningModule: 'learn-linux' });
+    expect((await shell.run('whoami')).feedback).toMatchObject({ correct: true });
+    expect((await status(system)).active?.step.id).toBe('pwd');
+
+    aiOn = false;
+    const sent = requests.length;
+    const offline = await status(system);
+    expect(offline).toMatchObject({ builtIn: { aiOff: true }, active: null, course: { title: course.title } });
+    await system.dispatch('learn-linux.start', { lesson: 'first-words' });
+    expect((await shell.run('/hint')).stdout).toContain(course.lessons[0]!.steps[0]!.hints[0]!);
+    expect((await shell.run('whoami')).feedback).toMatchObject({ correct: true });
+    expect(requests).toHaveLength(sent);
+
+    aiOn = true;
+    const resumed = await status(system);
+    expect(resumed.builtIn).toBeUndefined();
+    expect(resumed.course.title).toBe('AI Linux Lab');
+    expect(resumed.active?.step.id).toBe('pwd');
+    expect(resumed.survey).toBeUndefined();
+
+    // The built-in course kept its own progress too.
+    aiOn = false;
+    expect((await status(system)).active?.step.id).toBe('pwd');
+  });
+
   // Lesson CI for the built-in course (used without an AI key): each lesson's solution must complete it.
   it.each(course.lessons.filter((lesson) => lesson.solution.every((step) => typeof step === 'string')).map((lesson) => [lesson.id]))(
     'built-in lesson %s is completed by its own solution',

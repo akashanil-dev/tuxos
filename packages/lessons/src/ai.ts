@@ -101,6 +101,11 @@ function progressPath(courseId: string, home: string): string {
   return `${expand(STATE_DIR, home)}/${filename}`;
 }
 
+/** The built-in course's progress, kept apart so an AI lab and the built-in lessons each keep their own. */
+function builtInPath(courseId: string, home: string): string {
+  return `${expand(STATE_DIR, home)}/${courseId}-built-in.json`;
+}
+
 /** A server-designed course that still uses local shell execution as the evidence source. */
 export class AICourseRunner {
   private state: AIProgress | undefined;
@@ -131,10 +136,12 @@ export class AICourseRunner {
     this.requireAI = options.requireAI === true;
     this.survey = options.survey ?? [];
     this.surveyAnswers = this.loadSurvey();
-    this.state = this.load();
+    const lab = this.loadAiLab();
+    const builtIn = lab ? undefined : this.loadBuiltIn();
+    this.state = lab ?? builtIn;
+    this.fallbackMode = !lab && !!builtIn;
     this.memory = this.loadMemory();
-    this.fallbackMode = !!this.state && this.state.generatedByAI !== true && this.state.syllabus.days.length === this.course.lessons.length
-      && this.state.syllabus.days.every((day, index) => day.tasks[0]?.id === this.course.lessons[index]?.steps[0]?.id);
+    this.syncMode();
     if (this.state?.active) learningRuntime.activate(this.ctx.id);
     this.stop = ctx.onEvent((event) => this.observe(event));
   }
@@ -142,6 +149,30 @@ export class AICourseRunner {
   /** AI calls are possible: there is a learning service and it has a key (an unknown answer counts as yes). */
   private aiReady(): boolean {
     return !!this.ctx.learning && this.ctx.learning.available?.() !== false;
+  }
+
+  /**
+   * AI can be switched off, or the key removed, at any time. Then an AI-designed lab waits (it stays saved) and
+   * the built-in course takes over, checked by its own rules, so no task depends on AI. When AI is back on,
+   * the lab resumes where it was left.
+   */
+  private syncMode(): void {
+    if (this.planning || this.evaluating) return;
+    if (!this.aiReady()) {
+      if (this.state && !this.fallbackMode) {
+        this.state = this.loadBuiltIn() ?? fallbackProgress(this.course, this.profile, this.ctx.id);
+        this.fallbackMode = true;
+        this.stepEvents = [];
+      }
+      return;
+    }
+    if (this.fallbackMode) {
+      const lab = this.loadAiLab();
+      if (lab) {
+        this.state = lab;
+        this.fallbackMode = false;
+      }
+    }
   }
 
   bootstrap(): Promise<void> {
@@ -172,6 +203,7 @@ export class AICourseRunner {
       }) as AISyllabus;
       validateSyllabus(result, this.ctx.id);
       this.state = { syllabus: result, generatedByAI: true, completed: [], active: { day: result.days[0]!.day, task: 0 }, lastFeedback: null, lastResult: null };
+      this.fallbackMode = false;
       this.remember({ kind: 'plan', summary: `Generated ${result.days.length}-day syllabus: ${result.title}` });
       learningRuntime.activate(this.ctx.id);
       this.save();
@@ -193,7 +225,7 @@ export class AICourseRunner {
     this.aiUnavailable = false;
     this.unavailableReason = '';
     // No lesson is active until the learner picks one, so other terminals aren't judged in the meantime.
-    this.state = fallbackProgress(this.course, this.profile, this.ctx.id);
+    this.state = this.loadBuiltIn() ?? fallbackProgress(this.course, this.profile, this.ctx.id);
     this.fallbackMode = true;
     this.remember({ kind: 'plan', summary: 'Using the reviewed built-in course because AI is not available.' });
     learningRuntime.activate(this.ctx.id);
@@ -262,6 +294,7 @@ export class AICourseRunner {
   }
 
   status(): LessonStatus {
+    this.syncMode();
     // The key can be removed at any time (Settings): fall back to the built-in course rather than an error.
     if (!this.state && !this.planning && !this.aiReady() && !this.awaitingSurvey()) this.useBuiltInCourse();
     if (this.awaitingSurvey()) return {
@@ -308,6 +341,7 @@ export class AICourseRunner {
   }
 
   start(dayId: string): void {
+    this.syncMode();
     const state = this.requireState();
     let day = Number.parseInt(dayId.replace(/^day-/, ''), 10);
     let selected = state.syllabus.days.find((item) => item.day === day);
@@ -329,6 +363,7 @@ export class AICourseRunner {
   }
 
   next(): string {
+    this.syncMode();
     const state = this.requireState();
     const current = this.currentTask();
     if (!current) return 'All generated tasks are complete. Ask for a new syllabus day when ready.';
@@ -365,6 +400,7 @@ export class AICourseRunner {
   }
 
   private async askFor(kind: 'hint' | 'answer'): Promise<string> {
+    this.syncMode();
     const task = this.currentTask();
     if (!task) return 'There is no active task. Start a day with the course action first.';
     const failures = this.failuresOn(task.id);
@@ -400,6 +436,7 @@ export class AICourseRunner {
     if (event.action.type !== 'shell.ran' && event.action.type !== 'session.open') return;
     const run = event.action.type === 'shell.ran' ? event.action.payload as ShellRun : { line: '', code: 0, stdout: '', stderr: '', commands: [] };
     if (/^\s*\/(hint|answer|task|next)(?:\s|$)/.test(run.line)) return;
+    this.syncMode();
     const task = this.currentTask();
     if (!task) return;
     if (this.fallbackMode) {
@@ -480,10 +517,28 @@ export class AICourseRunner {
   private day(day: number) { return this.requireState().syllabus.days.find((item) => item.day === day)!; }
   private requireState(): AIProgress { if (!this.state) throw new Error('learning syllabus is still loading'); return this.state; }
 
-  private load(): AIProgress | undefined {
-    const saved = this.host.read(progressPath(this.ctx.id, this.host.home));
+  private load(path: string): AIProgress | undefined {
+    const saved = this.host.read(path);
     if (!saved?.content) return undefined;
     try { const value = JSON.parse(saved.content) as AIProgress; validateSyllabus(value.syllabus, this.ctx.id); return value; } catch { return undefined; }
+  }
+
+  /** The built-in course's own progress (older versions kept it in the AI lab's file). */
+  private isBuiltIn(progress: AIProgress): boolean {
+    return progress.generatedByAI !== true && progress.syllabus.days.length === this.course.lessons.length
+      && progress.syllabus.days.every((day, index) => day.tasks[0]?.id === this.course.lessons[index]?.steps[0]?.id);
+  }
+
+  private loadAiLab(): AIProgress | undefined {
+    const lab = this.load(progressPath(this.ctx.id, this.host.home));
+    return lab && !this.isBuiltIn(lab) ? lab : undefined;
+  }
+
+  private loadBuiltIn(): AIProgress | undefined {
+    const saved = this.load(builtInPath(this.ctx.id, this.host.home));
+    if (saved && this.isBuiltIn(saved)) return saved;
+    const legacy = this.load(progressPath(this.ctx.id, this.host.home));
+    return legacy && this.isBuiltIn(legacy) ? legacy : undefined;
   }
 
   private loadMemory(): LearningMemory {
@@ -516,7 +571,8 @@ export class AICourseRunner {
   private save(): void {
     const state = this.requireState();
     this.host.mkdir(expand(STATE_DIR, this.host.home));
-    this.host.write(progressPath(this.ctx.id, this.host.home), `${JSON.stringify(state, null, 2)}\n`);
+    const path = this.fallbackMode ? builtInPath(this.ctx.id, this.host.home) : progressPath(this.ctx.id, this.host.home);
+    this.host.write(path, `${JSON.stringify(state, null, 2)}\n`);
     if (this.fallbackMode) {
       const completed: Record<string, string[]> = {};
       for (const lesson of this.course.lessons) {
