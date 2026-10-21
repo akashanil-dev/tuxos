@@ -60,8 +60,9 @@ const system = createLocalSystem({
   storage,
   ai,
   modules: [
-    { manifest: pluginManagerModule.manifest, load: async () => pluginManagerModule },
+    // Apps appear on the desktop in this order: the Terminal first, then Plugins.
     { manifest: terminalManifest, load: () => import('@tuxos/module-terminal').then((module) => module.terminal) },
+    { manifest: pluginManagerModule.manifest, load: async () => pluginManagerModule },
     { manifest: filesManifest, load: () => import('@tuxos/module-files').then((module) => module.files) },
     { manifest: editorManifest, load: () => import('@tuxos/module-editor').then((module) => module.editor) },
     {
