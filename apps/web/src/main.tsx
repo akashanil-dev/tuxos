@@ -44,7 +44,7 @@ const browserStorage: KeyValueStorage = {
 const accountsClient = httpAccounts();
 const accountStorage = accountsClient.storage();
 const { storage, use } = switchableStorage(browserStorage);
-// AI runs on the learner's own OpenAI key: saved in their account, or in this browser for guests.
+// AI runs on the learner's own provider and key: saved in their account, or in this browser for guests.
 const ai = webAiKeys();
 const accounts: AccountsWiring = {
   client: accountsClient,
@@ -90,5 +90,9 @@ const system = createLocalSystem({
     },
   },
 });
-const tutor = httpTransport('/api/tutor', (url, init) => fetch(url, { ...init, headers: { ...init?.headers as Record<string, string>, ...ai.headers() } }));
+// With AI switched off (or no key), Vasi's requests never leave the browser.
+const tutor = httpTransport('/api/tutor', async (url, init) => {
+  if (!ai.status().enabled) throw new Error('AI is turned off. Turn it on in Settings → AI.');
+  return fetch(url, { ...init, headers: { ...init?.headers as Record<string, string>, ...ai.headers() } });
+});
 createRoot(document.getElementById('root')!).render(<StrictMode><App system={system} tutor={tutor} accounts={accounts} /></StrictMode>);

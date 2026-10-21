@@ -229,7 +229,7 @@ export class AICourseRunner {
 
   /** Saves the learner's star ratings, then designs their syllabus in the background. */
   submitSurvey(answers: unknown): void {
-    if (!this.aiReady()) throw new Error('an AI lab needs an OpenAI API key: add yours in Settings → AI');
+    if (!this.aiReady()) throw new Error('an AI lab needs AI turned on, with your AI provider and key: set them up in Settings → AI');
     if (!this.awaitingSurvey()) throw new Error('this course already has a syllabus');
     const ratings = answers as Record<string, unknown> | null;
     if (!ratings || typeof ratings !== 'object') throw new Error('answers must be an object of star ratings');

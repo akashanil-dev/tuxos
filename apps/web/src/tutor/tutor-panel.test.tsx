@@ -53,10 +53,10 @@ afterEach(() => {
 
 describe('tutor panel', () => {
   it('without an AI key, explains how to add one and sends nothing', async () => {
-    const off: AiStatus = { enabled: false, source: null, signedIn: false };
+    const off: AiStatus = { available: true, enabled: false, on: true, source: null, signedIn: false };
     const ai: AiKeyStore = {
-      status: () => off, onChange: () => () => undefined, headers: () => ({}),
-      save: async () => off, remove: async () => off,
+      status: () => off, onChange: () => () => undefined, headers: () => ({}), providers: () => ({ providers: [], custom: false }),
+      models: async () => [], save: async () => off, remove: async () => off, setOn: async () => off,
     };
     const system = createLocalSystem({ storage: memory(), ai, modules: [] });
     await system.boot('ada');

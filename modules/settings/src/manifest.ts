@@ -12,7 +12,7 @@ export const manifest: ModuleManifest = {
       title: 'Settings',
       icon: 'settings',
       category: 'Settings',
-      description: 'Choose your desktop environment and wallpaper, and add your OpenAI API key.',
+      description: 'Choose your desktop environment and wallpaper, and set up AI with your own provider and key.',
     }],
   },
 };

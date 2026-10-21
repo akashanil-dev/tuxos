@@ -1,5 +1,5 @@
 import { DESKTOPS, WALLPAPERS, desktopById } from '@tuxos/appearance';
-import type { AiKeyStore, AiStatus, AppViewProps } from '@tuxos/system';
+import type { AiKeyStore, AiModelInfo, AiStatus, AppViewProps } from '@tuxos/system';
 import { useEffect, useState, type FormEvent } from 'react';
 import './settings.css';
 
@@ -73,65 +73,150 @@ export default function SettingsView({ system }: AppViewProps) {
   </div>;
 }
 
-/** The learner's own OpenAI API key, which turns on Vasi and the AI trainers. */
+/** Shown while the server has AI switched off: on hover or focus of the switch, and under it. */
+const REBUILDING = 'AI features are being rebuilt for a better experience. They will be back soon.';
+
+/**
+ * The AI switch and the learner's own AI provider, model and key, which together turn on Vasi and the AI
+ * trainers. While the server doesn't offer AI, the whole section is greyed out and the switch stays off.
+ */
 function AiKeySection({ store }: { store: AiKeyStore }) {
   const [status, setStatus] = useState<AiStatus>(() => store.status());
-  const [draft, setDraft] = useState('');
+  const { providers, custom } = store.providers();
+  const [provider, setProvider] = useState(() => status.provider ?? providers[0]?.id ?? '');
+  const [key, setKey] = useState('');
+  const [baseUrl, setBaseUrl] = useState(() => status.baseUrl ?? '');
+  const [models, setModels] = useState<AiModelInfo[] | null>(null);
+  const [model, setModel] = useState(() => status.model ?? '');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ error: boolean; text: string } | null>(null);
   useEffect(() => store.onChange(setStatus), [store]);
 
-  const run = async (work: () => Promise<AiStatus>, done: string) => {
+  const available = status.available;
+  const own = status.source === 'account' || status.source === 'browser';
+  // A saved key is reused only for the provider (and address) it was saved for.
+  const hasKeyFor = own && status.provider === provider && (provider !== 'custom' || status.baseUrl === baseUrl.trim());
+  const chosen = providers.find((each) => each.id === provider);
+  const providerName = (id?: string) => providers.find((each) => each.id === id)?.name ?? (id === 'custom' ? 'your server' : id);
+
+  const run = async (work: () => Promise<unknown>, done: string | null) => {
     setBusy(true);
     setMessage(null);
     try {
-      setStatus(await work());
-      setDraft('');
-      setMessage({ error: false, text: done });
+      await work();
+      if (done) setMessage({ error: false, text: done });
     } catch (error) {
       setMessage({ error: true, text: error instanceof Error ? error.message : String(error) });
     } finally {
       setBusy(false);
     }
   };
+  const pickProvider = (id: string) => {
+    setProvider(id);
+    setModels(null);
+    setModel(id === status.provider ? status.model ?? '' : '');
+    setMessage(null);
+  };
+  const loadModels = () => void run(async () => {
+    const list = await store.models({ provider, key: key.trim() || undefined, baseUrl: provider === 'custom' ? baseUrl : undefined });
+    setModels(list);
+    if (!list.some((each) => each.id === model)) setModel(list[0]?.id ?? '');
+  }, null);
   const save = (event: FormEvent) => {
     event.preventDefault();
-    if (draft.trim()) void run(() => store.save(draft), 'Key checked and saved. Vasi and the AI trainers are on.');
+    void run(async () => {
+      setStatus(await store.save({ provider, model, key: key.trim() || undefined, baseUrl: provider === 'custom' ? baseUrl : undefined }));
+      setKey('');
+    }, status.on ? 'Checked and saved. Vasi and the AI trainers are on.' : 'Checked and saved. Turn AI on to use it.');
   };
-  const own = status.source === 'account' || status.source === 'browser';
+  const toggle = () => {
+    if (!available || busy) return;
+    void run(async () => setStatus(await store.setOn(!status.on)), status.on
+      ? 'AI is off. Vasi and the courses now work offline, without your key.'
+      : own ? 'AI is on.' : 'AI is on. Choose a provider and add your key to start using it.');
+  };
 
   return <>
     <h3>AI</h3>
     <p className="settings-intro">
-      Vasi and the AI trainers run on OpenAI, using your own API key, so you only pay for what you use. Without a
-      key everything else still works, and Learn Linux uses its built-in lessons.
+      Vasi and the AI trainers use an AI provider you choose, with your own API key, so you only pay for what you
+      use (several providers have free plans). With AI off, everything still works: the courses use their built-in
+      lessons and Vasi answers from his offline guide.
     </p>
-    <div className="ai-key">
-      <p className={`ai-key-state ${status.enabled ? 'on' : 'off'}`} role="status">
-        {own ? <>AI is on with your key <code>{status.hint}</code>{status.source === 'browser' ? ', kept in this browser.' : ', saved with your account.'}</>
-          : status.source === 'server' ? 'AI is on: this server provides it. You can still use your own key.'
-            : 'AI is off: add an OpenAI API key to turn it on.'}
-      </p>
+    <div className={`ai-key ${available ? '' : 'unavailable'}`}>
+      <div className="ai-switch">
+        <span id="ai-switch-label">AI features</span>
+        <span className="ai-switch-control" data-tooltip={available ? undefined : REBUILDING}>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={status.on}
+            aria-labelledby="ai-switch-label"
+            aria-disabled={!available || busy}
+            aria-describedby={available ? undefined : 'ai-rebuilding'}
+            className={status.on ? 'on' : ''}
+            onClick={toggle}
+          ><span aria-hidden="true" />{status.on ? 'On' : 'Off'}</button>
+        </span>
+      </div>
+      {!available && <p id="ai-rebuilding" className="ai-key-state off" role="status">{REBUILDING}</p>}
+      {available && <p className={`ai-key-state ${status.enabled ? 'on' : 'off'}`} role="status">
+        {!status.on ? 'AI is off: no AI requests are made and your key is not used.'
+          : own ? <>AI is on with {providerName(status.provider)}, model <code>{status.model}</code>, key <code>{status.hint}</code>
+            {status.source === 'browser' ? ', kept in this browser.' : ', saved with your account.'}</>
+            : status.locked ? 'Your saved AI settings are locked with your password. Sign out and sign in again to use them.'
+              : 'AI is on, but needs a provider and your API key.'}
+      </p>}
       <form onSubmit={save}>
-        <input
-          type="password"
-          aria-label="OpenAI API key"
-          placeholder={own ? 'Paste a new key to replace it' : 'sk-…'}
-          autoComplete="off"
-          spellCheck={false}
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          disabled={busy}
-        />
-        <button type="submit" disabled={busy || !draft.trim()}>{busy ? 'Checking…' : own ? 'Replace key' : 'Save key'}</button>
-        {own && <button type="button" disabled={busy} onClick={() => void run(() => store.remove(), 'Key removed.')}>Remove key</button>}
+        <fieldset disabled={!available || busy}>
+          <label>
+            <span>Provider</span>
+            <select value={provider} onChange={(event) => pickProvider(event.target.value)}>
+              {providers.map((each) => <option key={each.id} value={each.id}>{each.name}{each.free ? ' (free plan)' : ''}</option>)}
+              {custom && <option value="custom">Custom (OpenAI-compatible)</option>}
+            </select>
+          </label>
+          {provider === 'custom' && <label>
+            <span>API address</span>
+            <input type="url" placeholder="https://example.com/v1" value={baseUrl} spellCheck={false}
+              onChange={(event) => { setBaseUrl(event.target.value); setModels(null); }} />
+          </label>}
+          <label>
+            <span>API key</span>
+            <input
+              type="password"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder={hasKeyFor ? `Saved key ${status.hint}: paste a new one to replace it` : 'Paste your API key'}
+              value={key}
+              onChange={(event) => { setKey(event.target.value); setModels(null); }}
+            />
+          </label>
+          <label>
+            <span>Model</span>
+            <span className="ai-model">
+              {models
+                ? <select value={model} onChange={(event) => setModel(event.target.value)}>
+                  {!models.length && <option value="">No chat models found</option>}
+                  {models.map((each) => <option key={each.id} value={each.id}>{each.id}{each.free ? ' (free)' : ''}</option>)}
+                </select>
+                : <input readOnly value={model || 'Load the models to choose one'} aria-label="Chosen model" />}
+              <button type="button" onClick={loadModels} disabled={!key.trim() && !hasKeyFor}>Load models</button>
+            </span>
+          </label>
+          <div className="ai-key-actions">
+            <button type="submit" disabled={!model || (!key.trim() && !hasKeyFor)}>{busy ? 'Checking…' : 'Save'}</button>
+            {own && <button type="button" onClick={() => void run(async () => { setStatus(await store.remove()); setModel(''); setModels(null); }, 'AI settings removed.')}>Remove</button>}
+          </div>
+        </fieldset>
       </form>
       {message && <p className={`ai-key-message ${message.error ? 'error' : ''}`} role={message.error ? 'alert' : 'status'}>{message.text}</p>}
       <p className="ai-key-help">
-        Create a key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer">platform.openai.com/api-keys</a>.
+        {chosen && <>Create a key at <a href={chosen.keysUrl} target="_blank" rel="noreferrer">{new URL(chosen.keysUrl).host}</a>. </>}
         {status.signedIn
-          ? ' It is stored encrypted with your account and only used for your own requests; TuxOS never shows it again.'
-          : ' As a guest, it is kept only in this browser and sent with your own AI requests. Sign in to keep it with an account.'}
+          ? 'It is encrypted with a key that only your password unlocks, so nobody running TuxOS can read it. It is used only for your own requests and never shown again.'
+          : 'As a guest, it is kept only in this browser and sent with your own AI requests. Sign in to keep it with an account.'}
+        {' '}Vasi works best with a model that supports tool calling; with one that doesn&apos;t, he can chat but not use the computer.
       </p>
     </div>
   </>;

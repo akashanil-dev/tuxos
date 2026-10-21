@@ -43,24 +43,69 @@ export interface TerminalOptions {
   learningModule?: string;
 }
 
-/** Whether AI features can run: the learner's own OpenAI key, or one the server provides for everyone. */
+/**
+ * Whether AI features run. They need the server to offer AI at all, the learner's switch (Settings → AI), and
+ * the learner's own provider, model and key: the server has none. When they don't run, every module uses its
+ * own built-in, offline behaviour.
+ */
 export interface AiStatus {
+  /** The server offers AI features. While it doesn't, they stay off whatever the learner sets. */
+  available: boolean;
+  /** AI requests may be made: AI is available, the switch is on, and there are settings to use. */
   enabled: boolean;
-  /** Where the key comes from: saved in the account, kept in this browser (guests), or the server's. */
-  source: 'account' | 'browser' | 'server' | null;
-  /** The start and end of the learner's own key, to recognise it. */
+  /** The learner's AI switch, off until they turn it on. Off means no AI request is made, even with a key. */
+  on: boolean;
+  /** Where the settings are: saved in the account, or kept in this browser (guests). */
+  source: 'account' | 'browser' | null;
+  /** The provider's id (e.g. groq), the chosen model, and the start and end of the key, to recognise it. */
+  provider?: string;
+  model?: string;
   hint?: string;
-  /** Guests can't save a key in an account; it stays in their browser. */
+  /** A custom provider's address. */
+  baseUrl?: string;
+  /** Guests can't save settings in an account; they stay in their browser. */
   signedIn: boolean;
+  /** Signed in, but this session can't unlock the saved settings (locked with the password): sign in again. */
+  locked?: boolean;
 }
 
-/** The learner's own OpenAI API key. Saving checks the key first and rejects with the reason if it fails. */
+/** An AI provider a learner can choose in Settings. */
+export interface AiProviderInfo {
+  id: string;
+  name: string;
+  /** Where to create a key. */
+  keysUrl: string;
+  /** Offers some models for free. */
+  free: boolean;
+}
+
+/** A model a provider offers; free ones are listed first. */
+export interface AiModelInfo {
+  id: string;
+  free: boolean;
+}
+
+/** What the learner saves: the provider, its model, the key (omit it to keep the saved one) and a custom address. */
+export interface AiSettingsInput {
+  provider: string;
+  model: string;
+  key?: string;
+  baseUrl?: string;
+}
+
+/** The learner's own AI provider and key. Saving checks them first and rejects with the reason if they fail. */
 export interface AiKeyStore {
   status(): AiStatus;
   onChange(listener: (status: AiStatus) => void): () => void;
-  save(key: string): Promise<AiStatus>;
+  /** The providers to choose from, and whether a custom address may be used. */
+  providers(): { providers: AiProviderInfo[]; custom: boolean };
+  /** A provider's models, checked with the given key (or, signed in, the saved one when no key is given). */
+  models(input: { provider: string; key?: string; baseUrl?: string }): Promise<AiModelInfo[]>;
+  save(settings: AiSettingsInput): Promise<AiStatus>;
   remove(): Promise<AiStatus>;
-  /** Headers that carry a guest's key with an AI request (empty when the server has the key). */
+  /** Turns AI features on or off, for this account or, for guests, this browser. */
+  setOn(on: boolean): Promise<AiStatus>;
+  /** Headers that carry a guest's settings with an AI request (empty for accounts, or while AI is off). */
   headers(): Record<string, string>;
 }
 
@@ -313,6 +358,8 @@ function browserLearningBackend(ai: AiKeyStore | undefined): LearningBackend {
   return {
     available: () => ai?.status().enabled ?? true,
     async request(path, body) {
+      // A definite off: with AI switched off (or no key), nothing is sent, whatever a module asks.
+      if (ai && !ai.status().enabled) throw new Error(ai.status().available ? 'AI is turned off. Turn it on in Settings → AI.' : 'AI features are being rebuilt and are off for now.');
       let response: Response;
       try {
         response = await fetch(`/api/learning${path}`, {

@@ -242,8 +242,10 @@ function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId
           {lesson.completed}/{lesson.steps} done
         </span>}
         {status.builtIn
-          ? <button type="button" className="linux-mission-retake" onClick={() => void system.openApp('settings')}
-            title="Add your OpenAI API key for an AI-designed lab at your level">Built-in course · Add AI key</button>
+          ? system.ai()?.status().available === false
+            ? <span className="linux-mission-course" title="An AI-designed lab is being rebuilt and will be back soon">Built-in course</span>
+            : <button type="button" className="linux-mission-retake" onClick={() => void system.openApp('settings')}
+              title="Turn on AI with your own provider and key for an AI-designed lab at your level">Built-in course · Set up AI</button>
           : <button type="button" className="linux-mission-retake" onClick={() => void call('retakeSurvey')}
             title="Rate your experience again to get a lab at a different level">Retake survey</button>}
       </div>
@@ -283,11 +285,16 @@ function BuiltInLessons({ system, status, onStart }: { system: SystemClient; sta
     <header>
       <h3>{status.course.title}</h3>
       <p>{status.course.summary}</p>
-      {status.builtIn?.aiOff && <p className="linux-builtin-ai">
-        These are the built-in lessons. Add your OpenAI API key in Settings to get an AI trainer that designs a
-        lab for your level and gives personal hints.
-        <button type="button" className="quiet" onClick={() => void system.openApp('settings')}>Open Settings</button>
-      </p>}
+      {status.builtIn?.aiOff && (system.ai()?.status().available === false
+        ? <p className="linux-builtin-ai">
+          These are the built-in lessons. An AI trainer that designs a lab for your level and gives personal hints is
+          being rebuilt for a better experience, and will be back soon.
+        </p>
+        : <p className="linux-builtin-ai">
+          These are the built-in lessons. Turn on AI in Settings, with your own provider and key, to get an AI trainer
+          that designs a lab for your level and gives personal hints.
+          <button type="button" className="quiet" onClick={() => void system.openApp('settings')}>Open Settings</button>
+        </p>)}
     </header>
     {status.lastExplain && <p className="linux-builtin-done" role="status">✓ {status.lastExplain}</p>}
     <ol>
