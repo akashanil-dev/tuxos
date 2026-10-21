@@ -3,7 +3,7 @@ import type { Transport } from '@tuxos/tutor';
 import { useEffect, useRef, useState } from 'react';
 import { offlineAnswer } from './offline';
 import { PointerOverlay } from './PointerOverlay';
-import { Puppet } from './Puppet';
+import { Penguin } from './Penguin';
 import { SudoDialog } from './SudoDialog';
 import { useStroll } from './useStroll';
 import { useStuckNudge } from './useStuckNudge';
@@ -29,23 +29,24 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
   const [offline, setOffline] = useState<Entry[]>([]);
   const entries = aiOn ? tutor.entries : offline;
 
-  // The first time a learner meets Vasi, he introduces himself once the desktop has settled.
+  // The first time a learner meets Vasi with AI on, he introduces himself once the desktop has settled. Without
+  // AI he stays quietly in his corner: no introduction, no strolls, no nudges, until he is clicked.
   useEffect(() => {
     let active = true;
     void system.user().then((name) => {
       if (!active) return;
       setUser(name);
-      if (!hasMetVasi(name)) setTimeout(() => { if (active) setIntro(true); }, 1200);
+      if (aiOn && !hasMetVasi(name)) setTimeout(() => { if (active) setIntro(true); }, 1200);
     });
     return () => { active = false; };
-  }, [system]);
+  }, [system, aiOn]);
   const closeIntro = () => {
     setIntro(false);
     rememberMetVasi(user);
   };
 
-  // He strolls along the bottom of the screen whenever nobody needs him.
-  const stroll = useStroll(!open && !intro && !nudge && !tutor.busy && !tutor.pointer && !tutor.sudoRequest);
+  // With AI on, he strolls along the bottom of the screen whenever nobody needs him.
+  const stroll = useStroll(aiOn && !open && !intro && !nudge && !tutor.busy && !tutor.pointer && !tutor.sudoRequest);
 
   useEffect(() => {
     log.current?.lastElementChild?.scrollIntoView?.({ block: 'end' });
@@ -126,7 +127,7 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
         <button type="submit" disabled={tutor.busy || !draft.trim()}>Ask</button>
       </form>
     </section>}
-    {nudge && !open && <button className="tutor-nudge" onClick={() => ask(nudge.question)}>
+    {nudge && !open && aiOn && <button className="tutor-nudge" onClick={() => ask(nudge.question)}>
       {nudge.text} <span>Ask Vasi</span>
     </button>}
     <div
@@ -145,7 +146,11 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
         aria-expanded={open}
         onClick={() => { if (intro) closeIntro(); setOpen(!open); }}
       >
-        <Puppet facing={stroll.facing} />
+        <Penguin
+          facing={stroll.facing}
+          walking={stroll.walking}
+          mood={tutor.pointer ? 'pointing' : tutor.busy ? (tutor.acting ? 'acting' : 'thinking') : 'idle'}
+        />
       </button>
     </div>
   </>;

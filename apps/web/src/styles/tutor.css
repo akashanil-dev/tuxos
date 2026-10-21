@@ -799,3 +799,13 @@
 .de-hyprland .vasi-control {
   border: 2px solid #cba6f7;
 }
+
+/* The 3D Vasi (Penguin3D.tsx) fills his button, like the drawn one. */
+.penguin-3d {
+  width: 100%;
+  height: 100%;
+}
+
+.penguin-3d canvas {
+  display: block;
+}

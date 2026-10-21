@@ -75,6 +75,30 @@ describe('tutor panel', () => {
     expect(transport.requests).toHaveLength(0);
   });
 
+  it('without AI, stays quietly in his corner: no introduction, no stroll, no nudges', async () => {
+    const off: AiStatus = { available: true, enabled: false, on: false, source: null, signedIn: false };
+    const ai: AiKeyStore = {
+      status: () => off, onChange: () => () => undefined, headers: () => ({}), providers: () => ({ providers: [], custom: false }),
+      models: async () => [], save: async () => off, remove: async () => off, setOn: async () => off,
+    };
+    const system = createLocalSystem({
+      storage: memory(),
+      ai,
+      modules: [{ manifest: terminalManifest, load: () => import('../../../../modules/terminal/src/index').then((m) => m.terminal) }],
+    });
+    await system.boot('ada');
+    render(<Desktop system={system} tutor={scripted()} />);
+    await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 });
+    const shell = await system.createTerminal();
+    await shell.run('nope');
+    await shell.run('nope');
+    // Past the introduction's delay (1.2 s) and his first stroll (2.5 s).
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    expect(screen.queryByRole('dialog', { name: 'Vasi introduces himself' })).toBeNull();
+    expect(screen.queryByText(/didn't work either/)).toBeNull();
+    expect(document.querySelector('.vasi-actor.walking')).toBeNull();
+  }, 10_000);
+
   it('answers a question, showing what the tutor did on the way', async () => {
     const system = await boot();
     const transport = scripted(

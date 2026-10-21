@@ -1,6 +1,6 @@
 import type { SystemClient } from '@tuxos/system';
 import { useEffect, useState } from 'react';
-import { Puppet } from './Puppet';
+import { Penguin } from './Penguin';
 import type { SudoRequest } from './useTutor';
 
 /**
@@ -52,7 +52,7 @@ export function SudoDialog({ system, request, verify }: {
       }}
     >
       <div className="sudo-head">
-        <span className="sudo-avatar"><Puppet /></span>
+        <span className="sudo-avatar"><Penguin /></span>
         <div>
           <h2>Authentication required</h2>
           <p>Vasi wants to run commands as the administrator (root) with <code>sudo</code>.</p>
