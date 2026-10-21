@@ -43,9 +43,14 @@ Docker, games) is a module that shows up as a desktop icon.
   before he can act as root. Every action shows in the chat, and **Stop** (or Esc) takes control back.
 - **Accounts.** Sign up to save your system and continue on any device, or try it without an account and keep
   everything in the browser.
-- **Bring your own AI key.** Vasi and the AI trainers use the learner's own OpenAI API key, added in
-  **Settings → AI**. A signed-in learner's key is saved encrypted with their account; a guest's stays in their
-  browser. Without a key, Vasi explains how to add one and everything else works as normal.
+- **Any AI provider, your own key, with an off switch.** Vasi and the AI trainers use a provider the learner
+  chooses in **Settings → AI** (Groq, NVIDIA, OpenRouter, Google Gemini, Cerebras, Mistral, OpenAI, DeepSeek or
+  Together; several have free plans), with the learner's own key and a model picked from the provider's list.
+  The server has no key. A signed-in learner's settings are encrypted with a key only their password unlocks, so
+  not even the people running TuxOS can read them; a guest's stay in their browser. The **AI features** switch is
+  off until the learner turns it on. With AI off, nothing is sent to an AI: the courses teach their built-in
+  lessons and Vasi answers from his offline guide. *AI is currently switched off on the live site while it is
+  rebuilt (`AI_FEATURES`).*
 
 ## Architecture
 
@@ -94,11 +99,34 @@ modules/      terminal, files, editor, settings, apt, learn-linux, learn-docker,
   responses are validated before use. Passwords are stored as salted scrypt hashes and session tokens are
   hashed, both in SQLite (`node:sqlite`). Saves are versioned so an older tab can't overwrite newer progress,
   and requests are rate limited.
-- **API keys** (`apps/api/src/ai-keys.ts`, `apps/web/src/ai-key.ts`): `/api/ai/key` checks a key with OpenAI
-  (listing models, which costs nothing) and saves it sealed with AES-256-GCM. The encryption secret is kept
-  outside the database (`TUXOS_KEY_SECRET`, or a `key-secret` file the server creates beside it). A guest's key
-  goes with each AI request in an `x-openai-key` header and is never stored on the server. Each AI call uses
-  the guest's key, else the account's saved key, else the server's `OPENAI_API_KEY` if one is set.
+- **AI providers** (`apps/api/src/providers.ts`): every provider speaks OpenAI's chat-completions format at its
+  own address. Keys are checked without spending anything where possible (listing models; OpenRouter's key
+  endpoint; for NVIDIA, whose model list is public, a one-token request). Weaker models are handled: a model
+  without tool calling still chats (Vasi can't operate the computer), the trainers retry without JSON mode and
+  read the JSON out of the reply, and a too-large conversation is retried with its recent part. OpenAI-only
+  options (such as `reasoning_effort`) go only to OpenAI.
+- **Network safety** (`apps/api/src/net-guard.ts`, `deploy/tuxos-api.service`): every request to a provider is
+  checked when it connects, against the addresses the name really resolves to: loopback, private, link-local
+  (cloud metadata), CGNAT and other reserved ranges are refused, redirects are never followed and responses are
+  size-capped. systemd's `IPAddressDeny` enforces the same in the kernel. A learner's own address (any
+  OpenAI-compatible server) is off unless `ALLOW_CUSTOM_AI_URL=1`, and then public https on port 443 only;
+  `ALLOW_PRIVATE_AI_URL=1` is for local development (e.g. Ollama). A custom server's error text is never shown.
+- **API keys** (`apps/api/src/ai-keys.ts`, `apps/web/src/ai-key.ts`): the server has no key of its own; every
+  AI call uses the learner's. `/api/ai/key` checks the provider, model and key, then saves them sealed with
+  AES-256-GCM under the account's vault key. The database holds the vault key only
+  wrapped with a key derived from the learner's password (scrypt) and, per session, with a key derived from
+  the session cookie's token, which the server never stores. So the database, the server's files and its
+  configuration can't decrypt a saved key without the learner's password or a live session: the operators can't
+  read it. A key is decrypted in memory only for that learner's own requests, never logged (key-like text is
+  redacted from errors) and never sent back. A guest's key stays in their browser and goes with each AI request
+  in `x-ai-*` headers; it is never stored on the server.
+- **AI switch** (Settings → AI): off until the learner turns it on, and greyed out while the server has
+  `AI_FEATURES` off. For an account the server keeps the setting and refuses to use the key; for a guest the
+  browser stops sending it. With AI off, or without a key,
+  no AI request leaves the browser, and every module uses its own offline behaviour: Learn Linux, Learn Docker
+  and the chmod trainer teach their built-in lessons with rule-based checks (an AI lab in progress is kept and
+  resumes when AI is back on), `/hint` and `/answer` use each task's own hints, and Vasi answers from an offline
+  guide built from the shell's help and the learner's last error. Plugins never have AI or network access.
 
 ## Run locally
 
@@ -110,17 +138,15 @@ cp .env.example .env    # optional settings
 npm run dev             # API on :8787, desktop at http://localhost:5173
 ```
 
-To try the AI features, add your OpenAI API key in **Settings → AI** inside TuxOS. Everything else works
-without one. If the trainer doesn't load, check `http://localhost:8787/api/health`.
+To try the AI features, set `AI_FEATURES=1` in `.env`, then in **Settings → AI** inside TuxOS turn AI on, choose a
+provider, paste your key and load its models. Everything else works without it. If the trainer doesn't load,
+check `http://localhost:8787/api/health`.
 
 | Variable | Purpose |
 | --- | --- |
-| `OPENAI_API_KEY` | Optional. Provides AI for every learner at the server's expense; learners' own keys are used first. |
-| `TUXOS_KEY_SECRET` | Optional. 64 hex characters (`openssl rand -hex 32`) to encrypt saved keys; otherwise `key-secret` is created beside the database. |
-| `OPENAI_MODEL` | Default model (`gpt-4.1-mini`). |
-| `OPENAI_MODEL_LINUX` | Learn Linux trainer (default `gpt-5.6-luna`). |
-| `OPENAI_MODEL_DOCKER`, `OPENAI_MODEL_TERMINAL`, `OPENAI_MODEL_CHMOD_ARCADE` | Other trainers (default `OPENAI_MODEL`). |
-| `OPENAI_BASE_URL` | Point at any OpenAI-compatible server, for example local inference. |
+| `AI_FEATURES` | `1` offers AI features. Off by default: no AI request is made and the switch is greyed out. |
+| `ALLOW_CUSTOM_AI_URL` | `1` lets learners enter their own OpenAI-compatible address (public https only). Off in production. |
+| `ALLOW_PRIVATE_AI_URL` | `1` also allows http and private addresses, for a local server such as Ollama. Development only. |
 
 Never commit an API key. If one is exposed, revoke it and create a new one.
 
@@ -146,14 +172,13 @@ Production runs on an Ubuntu 24.04 server behind Cloudflare and Caddy. The files
   releases are kept.
 - **Server:** Caddy serves `/opt/tuxos/current/web` and forwards `/api/*` to the API's Unix socket
   `/run/tuxos/api.sock` ([`deploy/Caddyfile`](deploy/Caddyfile)). The API runs as the unprivileged `tuxos` user
-  ([`deploy/tuxos-api.service`](deploy/tuxos-api.service)), with secrets in `/etc/tuxos/tuxos.env` and the
+  ([`deploy/tuxos-api.service`](deploy/tuxos-api.service)), with settings in `/etc/tuxos/tuxos.env` and the
   database at `/var/lib/tuxos/tuxos.db`. `TRUST_PROXY=1` makes rate limits use the visitor's IP.
-- **One-time setup:** copy `deploy/` to the server and run `sudo bash deploy/setup-server.sh`. Leave
-  `OPENAI_API_KEY` empty in `/etc/tuxos/tuxos.env` so learners use their own keys, add the Caddy site block and mounts, then add the GitHub secrets
+- **One-time setup:** copy `deploy/` to the server and run `sudo bash deploy/setup-server.sh`. Add the Caddy
+  site block and mounts, then add the GitHub secrets
   `DEPLOY_HOST`, `DEPLOY_SSH_KEY` and `DEPLOY_KNOWN_HOSTS` to a `production` environment.
-- **Backup:** `sudo sqlite3 /var/lib/tuxos/tuxos.db ".backup /root/tuxos-backup.db"`, and keep
-  `/var/lib/tuxos/key-secret` with it, separately: without it, saved API keys can't be read and learners must
-  enter them again.
+- **Backup:** `sudo sqlite3 /var/lib/tuxos/tuxos.db ".backup /root/tuxos-backup.db"`. Saved API keys in a backup
+  stay encrypted with each learner's password, so a backup can't reveal them either.
 - **Manual rollback:** `ln -sfn /opt/tuxos/releases/<commit> /opt/tuxos/current`, then
   `sudo systemctl restart tuxos-api`. Logs: `journalctl -u tuxos-api`.
 
@@ -171,8 +196,9 @@ Production runs on an Ubuntu 24.04 server behind Cloudflare and Caddy. The files
 - Vasi's agent flow was tested with a scripted model and in a real browser. The quality of his answers against
   the real model has not been reviewed systematically, and he has no memory between conversations.
 - Accounts have no password reset.
-- The key flow was tested against a stand-in for OpenAI, not with a real key. A learner's key is checked when
-  it is saved; if it later runs out of credits, the AI calls report that.
+- The provider flow was tested against stand-ins and each provider's real endpoints (without a valid key), not
+  end to end with real keys. Small free models vary a lot in tool calling and JSON output; the fallbacks keep
+  things working, but answer quality depends on the model chosen.
 - Each state-changing action copies the whole state, which is fine at learner-sized filesystems.
 
 ## Credits
@@ -182,6 +208,7 @@ Built with [TypeScript](https://www.typescriptlang.org/), [React](https://react.
 [Inter](https://rsms.me/inter/) and [JetBrains Mono](https://www.jetbrains.com/lp/mono/) (SIL Open Font
 License). Icon themes: GNOME (CC-BY-SA / GPL-3.0), Breeze (LGPL-3.0) and Papirus (GPL-3.0), used unmodified;
 see [`apps/web/public/icons/CREDITS.md`](apps/web/public/icons/CREDITS.md). The AI features use the
-[OpenAI API](https://platform.openai.com/docs/api-reference/chat).
+[OpenAI chat-completions format](https://platform.openai.com/docs/api-reference/chat), which every supported
+provider accepts.
 
 The development history is in [CHANGELOG.md](CHANGELOG.md).

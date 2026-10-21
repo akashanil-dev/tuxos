@@ -4,6 +4,50 @@ Notable changes, newest first. Older entries were written while TuxOS was built 
 the DevDay Exchange Community Hackathon in Kochi; they mention event files (AI_USAGE.md, SUBMISSION.md) that
 have since been removed.
 
+## 2026-10-21 — Vasi in 3D, and long command lines fixed
+
+- Changed: Vasi is a 3D penguin (three.js, built from shapes, no model file): he breathes, blinks, waddles with
+  flapping flippers, tilts his head and talks while thinking, taps away while he uses the computer, points and
+  waves. three.js loads only when he first appears; without WebGL the drawn penguin is shown.
+- Changed: Vasi only walks around, introduces himself and offers help when AI is enabled with a key. Otherwise he
+  stays in his corner, and clicking him opens his offline guide.
+- Fixed: a command longer than the terminal is wide was printed again for every key typed (a line typed by Vasi
+  appeared dozens of times). The line editor now redraws wrapped lines in place.
+
+## 2026-10-21 — Any AI provider, network safety, and AI off while it is rebuilt
+
+- Added: learners choose an AI provider (Groq, NVIDIA, OpenRouter, Google Gemini, Cerebras, Mistral, OpenAI,
+  DeepSeek, Together), paste their own key and pick a model from the provider's live list. Saved settings
+  (provider, model, key) stay encrypted under the learner's password.
+- Added: fallbacks for smaller models: chat without tools when a model has none, JSON read out of plain replies
+  when JSON mode is unsupported, and shorter history when a request is too large. OpenAI-only options go only to
+  OpenAI.
+- Security: every provider request goes through a guard that checks the resolved address when connecting and
+  refuses private, loopback, link-local (cloud metadata) and other reserved ranges, never follows redirects and
+  caps responses; systemd's `IPAddressDeny` blocks the same in the kernel. Custom addresses exist only with
+  `ALLOW_CUSTOM_AI_URL=1` (off in production). Redaction covers every provider's key format and the exact key.
+- Changed: AI is off unless the server sets `AI_FEATURES=1`, and the learner's AI switch is off by default. On the
+  live site AI is off for now: the switch is greyed out and says the AI features are being rebuilt.
+- Removed: `OPENAI_MODEL*` and `OPENAI_BASE_URL`; the learner picks the model. Saved keys from before are
+  deleted: learners set up AI again.
+
+## 2026-10-21 — No server API key, keys the operators can't read, and an AI off switch
+
+- Removed: the server-wide OpenAI key. The API ignores `OPENAI_API_KEY` (and warns if it is set); every AI call
+  uses the learner's own key. `/api/health` no longer reports `serverKey`. `TUXOS_KEY_SECRET` and the
+  `key-secret` file are gone.
+- Changed: saved keys are sealed with a per-account vault key that the database stores only wrapped with the
+  learner's password (scrypt) and with each session's cookie token, so nobody running the server can decrypt
+  them. Key-like text is redacted from errors and logs.
+- Migration: keys saved under the old server secret are deleted on start, and the old secret file is removed;
+  learners enter their key once more. Sessions from before this change must sign in again to save or use a key.
+- Added: an **AI features** switch in Settings → AI, kept with the account (the server then refuses to use the
+  key) or, for guests, in the browser. With AI off or no key, no AI request is made. An AI lab in progress
+  pauses, and the built-in course takes over with its own progress, then resumes when AI is back on. Vasi
+  answers from an offline guide (command help, the last error, course topics).
+- Why: learners pay only for their own use, the server holds no key that could be abused, and AI is an
+  explicit choice.
+
 ## 2026-10-21 — Renamed the GitHub repository to tuxos
 
 - Changed: the GitHub repository moved from `akashanil-dev/ayalvasis` to `akashanil-dev/tuxos`. GitHub
