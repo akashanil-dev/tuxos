@@ -1,13 +1,15 @@
-// POST /api/tutor: validate the browser's request, add the tutor's instructions, call the model once,
-// and return its message. Stateless: the browser keeps the conversation, so the server scales out freely.
+// POST /api/tutor: validate the browser's request, add the tutor's instructions, call the learner's model
+// once, and return its message. Stateless: the browser keeps the conversation, so the server scales out.
+// Any provider works: a model that can't use tools still chats (Vasi just can't operate the computer), and
+// a provider with a small limit gets the recent part of the conversation.
 
 import { SYSTEM_PROMPT } from './prompt.ts';
+import { chat, failureMessage, tooLarge, unsupported, type AiSettings, type ResolvedProvider } from './providers.ts';
 
-export interface TutorConfig {
-  apiKey: string | undefined;
-  model: string;
-  baseUrl: string;
-  learningModels?: Record<string, string>;
+/** The learner's AI for one request: their settings and where those send it. */
+export interface AiCall {
+  settings: AiSettings;
+  provider: ResolvedProvider;
 }
 
 export interface Reply {
@@ -18,52 +20,74 @@ export interface Reply {
 // An agent turn (look, click, type, look again…) adds several messages per step, so allow long conversations.
 const LIMITS = { messages: 160, tools: 60, content: 20_000 };
 const ROLES = new Set(['user', 'assistant', 'tool']);
+/** What a too-large conversation is cut to on retry. */
+const RECENT_MESSAGES = 24;
 
-export async function handleTutor(body: unknown, config: TutorConfig, fetcher: typeof fetch = fetch): Promise<Reply> {
-  if (!config.apiKey) {
-    return failure(503, 'Vasi needs an OpenAI API key. Add yours in Settings → AI.');
-  }
+export async function handleTutor(body: unknown, ai: AiCall | undefined, fetcher?: typeof fetch): Promise<Reply> {
+  if (!ai) return failure(503, 'Vasi needs your AI provider and API key. Add them in Settings → AI.');
   const problem = invalid(body);
   if (problem) return failure(400, problem);
   const { messages, tools } = body as { messages: unknown[]; tools: unknown[] };
+  const { settings, provider } = ai;
 
-  let response: Response;
-  try {
-    response = await fetcher(`${config.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${config.apiKey}` },
-      body: JSON.stringify({
-        model: config.model,
-        messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...messages],
-        ...(tools.length ? { tools, tool_choice: 'auto' } : {}),
-      }),
-      signal: AbortSignal.timeout(60_000),
-    });
-  } catch (error) {
-    const timedOut = error instanceof Error && error.name === 'TimeoutError';
-    return failure(504, timedOut ? 'The tutor took too long to answer. Please try again.'
-      : 'The tutor could not reach the AI service. Check the server\'s internet connection.');
+  let useTools = tools.length > 0;
+  let history = messages;
+  let result: Awaited<ReturnType<typeof chat>> | undefined;
+  // At most two retries: without tools if the model can't use them, with less history if it was too large.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      result = await chat(provider, settings.key, {
+        model: settings.model,
+        messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...history],
+        ...(useTools ? { tools, tool_choice: 'auto' } : {}),
+      }, 60_000, fetcher);
+    } catch (error) {
+      const timedOut = error instanceof Error && error.name === 'TimeoutError';
+      return failure(504, timedOut ? 'The tutor took too long to answer. Please try again.'
+        : `The tutor could not reach ${provider.name}. Check the server's internet connection.`);
+    }
+    if (result.ok) break;
+    if (useTools && unsupported(result.status, result.detail, 'tools')) { useTools = false; history = withoutTools(history); continue; }
+    if (tooLarge(result.status, result.detail) && history.length > RECENT_MESSAGES) { history = recent(history); continue; }
+    break;
   }
+  if (!result!.ok) return failure(upstreamStatus(result!.status), failureMessage(provider, result!.status, result!.detail));
 
-  const data = await response.json().catch(() => null) as {
-    choices?: { message?: { content?: string | null; tool_calls?: unknown[] } }[];
-    error?: { message?: string };
-  } | null;
-  if (!response.ok) {
-    return failure(upstreamStatus(response.status), upstreamMessage(response.status, data?.error?.message));
-  }
-  const message = data?.choices?.[0]?.message;
-  if (!message) return failure(502, 'The AI service sent an empty reply.');
+  const choices = result!.data?.choices as { message?: { content?: string | null; tool_calls?: unknown[] } }[] | undefined;
+  const message = choices?.[0]?.message;
+  if (!message) return failure(502, `${provider.name} sent an empty reply.`);
   return {
     status: 200,
     body: {
       message: {
         role: 'assistant',
         content: message.content ?? null,
-        ...(message.tool_calls?.length ? { tool_calls: message.tool_calls } : {}),
+        ...(useTools && message.tool_calls?.length ? { tool_calls: message.tool_calls } : {}),
       },
+      // Tells the browser this model can only chat, so it can say why Vasi isn't using the computer.
+      ...(tools.length && !useTools ? { toolsUnsupported: true } : {}),
     },
   };
+}
+
+/**
+ * The most recent part of a conversation, starting at a learner's message so that no tool result is left
+ * without the assistant message that asked for it.
+ */
+export function recent(messages: unknown[]): unknown[] {
+  const tail = messages.slice(-RECENT_MESSAGES);
+  const start = tail.findIndex((message) => (message as { role?: unknown })?.role === 'user');
+  return start >= 0 ? tail.slice(start) : messages.slice(-1);
+}
+
+/** A conversation with its tool calls and results taken out, for a model that has no tools. */
+export function withoutTools(messages: unknown[]): unknown[] {
+  return messages.flatMap((message) => {
+    const { role, content, tool_calls: _calls, ...rest } = message as { role?: unknown; content?: unknown; tool_calls?: unknown };
+    if (role === 'tool') return [];
+    if (role === 'assistant' && (content === null || content === undefined || content === '')) return [];
+    return [{ role, content, ...rest }];
+  });
 }
 
 /** Why a request is unacceptable, or null if it is fine. Only shape and size: content is the model's job. */
@@ -83,13 +107,6 @@ export function invalid(body: unknown): string | null {
 /** Pass "slow down" through to the browser; anything else from upstream is a bad gateway for us. */
 function upstreamStatus(status: number): number {
   return status === 429 ? 429 : 502;
-}
-
-function upstreamMessage(status: number, detail: string | undefined): string {
-  if (status === 401) return 'OpenAI did not accept the API key. Check it in Settings → AI.';
-  if (status === 429) return 'The API key is out of credits or rate limited. Try again in a minute, or check it in Settings → AI.';
-  if (status === 404) return `The AI model configured on the server was not found${detail ? `: ${detail}` : ''}.`;
-  return `The AI service returned an error (HTTP ${status})${detail ? `: ${detail}` : ''}.`;
 }
 
 function failure(status: number, error: string): Reply {

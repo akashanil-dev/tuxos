@@ -1,4 +1,5 @@
-import type { TutorConfig, Reply } from './tutor.ts';
+import { chat, failureMessage, redactKeys, unsupported } from './providers.ts';
+import type { AiCall, Reply } from './tutor.ts';
 
 export type LearningOperation = 'plan' | 'evaluate' | 'hint' | 'answer';
 
@@ -35,47 +36,49 @@ const PERSONAS: Record<string, TrainerProfile> = {
 
 const MODULES = new Set(Object.keys(PERSONAS));
 
-export async function handleLearning(body: unknown, config: TutorConfig, fetcher: typeof fetch = fetch): Promise<Reply> {
+export async function handleLearning(body: unknown, ai: AiCall | undefined, fetcher?: typeof fetch): Promise<Reply> {
   const problem = invalidLearning(body);
   if (problem) return { status: 400, body: { error: problem } };
-  if (!config.apiKey) return { status: 503, body: { error: 'The AI trainer needs an OpenAI API key. Add yours in Settings → AI.' } };
+  if (!ai) return { status: 503, body: { error: 'The AI trainer needs your AI provider and API key. Add them in Settings → AI.' } };
   const request = body as Record<string, unknown>;
   const moduleId = request.module as string;
   const trainer = PERSONAS[moduleId]!;
   const operation = request.operation as LearningOperation;
   const prompt = promptFor(operation, { ...request, trainer });
-  const model = config.learningModels?.[moduleId] ?? config.model;
+  const { settings, provider } = ai;
+  const model = settings.model;
+  // Not every provider or model has JSON mode or takes a temperature: drop what one refuses and ask again.
+  let jsonMode = true;
+  let tuning = true;
   try {
-    const response = await fetcher(`${config.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${config.apiKey}` },
-      body: JSON.stringify({
+    let call: Awaited<ReturnType<typeof chat>> | undefined;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      call = await chat(provider, settings.key, {
         model,
         messages: [
           { role: 'system', content: trainerPrompt(trainer) },
-          { role: 'user', content: prompt },
+          { role: 'user', content: jsonMode ? prompt : `${prompt}\nReply with only the JSON object, no other text.` },
         ],
-        response_format: { type: 'json_object' },
+        ...(jsonMode ? { response_format: { type: 'json_object' } } : {}),
         // Reasoning models think before answering; a syllabus needs little of that, and a full seven-day plan
         // at the default effort takes longer than Cloudflare lets a request run (100 seconds).
-        ...(fixedTemperature(model) ? { reasoning_effort: 'low' } : { temperature: 0.3 }),
-      }),
-      signal: AbortSignal.timeout(AI_TIMEOUT_MS),
-    });
-    const data = await response.json().catch(() => null) as {
-      choices?: { message?: { content?: string | null } }[];
-      error?: { message?: string };
-    } | null;
-    if (!response.ok) {
-      const message = data?.error?.message ?? `AI service returned HTTP ${response.status}`;
-      // Cloudflare replaces 502 bodies with its own page, so record why in the server log (journalctl).
-      console.error(`learning ${operation} for ${moduleId} with model ${model} failed: HTTP ${response.status}: ${message}`);
-      return { status: response.status === 429 ? 429 : 502, body: { error: message } };
+        ...(!tuning ? {} : fixedTemperature(model) ? (provider.openai ? { reasoning_effort: 'low' } : {}) : { temperature: 0.3 }),
+      }, AI_TIMEOUT_MS, fetcher);
+      if (call.ok) break;
+      if (jsonMode && unsupported(call.status, call.detail, 'json')) { jsonMode = false; continue; }
+      if (tuning && call.status === 400 && /temperature|reasoning/i.test(call.detail)) { tuning = false; continue; }
+      break;
     }
-    const content = data?.choices?.[0]?.message?.content;
+    if (!call!.ok) {
+      // Cloudflare replaces 502 bodies with its own page, so record why in the server log (journalctl).
+      console.error(`learning ${operation} for ${moduleId} with ${provider.id} model ${model} failed: HTTP ${call!.status}: ${call!.detail}`);
+      return { status: call!.status === 429 ? 429 : 502, body: { error: failureMessage(provider, call!.status, call!.detail) } };
+    }
+    const choices = call!.data?.choices as { message?: { content?: string | null } }[] | undefined;
+    const content = choices?.[0]?.message?.content;
     if (!content) return { status: 502, body: { error: 'AI learning service returned an empty response.' } };
-    let result: unknown;
-    try { result = JSON.parse(content); } catch { return { status: 502, body: { error: 'AI learning service returned invalid structured data.' } }; }
+    let result: unknown = parseJson(content);
+    if (result === undefined) return { status: 502, body: { error: 'The AI model did not return the structured answer the trainer needs. A larger model may do better.' } };
     if (operation === 'plan') result = normalizePlan(result, moduleId);
     const invalid = validateResult(operation, result);
     if (invalid) {
@@ -94,7 +97,7 @@ export async function handleLearning(body: unknown, config: TutorConfig, fetcher
     return { status: 200, body: result };
   } catch (error) {
     const timeout = error instanceof Error && error.name === 'TimeoutError';
-    console.error(`learning ${operation} for ${moduleId} with model ${model} failed: ${timeout ? 'timed out' : String(error)}`);
+    console.error(`learning ${operation} for ${moduleId} with model ${model} failed: ${timeout ? 'timed out' : redactKeys(String(error), settings.key)}`);
     return { status: 504, body: { error: timeout ? 'AI learning took too long. Try again.' : 'AI learning service could not be reached.' } };
   }
 }
@@ -132,6 +135,18 @@ function withheldAnswer(feedback: unknown, task: unknown, failures: number): unk
   return hint ? `Not quite. ${hint}` : 'Not quite. Re-read the lesson above and try again.';
 }
 
+/**
+ * The JSON object in a model's reply. Without JSON mode, smaller models often wrap it in a code fence or a
+ * sentence, so take the outermost {...} when the whole reply isn't JSON.
+ */
+export function parseJson(content: string): unknown {
+  try { return JSON.parse(content); } catch { /* look inside */ }
+  const fenced = /```(?:json)?\s*([\s\S]*?)```/i.exec(content)?.[1];
+  const candidate = fenced ?? content.slice(content.indexOf('{'), content.lastIndexOf('}') + 1);
+  if (!candidate.trim().startsWith('{')) return undefined;
+  try { return JSON.parse(candidate); } catch { return undefined; }
+}
+
 /** Just under Cloudflare's 100-second limit for a proxied request, so the learner sees our error, not its own. */
 const AI_TIMEOUT_MS = 90_000;
 
@@ -140,7 +155,8 @@ const AI_TIMEOUT_MS = 90_000;
  * (HTTP 400), so the low temperature that keeps older models' syllabuses steady is left out for them.
  */
 export function fixedTemperature(model: string): boolean {
-  return /^(gpt-5|o\d)/.test(model);
+  // Through a router the name has a vendor prefix (openai/gpt-5...).
+  return /^(?:openai\/)?(gpt-5|o\d)/.test(model);
 }
 
 export function invalidLearning(body: unknown): string | null {

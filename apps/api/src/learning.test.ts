@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { fixedTemperature, handleLearning, invalidLearning } from './learning.ts';
-import type { TutorConfig } from './tutor.ts';
+import { fixedTemperature, handleLearning, invalidLearning, parseJson } from './learning.ts';
+import { testAi } from './test-ai.ts';
 
-const config: TutorConfig = { apiKey: 'test-key', model: 'test-model', baseUrl: 'https://ai.example/v1', learningModels: { 'learn-linux': 'linux-model' } };
+const config = testAi('linux-model');
 
 function upstream(content: unknown, status = 200) {
   const calls: { url: string; init: RequestInit }[] = [];
@@ -40,15 +40,48 @@ describe('AI learning backend', () => {
       { day: 1, title: 'Basics', recap: false, tasks: [{ id: 't', title: 'Task', task: 'x', scenario: 'y', objective: 'z', hints: ['h'], answer: 'pwd', explain: 'why', recap: false }] },
     ] };
     const reasoning = upstream(plan);
-    await handleLearning({ operation: 'plan', module: 'learn-linux' }, { ...config, learningModels: { 'learn-linux': 'gpt-5.6-luna' } }, reasoning.fetcher);
+    await handleLearning({ operation: 'plan', module: 'learn-linux' }, testAi('gpt-5.6-luna'), reasoning.fetcher);
     const sent = JSON.parse(reasoning.calls[0]!.init.body as string);
     expect(sent).not.toHaveProperty('temperature');
     expect(sent.reasoning_effort).toBe('low');
     const classic = upstream(plan);
-    await handleLearning({ operation: 'plan', module: 'learn-linux' }, { ...config, learningModels: { 'learn-linux': 'gpt-4.1-mini' } }, classic.fetcher);
+    await handleLearning({ operation: 'plan', module: 'learn-linux' }, testAi('gpt-4.1-mini'), classic.fetcher);
     expect(JSON.parse(classic.calls[0]!.init.body as string)).toMatchObject({ temperature: 0.3 });
     expect(JSON.parse(classic.calls[0]!.init.body as string)).not.toHaveProperty('reasoning_effort');
     expect([fixedTemperature('gpt-5.6-luna'), fixedTemperature('o4-mini'), fixedTemperature('gpt-4.1-mini')]).toEqual([true, true, false]);
+  });
+
+  it('asks again without JSON mode when a model does not support it, and reads JSON out of its prose', async () => {
+    const bodies: Record<string, unknown>[] = [];
+    const fetcher = (async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(init.body as string);
+      bodies.push(body);
+      return body.response_format
+        ? Response.json({ error: { message: "'response_format' is not supported by this model" } }, { status: 400 })
+        : Response.json({ choices: [{ message: { content: 'Sure! ```json\n{"text": "Try ls."}\n```' } }] });
+    }) as unknown as typeof fetch;
+    const reply = await handleLearning({ operation: 'hint', module: 'terminal', task: {} }, testAi('llama-3.1-8b', { openai: false }), fetcher);
+    expect(reply).toEqual({ status: 200, body: { text: 'Try ls.' } });
+    expect(bodies).toHaveLength(2);
+    expect((bodies[1]!.messages as { content: string }[])[1]!.content).toContain('only the JSON object');
+  });
+
+  it('sends reasoning_effort only to OpenAI, and finds JSON in a reply', () => {
+    expect(parseJson('{"a":1}')).toEqual({ a: 1 });
+    expect(parseJson('Here it is: {"a": {"b": 2}} hope that helps')).toEqual({ a: { b: 2 } });
+    expect(parseJson('no json here')).toBeUndefined();
+    expect(fixedTemperature('openai/gpt-5-mini')).toBe(true);
+  });
+
+  it('leaves OpenAI-only options out for other providers', async () => {
+    const plan = { courseId: 'learn-linux', title: 'Linux', summary: 'Lab', days: [
+      { day: 1, title: 'Basics', recap: false, tasks: [{ id: 't', title: 'Task', task: 'x', scenario: 'y', objective: 'z', hints: ['h'], answer: 'pwd', explain: 'why', recap: false }] },
+    ] };
+    const routed = upstream(plan);
+    await handleLearning({ operation: 'plan', module: 'learn-linux' }, testAi('openai/gpt-5-mini', { openai: false }), routed.fetcher);
+    const sent = JSON.parse(routed.calls[0]!.init.body as string);
+    expect(sent).not.toHaveProperty('reasoning_effort');
+    expect(sent).not.toHaveProperty('temperature');
   });
 
   it('does not send cached attempt history into syllabus generation', async () => {
@@ -180,7 +213,7 @@ describe('AI learning backend', () => {
 
   it('does not call upstream without a key', async () => {
     const { fetcher, calls } = upstream({ text: 'hint' });
-    const reply = await handleLearning({ operation: 'hint', module: 'terminal', task: {} }, { ...config, apiKey: undefined }, fetcher);
+    const reply = await handleLearning({ operation: 'hint', module: 'terminal', task: {} }, undefined, fetcher);
     expect(reply.status).toBe(503);
     expect(calls).toHaveLength(0);
   });

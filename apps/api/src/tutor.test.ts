@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { RateLimiter } from './rate-limit.ts';
 import { SYSTEM_PROMPT } from './prompt.ts';
-import { handleTutor, invalid, type TutorConfig } from './tutor.ts';
+import { testAi } from './test-ai.ts';
+import { handleTutor, invalid, recent, withoutTools } from './tutor.ts';
 
-const config: TutorConfig = { apiKey: 'test-key', model: 'test-model', baseUrl: 'https://ai.example/v1' };
+const config = testAi();
 const question = { messages: [{ role: 'user', content: 'What does ls do?' }], tools: [] };
 
 function upstream(status: number, body: unknown) {
@@ -26,7 +27,7 @@ describe('POST /api/tutor', () => {
       status: 200, body: { message: { role: 'assistant', content: null, tool_calls: toolCalls } },
     });
     expect(calls[0]!.url).toBe('https://ai.example/v1/chat/completions');
-    expect((calls[0]!.init.headers as Record<string, string>).authorization).toBe('Bearer test-key');
+    expect((calls[0]!.init.headers as Record<string, string>).authorization).toBe('Bearer test-key-0000');
     const sent = JSON.parse(calls[0]!.init.body as string);
     expect(sent).toMatchObject({ model: 'test-model', tools: [tool], tool_choice: 'auto' });
     expect(sent.messages[0]).toEqual({ role: 'system', content: SYSTEM_PROMPT });
@@ -43,20 +44,75 @@ describe('POST /api/tutor', () => {
 
   it('explains clearly when no API key is configured, without calling anything', async () => {
     const { fetcher, calls } = upstream(200, {});
-    const reply = await handleTutor(question, { ...config, apiKey: undefined }, fetcher);
+    const reply = await handleTutor(question, undefined, fetcher);
     expect(reply).toMatchObject({ status: 503, body: { error: expect.stringContaining('Settings → AI') } });
     expect(calls).toHaveLength(0);
   });
 
   it.each([
-    [401, 'did not accept the API key', 502],
-    [429, 'out of credits', 429],
-    [404, 'model configured on the server was not found: no such model', 502],
-    [500, 'HTTP 500', 502],
+    [401, 'did not accept your API key', 502],
+    [429, 'rate limit', 429],
+    [404, 'does not offer the chosen model', 502],
+    [500, 'HTTP 500): no such model', 502],
   ])('turns an upstream %i into a readable error', async (status, text, ours) => {
     const { fetcher } = upstream(status, { error: { message: 'no such model' } });
     const reply = await handleTutor(question, config, fetcher);
     expect(reply).toMatchObject({ status: ours, body: { error: expect.stringContaining(text) } });
+  });
+
+  it('falls back to plain chat for a model that cannot use tools, dropping earlier tool exchanges', async () => {
+    const tool = { type: 'function', function: { name: 'look_at_screen', description: 'x', parameters: {} } };
+    const calls: Record<string, unknown>[] = [];
+    const fetcher = (async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(init.body as string);
+      calls.push(body);
+      return body.tools
+        ? Response.json({ error: { message: 'tools are not supported for this model' } }, { status: 400 })
+        : Response.json({ choices: [{ message: { content: 'ls lists files.', tool_calls: [{ id: 'x' }] } }] });
+    }) as unknown as typeof fetch;
+    const history = [
+      { role: 'user', content: 'look' },
+      { role: 'assistant', content: null, tool_calls: [{ id: '1' }] },
+      { role: 'tool', tool_call_id: '1', content: 'screen' },
+      { role: 'user', content: 'What does ls do?' },
+    ];
+    const reply = await handleTutor({ messages: history, tools: [tool] }, config, fetcher);
+    expect(reply).toEqual({ status: 200, body: { message: { role: 'assistant', content: 'ls lists files.' }, toolsUnsupported: true } });
+    expect(calls).toHaveLength(2);
+    expect(calls[1]!.messages).toEqual([
+      { role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: 'look' }, { role: 'user', content: 'What does ls do?' },
+    ]);
+  });
+
+  it('retries with recent history when the provider says the request is too large', async () => {
+    const sizes: number[] = [];
+    const fetcher = (async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(init.body as string);
+      sizes.push(body.messages.length);
+      return sizes.length === 1
+        ? Response.json({ error: { message: 'Request too large: please reduce the length of the messages' } }, { status: 413 })
+        : Response.json({ choices: [{ message: { content: 'ok' } }] });
+    }) as unknown as typeof fetch;
+    const long = Array.from({ length: 60 }, (_, index) => ({ role: index % 2 ? 'assistant' : 'user', content: `m${index}` }));
+    expect((await handleTutor({ messages: long, tools: [] }, config, fetcher)).status).toBe(200);
+    expect(sizes[0]).toBe(61);
+    expect(sizes[1]).toBeLessThanOrEqual(25);
+  });
+
+  it('keeps recent history starting at a learner message, and strips tool exchanges', () => {
+    const messages = [{ role: 'user', content: 'a' }, ...Array.from({ length: 30 }, () => ({ role: 'tool', content: 't' })), { role: 'user', content: 'b' }];
+    expect(recent(messages)).toEqual([{ role: 'user', content: 'b' }]);
+    expect(withoutTools([{ role: 'assistant', content: 'hi', tool_calls: [{}] }])).toEqual([{ role: 'assistant', content: 'hi' }]);
+  });
+
+  it('never echoes a custom server\'s own error text, and redacts keys from a provider\'s', async () => {
+    const custom = upstream(500, { error: { message: '<html>internal admin page</html>' } });
+    const hidden = await handleTutor(question, testAi('m', { custom: true, name: 'my.server' }), custom.fetcher);
+    expect(JSON.stringify(hidden)).not.toContain('admin');
+    const leaky = upstream(500, { error: { message: 'bad key test-key-0000 and gsk_abcdefghijklmnop' } });
+    const redacted = JSON.stringify(await handleTutor(question, config, leaky.fetcher));
+    expect(redacted).not.toContain('test-key-0000');
+    expect(redacted).not.toContain('abcdefghijklmnop');
   });
 
   it('reports an unreachable AI service', async () => {

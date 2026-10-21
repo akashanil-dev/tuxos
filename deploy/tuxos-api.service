@@ -9,7 +9,7 @@ Type=simple
 User=tuxos
 Group=tuxos
 WorkingDirectory=/opt/tuxos/current/api
-# Secrets and settings (OPENAI_API_KEY, models, SOCKET, TRUST_PROXY, DATABASE_PATH), readable only by root.
+# Settings (AI_FEATURES, SOCKET, TRUST_PROXY, DATABASE_PATH), readable only by root. There is no server API key.
 EnvironmentFile=/etc/tuxos/tuxos.env
 ExecStart=/usr/bin/node src/server.ts
 Restart=on-failure
@@ -32,6 +32,12 @@ ProtectControlGroups=true
 RestrictSUIDSGID=true
 LockPersonality=true
 MemoryMax=512M
+# The API's only outgoing connections are to AI providers on the internet. The kernel refuses anything on
+# this machine or a private network (other services, Docker, the cloud metadata address 169.254.169.254),
+# whatever address a request names: a second layer behind apps/api/src/net-guard.ts. Incoming requests use
+# the Unix socket, which this doesn't affect; 127.0.0.53 is systemd-resolved, needed for DNS.
+IPAddressDeny=localhost link-local multicast 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 100.64.0.0/10 192.0.0.0/24 198.18.0.0/15 fc00::/7
+IPAddressAllow=127.0.0.53
 
 [Install]
 WantedBy=multi-user.target

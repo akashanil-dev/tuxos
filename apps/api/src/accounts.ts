@@ -7,14 +7,16 @@
 //   POST /api/auth/verify   {password}            -> checks the signed-in account's password (Vasi's sudo)
 //   GET  /api/save                                -> {data, version}
 //   PUT  /api/save          {data, version}       -> saves if version matches, else 409 (changed elsewhere)
-// It also keeps each account's own OpenAI API key, sealed by ai-keys.ts (the routes are in server.ts).
+// It also keeps each account's own AI settings (provider, model, key) and whether its AI is on (ai-keys.ts).
 // Passwords are kept only as salted scrypt hashes; sessions are random tokens in an HttpOnly cookie, and
-// only a hash of each token is stored.
+// only a hash of each token is stored. AI settings are sealed with the account's vault key, which is stored
+// only wrapped by the password and by each session's token (see ai-keys.ts), so the server can't read it.
 
 import { createHash, randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { KeyBox, passwordBox, sessionBox, unwrapVault, wrapVault, type KeyStore } from './ai-keys.ts';
 
 export interface AccountReply {
   status: number;
@@ -52,7 +54,7 @@ async function passwordMatches(password: string, stored: string): Promise<boolea
 
 const tokenHash = (token: string) => createHash('sha256').update(token).digest('hex');
 
-export class Accounts {
+export class Accounts implements KeyStore {
   private readonly db: DatabaseSync;
   /** Spent on wrong usernames too, so a reply's timing doesn't reveal which usernames exist. */
   private readonly decoy: Promise<string>;
@@ -86,10 +88,23 @@ export class Accounts {
         version INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
       );
+    `);
+    // Older saved keys were sealed with a server secret (readable by the server's operators), or were a bare
+    // OpenAI key rather than full provider settings: delete them, and learners enter their settings once more.
+    const columns = (table: string) => (this.db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).map((c) => c.name);
+    if (!columns('ai_keys').includes('format')) this.db.exec('DROP TABLE IF EXISTS ai_keys');
+    if (!columns('sessions').includes('vault')) this.db.exec('ALTER TABLE sessions ADD COLUMN vault TEXT');
+    if (!columns('users').includes('ai_enabled')) this.db.exec('ALTER TABLE users ADD COLUMN ai_enabled INTEGER NOT NULL DEFAULT 0');
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS vaults (
+        user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        salt TEXT NOT NULL,
+        wrapped TEXT NOT NULL
+      );
       CREATE TABLE IF NOT EXISTS ai_keys (
         user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
         sealed TEXT NOT NULL,
-        hint TEXT NOT NULL,
+        format INTEGER NOT NULL DEFAULT 2,
         updated_at INTEGER NOT NULL
       );
     `);
@@ -136,7 +151,7 @@ export class Accounts {
     try {
       const created = this.db.prepare('INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?)')
         .run(username, hash, this.now());
-      return this.signIn(Number(created.lastInsertRowid), username, 201);
+      return await this.signIn(Number(created.lastInsertRowid), username, password, 201);
     } catch (error) {
       if (String(error).includes('UNIQUE')) return { status: 409, body: { error: 'That username is taken.' } };
       throw error;
@@ -154,7 +169,7 @@ export class Accounts {
     if (user && usable) ok = await passwordMatches(password, user.password_hash);
     else await passwordMatches(usable ? password : '', await this.decoy);
     if (!user || !ok) return { status: 401, body: { error: 'Wrong username or password.' } };
-    return this.signIn(user.id, user.username, 200);
+    return this.signIn(user.id, user.username, password!, 200);
   }
 
   private logout(cookieHeader: string | undefined): AccountReply {
@@ -188,36 +203,93 @@ export class Accounts {
     return user && { id: user.id, username: user.username };
   }
 
-  /** The account's sealed OpenAI key and its hint, if it saved one. */
-  aiKey(userId: number): { sealed: string; hint: string } | undefined {
-    return this.db.prepare('SELECT sealed, hint FROM ai_keys WHERE user_id = ?').get(userId) as
-      { sealed: string; hint: string } | undefined;
+  /** The signed-in account's AI settings, decrypted in memory for this request only. Never log them. */
+  aiSecret(cookieHeader: string | undefined): string | undefined {
+    const session = this.session(cookieHeader);
+    if (!session?.vault) return undefined;
+    const row = this.db.prepare('SELECT sealed FROM ai_keys WHERE user_id = ?').get(session.id) as { sealed: string } | undefined;
+    return row ? new KeyBox(session.vault).open(row.sealed) : undefined;
   }
 
-  setAiKey(userId: number, sealed: string, hint: string): void {
-    this.db.prepare(`INSERT INTO ai_keys (user_id, sealed, hint, updated_at) VALUES (?, ?, ?, ?)
-      ON CONFLICT(user_id) DO UPDATE SET sealed = excluded.sealed, hint = excluded.hint, updated_at = excluded.updated_at`)
-      .run(userId, sealed, hint, this.now());
+  setAiSecret(cookieHeader: string | undefined, secret: string): boolean {
+    const session = this.session(cookieHeader);
+    if (!session?.vault) return false;
+    this.db.prepare(`INSERT INTO ai_keys (user_id, sealed, updated_at) VALUES (?, ?, ?)
+      ON CONFLICT(user_id) DO UPDATE SET sealed = excluded.sealed, updated_at = excluded.updated_at`)
+      .run(session.id, new KeyBox(session.vault).seal(secret), this.now());
+    return true;
   }
 
-  removeAiKey(userId: number): void {
+  removeAiSecret(cookieHeader: string | undefined): void {
+    const user = this.sessionUser(cookieHeader);
+    if (user) this.db.prepare('DELETE FROM ai_keys WHERE user_id = ?').run(user.id);
+  }
+
+  hasAiSecret(cookieHeader: string | undefined): boolean {
+    const user = this.sessionUser(cookieHeader);
+    return !!user && !!this.db.prepare('SELECT 1 FROM ai_keys WHERE user_id = ?').get(user.id);
+  }
+
+  /** Whether this session holds the account's vault, so it can save and use AI settings. */
+  canUnlock(cookieHeader: string | undefined): boolean {
+    return !!this.session(cookieHeader)?.vault;
+  }
+
+  /** The account's AI switch (Settings → AI), off until the learner turns it on. Off: no AI call is made. */
+  aiEnabled(cookieHeader: string | undefined): boolean {
+    return this.sessionUser(cookieHeader)?.ai_enabled === 1;
+  }
+
+  setAiEnabled(cookieHeader: string | undefined, enabled: boolean): void {
+    const user = this.sessionUser(cookieHeader);
+    if (user) this.db.prepare('UPDATE users SET ai_enabled = ? WHERE id = ?').run(enabled ? 1 : 0, user.id);
+  }
+
+  /**
+   * The account's vault key, from its password: made on the first sign-in. If it can't be opened (it was
+   * wrapped with a password that no longer applies), a new vault replaces it and the unreadable key is dropped.
+   */
+  private async unlockVault(userId: number, password: string): Promise<Buffer> {
+    const row = this.db.prepare('SELECT salt, wrapped FROM vaults WHERE user_id = ?').get(userId) as
+      { salt: string; wrapped: string } | undefined;
+    if (row) {
+      const vault = unwrapVault(await passwordBox(password, Buffer.from(row.salt, 'base64')), row.wrapped);
+      if (vault) return vault;
+    }
+    const vault = randomBytes(32);
+    const salt = randomBytes(16);
+    const wrapped = wrapVault(await passwordBox(password, salt), vault);
+    this.db.prepare(`INSERT INTO vaults (user_id, salt, wrapped) VALUES (?, ?, ?)
+      ON CONFLICT(user_id) DO UPDATE SET salt = excluded.salt, wrapped = excluded.wrapped`).run(userId, salt.toString('base64'), wrapped);
     this.db.prepare('DELETE FROM ai_keys WHERE user_id = ?').run(userId);
+    return vault;
   }
 
-  private signIn(userId: number, username: string, status: number): AccountReply {
+  private async signIn(userId: number, username: string, password: string, status: number): Promise<AccountReply> {
+    const vault = await this.unlockVault(userId, password);
     const token = randomBytes(32).toString('base64url');
     const expires = this.now() + SESSION_DAYS * 24 * 60 * 60 * 1000;
     this.db.prepare('DELETE FROM sessions WHERE expires_at < ?').run(this.now());
-    this.db.prepare('INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)').run(tokenHash(token), userId, expires);
+    this.db.prepare('INSERT INTO sessions (token_hash, user_id, expires_at, vault) VALUES (?, ?, ?, ?)')
+      .run(tokenHash(token), userId, expires, wrapVault(sessionBox(token), vault));
     return { status, body: { username }, cookie: this.cookie(token, SESSION_DAYS * 24 * 60 * 60) };
+  }
+
+  /** The signed-in account and its vault key, opened with this request's session token. */
+  private session(cookieHeader: string | undefined): { id: number; vault: Buffer | undefined } | undefined {
+    const token = readCookie(cookieHeader);
+    if (!token) return undefined;
+    const row = this.db.prepare('SELECT user_id, vault FROM sessions WHERE token_hash = ? AND expires_at > ?')
+      .get(tokenHash(token), this.now()) as { user_id: number; vault: string | null } | undefined;
+    return row && { id: row.user_id, vault: unwrapVault(sessionBox(token), row.vault) };
   }
 
   private sessionUser(cookieHeader: string | undefined) {
     const token = readCookie(cookieHeader);
     if (!token) return undefined;
-    return this.db.prepare(`SELECT users.id, users.username, users.password_hash FROM sessions
+    return this.db.prepare(`SELECT users.id, users.username, users.password_hash, users.ai_enabled FROM sessions
       JOIN users ON users.id = sessions.user_id WHERE sessions.token_hash = ? AND sessions.expires_at > ?`)
-      .get(tokenHash(token), this.now()) as { id: number; username: string; password_hash: string } | undefined;
+      .get(tokenHash(token), this.now()) as { id: number; username: string; password_hash: string; ai_enabled: number } | undefined;
   }
 
   private cookie(value: string, maxAge: number): string {
