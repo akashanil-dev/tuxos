@@ -4,6 +4,12 @@ Notable changes, newest first. Older entries were written while TuxOS was built 
 the DevDay Exchange Community Hackathon in Kochi; they mention event files (AI_USAGE.md, SUBMISSION.md) that
 have since been removed.
 
+## 2026-10-21 — Renamed the GitHub repository to tuxos
+
+- Changed: the GitHub repository moved from `akashanil-dev/ayalvasis` to `akashanil-dev/tuxos`. GitHub
+  redirects the old URL, but clones should run `git remote set-url origin https://github.com/akashanil-dev/tuxos.git`.
+- Why: The repository name now matches the product name, TuxOS.
+
 ## 2026-10-13 — Graphical plugin manager and lifecycle hardening
 
 - Added a themed, responsive Plugins app with a searchable offline catalog, installed-plugin management,
