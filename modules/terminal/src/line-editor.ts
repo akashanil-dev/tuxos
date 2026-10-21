@@ -2,8 +2,9 @@
 // and produces the escape sequences that redraw it. It knows nothing about the shell or the DOM,
 // so it can be tested on its own.
 //
-// Known limitation: redrawing uses `\r` and clear-to-end-of-line, which assumes the prompt and line
-// fit on one screen row. Longer lines still work, they just redraw imperfectly.
+// A prompt and line longer than the terminal is wide wrap onto several rows. Every redraw goes back up to the
+// row the prompt starts on, clears from there down, writes the prompt and line once, and puts the cursor back,
+// so the line is never printed again below itself (which, typed a key at a time, printed one copy per key).
 
 import type { Completion } from '@tuxos/shell';
 
@@ -48,6 +49,10 @@ export class LineEditor {
   private draft = '';
   /** Consecutive Tab presses: bash lists the candidates on the second one. */
   private tabs = 0;
+  /** The terminal's width in characters; the caller keeps it current (see TerminalController). */
+  columns = 80;
+  /** How many rows below the prompt's first row the terminal cursor is now. */
+  private row = 0;
 
   /** Start a fresh line after a prompt, with the shell's history for Up/Down. */
   start(prompt: string, history: string[]): string {
@@ -57,7 +62,8 @@ export class LineEditor {
     this.line = '';
     this.cursor = 0;
     this.draft = '';
-    return prompt;
+    this.row = 0;
+    return prompt + this.settle(width(prompt));
   }
 
   input(data: string): EditorResult {
@@ -89,20 +95,61 @@ export class LineEditor {
     const prefix = commonPrefix(candidates);
     if (prefix.length > typed.length) return this.replaceWord(start, prefix);
     if (this.tabs < 2) return '\x07';
-    return `\r\n${formatColumns(candidates.map(displayName), columns)}${this.redraw()}`;
+    const below = `${this.toEnd()}\r\n${formatColumns(candidates.map(displayName), columns)}`;
+    this.row = 0;
+    return below + this.redraw();
   }
 
-  /** Redraw the prompt and line, e.g. after the screen was cleared. */
+  /** Redraw the prompt and line in place: from the prompt's first row, whatever rows the line wraps onto. */
   redraw(): string {
-    const back = this.line.length - this.cursor;
-    return `\r${this.prompt}${this.line}\x1b[K${back > 0 ? `\x1b[${back}D` : ''}`;
+    const up = this.row > 0 ? `\x1b[${this.row}A` : '';
+    const end = width(this.prompt) + width(this.line);
+    const written = `${up}\r${this.prompt}${this.line}${this.settle(end)}\x1b[J`;
+    this.row = this.rowOf(end);
+    return written + this.place(width(this.prompt) + width(this.line.slice(0, this.cursor)));
+  }
+
+  /** The screen was cleared, keeping only the row the cursor was on: the prompt starts there now. */
+  cleared(): string {
+    this.row = 0;
+    return this.redraw();
+  }
+
+  /**
+   * After writing up to an exact multiple of the width, a terminal leaves the cursor on the last column,
+   * waiting to wrap. Make it wrap now, so the cursor's row is certain.
+   */
+  private settle(end: number): string {
+    return end > 0 && end % this.width() === 0 ? ' \r\x1b[K' : '';
+  }
+
+  private width(): number {
+    return Math.max(1, Math.floor(this.columns) || 80);
+  }
+
+  private rowOf(offset: number): number {
+    return Math.floor(offset / this.width());
+  }
+
+  /** Moves the cursor from where it is to an offset from the start of the prompt, without redrawing. */
+  private place(offset: number): string {
+    const row = this.rowOf(offset);
+    const column = offset % this.width();
+    const vertical = row < this.row ? `\x1b[${this.row - row}A` : row > this.row ? `\x1b[${row - this.row}B` : '';
+    this.row = row;
+    return `${vertical}\r${column > 0 ? `\x1b[${column}C` : ''}`;
+  }
+
+  /** The cursor to the end of the line, so what follows starts below all of it. */
+  private toEnd(): string {
+    return this.place(width(this.prompt) + width(this.line));
   }
 
   private key(key: string): EditorResult {
     const none: EditorEvent[] = [];
     switch (key) {
       case KEYS.enter:
-        return { output: '\r\n', events: [{ type: 'submit', line: this.line }] };
+        return { output: `${this.toEnd()}\r\n`, events: [{ type: 'submit', line: this.line }] };
       case KEYS.backspace:
       case KEYS.ctrlH:
         return { output: this.edit(this.line.slice(0, Math.max(0, this.cursor - 1)) + this.line.slice(this.cursor),
@@ -125,7 +172,7 @@ export class LineEditor {
       case KEYS.ctrlU:
         return { output: this.edit(this.line.slice(this.cursor), 0), events: none };
       case KEYS.ctrlC:
-        return { output: '^C\r\n', events: [{ type: 'interrupt' }] };
+        return { output: `${this.toEnd()}^C\r\n`, events: [{ type: 'interrupt' }] };
       case KEYS.ctrlL:
         return { output: '', events: [{ type: 'clear-screen' }] };
       case KEYS.ctrlD:
@@ -162,6 +209,11 @@ export class LineEditor {
   private replaceWord(start: number, text: string): string {
     return this.edit(this.line.slice(0, start) + text + this.line.slice(this.cursor), start + text.length);
   }
+}
+
+/** How many columns text takes on screen: escape sequences take none. (Wide characters count as one.) */
+function width(text: string): number {
+  return [...text.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '')].length;
 }
 
 /** Split terminal input into keys: escape sequences stay whole, everything else is one character each. */

@@ -26,7 +26,8 @@ describe('LineEditor', () => {
   it('redraws the prompt and moves the cursor back when not at the end', () => {
     const line = editor();
     const { output } = line.input('ab\x1b[D');
-    expect(output.endsWith('\r$ ab\x1b[K\x1b[1D')).toBe(true);
+    // The whole line is redrawn once, then the cursor goes to its column: after the prompt and `a`.
+    expect(output.endsWith('\r$ ab\x1b[J\r\x1b[3C')).toBe(true);
   });
 
   it('submits on Enter and stops at it, leaving the rest for the next prompt', () => {
@@ -89,7 +90,7 @@ describe('tab completion', () => {
     line.input('\t');
     const listing = line.applyCompletion({ start: 3, candidates: ['pa', 'pb'] }, 80);
     expect(listing).toContain('pa  pb\r\n');
-    expect(listing.endsWith('\r$ ls p\x1b[K')).toBe(true);
+    expect(listing.endsWith('\r$ ls p\x1b[J\r\x1b[6C')).toBe(true);
   });
 
   it('rings the bell when nothing matches', () => {

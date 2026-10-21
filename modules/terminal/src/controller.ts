@@ -40,6 +40,7 @@ export class TerminalController {
       this.pending += data;
       return;
     }
+    this.editor.columns = this.screen.cols;
     const { output, events } = this.editor.input(data);
     this.screen.write(output);
     for (const event of events) await this.handle(event);
@@ -53,7 +54,7 @@ export class TerminalController {
         return this.showPrompt();
       case 'clear-screen':
         this.screen.clear();
-        this.screen.write(this.editor.redraw());
+        this.screen.write(this.editor.cleared());
         return;
       case 'eof':
         this.screen.write('exit\r\n');
@@ -61,6 +62,7 @@ export class TerminalController {
         return;
       case 'complete': {
         const completion = await this.session.complete(event.line, event.cursor);
+        this.editor.columns = this.screen.cols;
         this.screen.write(this.editor.applyCompletion(completion, this.screen.cols));
       }
     }
@@ -81,6 +83,7 @@ export class TerminalController {
   private async showPrompt(): Promise<void> {
     this.busy = true;
     const prompt = await this.session.prompt();
+    this.editor.columns = this.screen.cols;
     this.screen.write(this.editor.start(prompt, await this.session.history()));
     const title = titleFor(prompt);
     if (title !== this.title) this.window.setTitle((this.title = title));

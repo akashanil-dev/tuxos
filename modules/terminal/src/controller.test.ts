@@ -59,7 +59,7 @@ describe('TerminalController', () => {
     const { controller, read } = await setup();
     await controller.start();
     await controller.input('cd Doc\t');
-    expect(read().endsWith('cd Documents/\x1b[K')).toBe(true);
+    expect(read()).toMatch(/cd Documents\/\x1b\[J\r\x1b\[\d+C$/);
   });
 
   it('closes the window on exit and on Ctrl+D at an empty prompt', async () => {
