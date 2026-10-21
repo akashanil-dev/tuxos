@@ -1,6 +1,7 @@
 import type { AiStatus, SystemClient } from '@tuxos/system';
 import type { Transport } from '@tuxos/tutor';
 import { useEffect, useRef, useState } from 'react';
+import { offlineAnswer } from './offline';
 import { PointerOverlay } from './PointerOverlay';
 import { Puppet } from './Puppet';
 import { SudoDialog } from './SudoDialog';
@@ -22,7 +23,11 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
   const log = useRef<HTMLOListElement>(null);
   const [user, setUser] = useState('');
   const [intro, setIntro] = useState(false);
-  const aiOn = useAiEnabled(system);
+  const ai = useAiStatus(system);
+  const aiOn = ai?.enabled ?? true;
+  // Without AI, Vasi answers from his offline guide; that conversation is kept apart from the AI one.
+  const [offline, setOffline] = useState<Entry[]>([]);
+  const entries = aiOn ? tutor.entries : offline;
 
   // The first time a learner meets Vasi, he introduces himself once the desktop has settled.
   useEffect(() => {
@@ -44,7 +49,7 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
 
   useEffect(() => {
     log.current?.lastElementChild?.scrollIntoView?.({ block: 'end' });
-  }, [tutor.entries.length, tutor.busy]);
+  }, [entries.length, tutor.busy]);
 
   // Escape takes back control. Only a real key press counts: Vasi's own key presses are synthetic.
   const { busy, stop } = tutor;
@@ -58,7 +63,12 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
   const ask = (question: string) => {
     setOpen(true);
     dismiss();
-    tutor.ask(question);
+    if (aiOn) {
+      tutor.ask(question);
+      return;
+    }
+    const answer = offlineAnswer(question, system.commands?.() ?? [], system.tutor().recentEvents(50));
+    setOffline((entries) => [...entries, { kind: 'message', role: 'user', text: question }, { kind: 'message', role: 'assistant', text: answer }]);
   };
 
   return <>
@@ -84,34 +94,39 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
       </header>
       <ol className="tutor-log" ref={log}>
         {!aiOn && <li className="tutor-hello tutor-no-key">
-          Hi! I&apos;m Vasi. To chat and use the computer with you, I need an OpenAI API key: add yours in Settings
-          (it&apos;s used only for your own questions). Everything else in TuxOS works without one.
-          <button type="button" onClick={() => { setOpen(false); void system.openApp('settings'); }}>Open Settings</button>
+          Hi! I&apos;m Vasi. {ai?.available === false
+            ? 'My AI features are being rebuilt for a better experience, so for now'
+            : `AI is ${ai?.on === false ? 'turned off' : 'not set up yet (it needs your AI provider and key)'}, so`}
+          {' '}I&apos;m answering from my offline guide: ask me what a command does, why your last command failed, or about
+          permissions, sudo and apt.
+          {ai?.available !== false && <>
+            {' '}To chat freely and have me use the computer with you, turn AI on in Settings.
+            <button type="button" onClick={() => { setOpen(false); void system.openApp('settings'); }}>Open Settings</button>
+          </>}
         </li>}
         {aiOn && !tutor.entries.length && <li className="tutor-hello">
           Hi! I&apos;m Vasi, your Linux teacher. Ask me anything, or ask me to show you how something works.
           I can use this computer too, but you&apos;ll do the learning.
         </li>}
-        {tutor.entries.map((entry, index) => <EntryView key={index} entry={entry} />)}
+        {entries.map((entry, index) => <EntryView key={index} entry={entry} />)}
         {tutor.busy && <li className="tutor-thinking" role="status">Vasi is thinking…</li>}
       </ol>
       <form onSubmit={(event) => {
         event.preventDefault();
-        if (!aiOn || !draft.trim() || tutor.busy) return;
+        if (!draft.trim() || tutor.busy) return;
         ask(draft);
         setDraft('');
       }}>
         <input
           aria-label="Ask Vasi"
-          placeholder={!aiOn ? 'Add an API key in Settings to ask Vasi' : tutor.busy ? 'Vasi is answering…' : 'Ask about a command, an error, a lesson…'}
+          placeholder={tutor.busy ? 'Vasi is answering…' : !aiOn ? 'Ask about a command or an error…' : 'Ask about a command, an error, a lesson…'}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
-          disabled={!aiOn}
         />
-        <button type="submit" disabled={!aiOn || tutor.busy || !draft.trim()}>Ask</button>
+        <button type="submit" disabled={tutor.busy || !draft.trim()}>Ask</button>
       </form>
     </section>}
-    {nudge && !open && aiOn && <button className="tutor-nudge" onClick={() => ask(nudge.question)}>
+    {nudge && !open && <button className="tutor-nudge" onClick={() => ask(nudge.question)}>
       {nudge.text} <span>Ask Vasi</span>
     </button>}
     <div
@@ -136,15 +151,15 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
   </>;
 }
 
-/** Whether Vasi can talk: AI needs a key. Systems without a key store (tests, other hosts) assume it can. */
-function useAiEnabled(system: SystemClient): boolean {
+/** Whether Vasi can use AI: the switch is on and there is a key. Null without a key store (tests, other hosts). */
+function useAiStatus(system: SystemClient): AiStatus | null {
   const store = system.ai();
   const [status, setStatus] = useState<AiStatus | null>(() => store?.status() ?? null);
   useEffect(() => {
     setStatus(store?.status() ?? null);
     return store?.onChange(setStatus);
   }, [store]);
-  return status?.enabled ?? true;
+  return status;
 }
 
 /** Vasi's own pointer: it glides to what he is about to click, and ripples when he clicks. */

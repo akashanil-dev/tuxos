@@ -130,6 +130,8 @@ export interface SystemClient {
   createTerminal(options?: TerminalOptions): Promise<TerminalSession>;
   /** The AI tutor's own, permission-limited access to the system. */
   tutor(): TutorAccess;
+  /** The shell's installed commands with their help text (Vasi's offline guide reads it). */
+  commands?(): { name: string; summary: string; usage?: string }[];
   /** The learner's AI key, when this system has a key store (the browser app does; tests may not). */
   ai(): AiKeyStore | null;
   reset(): Promise<void>;
@@ -301,6 +303,10 @@ export function createLocalSystem(options: {
       const shell = createShell(kernel, { registry, plugins: current().plugins });
       if (options.learningModule) shell.env.TUXOS_LEARNING_MODULE = options.learningModule;
       return terminalSession(kernel, shell, options.learningModule);
+    },
+    commands() {
+      return current().registry.list().filter((command) => command.available?.() !== false)
+        .map(({ name, summary, usage }) => ({ name, summary, usage }));
     },
     tutor() {
       const { kernel, registry } = current();

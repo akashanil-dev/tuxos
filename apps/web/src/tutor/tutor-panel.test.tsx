@@ -52,20 +52,26 @@ afterEach(() => {
 });
 
 describe('tutor panel', () => {
-  it('without an AI key, explains how to add one and sends nothing', async () => {
-    const off: AiStatus = { available: true, enabled: false, on: true, source: null, signedIn: false };
+  it('while AI is being rebuilt, answers from the offline guide and sends nothing', async () => {
+    const off: AiStatus = { available: false, enabled: false, on: false, source: null, signedIn: false };
     const ai: AiKeyStore = {
       status: () => off, onChange: () => () => undefined, headers: () => ({}), providers: () => ({ providers: [], custom: false }),
       models: async () => [], save: async () => off, remove: async () => off, setOn: async () => off,
     };
-    const system = createLocalSystem({ storage: memory(), ai, modules: [] });
+    const system = createLocalSystem({
+      storage: memory(),
+      ai,
+      modules: [{ manifest: terminalManifest, load: () => import('../../../../modules/terminal/src/index').then((m) => m.terminal) }],
+    });
     await system.boot('ada');
     const transport = scripted({ role: 'assistant', content: 'should not be asked' });
     render(<Desktop system={system} tutor={transport} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Ask Vasi, your Linux tutor' }, { timeout: 4000 }));
-    expect(screen.getByText(/I need an OpenAI API key/)).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Open Settings' })).toBeTruthy();
-    expect((screen.getByLabelText('Ask Vasi') as HTMLInputElement).disabled).toBe(true);
+    expect(screen.getByText(/being rebuilt/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Open Settings' })).toBeNull();
+    fireEvent.change(screen.getByLabelText('Ask Vasi'), { target: { value: 'what does pwd do?' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Ask' }));
+    expect(await screen.findByText(/Print the/i)).toBeTruthy();
     expect(transport.requests).toHaveLength(0);
   });
 
