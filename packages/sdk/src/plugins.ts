@@ -1,4 +1,4 @@
-import type { DispatchResult, PluginManifest } from './index';
+import type { DispatchResult, PluginManifest, PluginTheme } from './index';
 
 export const PLUGIN_LIMITS = { packageBytes: 256 * 1024, totalBytes: 1024 * 1024, installed: 24, rpcBytes: 64 * 1024 };
 export const PLUGIN_CAPABILITIES = {
@@ -58,6 +58,17 @@ function string(value: unknown, label: string, max: number, optional = false): s
   return value;
 }
 
+export function validatePluginTheme(value: unknown): PluginTheme {
+  const theme = object(value, 'Theme');
+  if (!validPluginId(theme.id)) throw new Error('Invalid theme ID.');
+  const name = string(theme.name, 'Theme name', 80);
+  const colors = Object.fromEntries(['accent', 'background', 'surface', 'foreground'].map(key => {
+    if (typeof theme[key] !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(theme[key] as string)) throw new Error('Theme colours must be six-digit hex colours.');
+    return [key, theme[key]];
+  })) as Pick<PluginTheme, 'accent' | 'background' | 'surface' | 'foreground'>;
+  return { id: theme.id, name, ...colors };
+}
+
 /** Validate unknown input before it reaches paths, module registration or the iframe. */
 export function validatePluginManifest(value: unknown): PluginManifest {
   const m = object(value, 'Manifest');
@@ -92,7 +103,8 @@ export function validatePluginManifest(value: unknown): PluginManifest {
         || Number(geometry.width) < 240 || Number(geometry.width) > 1600 || Number(geometry.height) < 160 || Number(geometry.height) > 1200) throw new Error('App dimensions must be 240–1600 × 160–1200 pixels.');
       defaultGeometry = { width: Number(geometry.width), height: Number(geometry.height) };
     }
-    return { id: app.id, title, icon: appIcon, category, description: appDescription, ...(defaultGeometry ? { defaultGeometry } : {}) };
+    if (app.widget !== undefined && typeof app.widget !== 'boolean') throw new Error('Widget must be a boolean.');
+    return { ...(app.widget === true ? { widget: true } : {}), id: app.id, title, icon: appIcon, category, description: appDescription, ...(defaultGeometry ? { defaultGeometry } : {}) };
   });
   if (new Set(apps.map((app) => app.id)).size !== apps.length) throw new Error('Duplicate app ID.');
   const rawCommands = contributes.commands ?? [];
@@ -103,7 +115,11 @@ export function validatePluginManifest(value: unknown): PluginManifest {
     return { name: command.name, summary: string(command.summary, 'Command summary', 160), usage: string(command.usage, 'Command usage', 160, true) || command.name };
   });
   if (new Set(commands.map((cmd) => cmd.name)).size !== commands.length) throw new Error('Duplicate command name.');
-  return { id: m.id, name, version, description, capabilities, entry, ...(author ? { author } : {}), ...(icon ? { icon } : {}), contributes: { apps, commands } };
+  const rawThemes = contributes.themes ?? [];
+  if (!Array.isArray(rawThemes) || rawThemes.length > 8) throw new Error('A plugin may include at most 8 theme presets.');
+  const themes = rawThemes.map(validatePluginTheme);
+  if (new Set(themes.map(theme => theme.id)).size !== themes.length) throw new Error('Duplicate theme ID.');
+  return { id: m.id, name, version, description, capabilities, entry, ...(author ? { author } : {}), ...(icon ? { icon } : {}), contributes: { apps, commands, ...(themes.length ? { themes } : {}) } };
 }
 
 export function pluginBytes(value: unknown): number {

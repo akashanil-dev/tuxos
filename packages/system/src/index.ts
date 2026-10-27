@@ -13,6 +13,7 @@ import {
   type Completion,
   type RunResult,
   type Shell,
+  type ShellIO,
 } from '@tuxos/shell';
 
 export interface KeyValueStorage {
@@ -31,7 +32,7 @@ export interface ModuleEntry {
 export type TerminalResult = RunResult & { feedback?: TrainerFeedback };
 
 export interface TerminalSession {
-  run(line: string): Promise<TerminalResult>;
+  run(line: string, io?: ShellIO): Promise<TerminalResult>;
   cwd(): Promise<string>;
   prompt(): Promise<string>;
   complete(line: string, cursor: number): Promise<Completion>;
@@ -134,6 +135,9 @@ export interface SystemClient {
   commands?(): { name: string; summary: string; usage?: string }[];
   /** The learner's AI key, when this system has a key store (the browser app does; tests may not). */
   ai(): AiKeyStore | null;
+  /** Replace the simulated system with a fresh account save and keep the user signed in. */
+  restartLearning(): Promise<void>;
+  onRestart(listener: () => void): () => void;
   reset(): Promise<void>;
   uninstallPlugin?(id: string): Promise<void>;
   reloadPlugins?(): Promise<void>;
@@ -179,6 +183,7 @@ interface Running {
 
 export function createLocalSystem(options: {
   storage: KeyValueStorage;
+  journey?: boolean;
   modules: ModuleEntry[];
   learning?: LearningBackend;
   ai?: AiKeyStore;
@@ -189,6 +194,9 @@ export function createLocalSystem(options: {
   const changeListeners = new Set<(event: KernelEvent) => void>();
   const saveErrorListeners = new Set<(error: Error) => void>();
   const appListeners = new Set<() => void>();
+  const restartListeners = new Set<() => void>();
+  const pendingSaves = new Set<Promise<void>>();
+  let restarting = false;
 
   const current = (): Running => {
     if (!running) throw new Error('system has not booted');
@@ -196,12 +204,16 @@ export function createLocalSystem(options: {
   };
 
   const writeSave = async (): Promise<void> => {
+    if (restarting) return;
     const { kernel } = current();
-    await options.storage.set(SAVE_KEY, JSON.stringify({ username: kernel.user, snapshot: kernel.snapshot() }));
+    const write = options.storage.set(SAVE_KEY, JSON.stringify({ username: kernel.user, snapshot: kernel.snapshot() }));
+    pendingSaves.add(write);
+    try { await write; } finally { pendingSaves.delete(write); }
   };
 
   // Saving never blocks the learner: changes are batched and written after a short pause.
   const scheduleSave = (): void => {
+    if (restarting) return;
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       timer = undefined;
@@ -221,7 +233,7 @@ export function createLocalSystem(options: {
       await running.plugins.dispose();
       await running.host.dispose();
     }
-    const kernel = createKernel(snapshot ? { snapshot } : { username });
+    const kernel = createKernel({ ...(snapshot ? { snapshot } : { username }), journey: options.journey });
     const registry = createCommandRegistry();
     const host = createModuleHost({
       kernel,
@@ -230,7 +242,7 @@ export function createLocalSystem(options: {
     });
     for (const entry of options.modules) host.add(entry.manifest, entry.load);
     const unsubscribe = kernel.subscribe((event) => {
-      if (!event.ok || !event.mutates) return;
+      if (restarting || !event.ok || !event.mutates) return;
       scheduleSave();
       for (const listener of changeListeners) listener(event);
     });
@@ -239,6 +251,7 @@ export function createLocalSystem(options: {
     running = { kernel, registry, host, plugins, unsubscribe };
     await discoverPlugins(client, host, options.plugins);
     await host.start();
+    if (options.journey) kernel.dispatch({ type: 'journey.reconcile', payload: {} });
   };
 
   const client: SystemClient = {
@@ -301,6 +314,14 @@ export function createLocalSystem(options: {
     async createTerminal(options = {}) {
       const { kernel, registry } = current();
       const shell = createShell(kernel, { registry, plugins: current().plugins });
+      if (options.learningModule === 'learn-linux') {
+        const saved = kernel.getState().session.journey?.terminal;
+        const active = learningRuntime.get('learn-linux')?.status().active?.lesson.id;
+        if (saved && saved.lesson === active) {
+          const directory = kernel.dispatch<{ kind: string }>({ type: 'fs.stat', payload: { path: saved.cwd } });
+          if (directory.ok && directory.value.kind === 'dir') { shell.cwd = saved.cwd; shell.env = { ...shell.env, ...saved.env, PWD: saved.cwd }; }
+        }
+      }
       if (options.learningModule) shell.env.TUXOS_LEARNING_MODULE = options.learningModule;
       return terminalSession(kernel, shell, options.learningModule);
     },
@@ -335,6 +356,30 @@ export function createLocalSystem(options: {
       };
     },
     ai: () => options.ai ?? null,
+    onRestart(listener) {
+      restartListeners.add(listener);
+      return () => restartListeners.delete(listener);
+    },
+    async restartLearning() {
+      if (restarting) throw new Error('A reset is already in progress.');
+      const username = current().kernel.user;
+      if (!current().kernel.getState().session.journey) throw new Error('Learning journey is not enabled.');
+      restarting = true;
+      if (timer) clearTimeout(timer);
+      timer = undefined;
+      try {
+        // Finish older writes before replacing the account save. If saving fails, keep the
+        // current system running so Settings can show the error and offer another attempt.
+        await Promise.allSettled([...pendingSaves]);
+        const fresh = createKernel({ username, journey: true }).snapshot();
+        await options.storage.set(SAVE_KEY, JSON.stringify({ username, snapshot: fresh }));
+        await boot(username);
+      } finally {
+        restarting = false;
+      }
+      for (const listener of restartListeners) listener();
+      scheduleSave();
+    },
     async reset() {
       if (timer) clearTimeout(timer);
       timer = undefined;
@@ -395,8 +440,10 @@ async function savedSnapshot(storage: KeyValueStorage, username: string): Promis
 
 function terminalSession(kernel: Kernel, shell: Shell, learningModule?: string): TerminalSession {
   return {
-    run: async (line) => {
-      const result = await shell.run(line);
+    run: async (line, io) => {
+      const previousLesson = learningModule === 'learn-linux' ? learningRuntime.get(learningModule)?.status().active?.lesson.id : undefined;
+      const result = await shell.run(line, io);
+      if (previousLesson && kernel.getState().session.journey) kernel.dispatch({ type: 'journey.terminal', payload: { lesson: previousLesson, cwd: shell.cwd, env: shell.env } });
       const runner = learningModule ? learningRuntime.get(learningModule) : learningRuntime.get();
       const assessment = await runner?.waitForAssessment();
       return assessment ? { ...result, feedback: assessment } : result;

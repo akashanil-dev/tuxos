@@ -77,9 +77,10 @@ function sudo(): CommandDefinition {
         ctx.stderr('sudo: command required\n');
         return 1;
       }
-      const result = await (ctx.shell as ShellInternals).runAsCommand(args, ctx.stdin, 'root');
-      ctx.stdout(result.stdout);
-      ctx.stderr(result.stderr);
+      const result = await (ctx.shell as ShellInternals).runAsCommand(args, ctx.stdin, 'root', {
+        stdout: ctx.stdout, stderr: ctx.stderr, readLine: ctx.readLine,
+        signal: ctx.signal, terminal: ctx.terminal,
+      });
       return result.code;
     },
   };

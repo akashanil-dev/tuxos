@@ -1,6 +1,8 @@
 // Kernel state and the fresh system a new learner boots into.
 
+import type { JourneyProgress, PluginTheme } from '@tuxos/sdk';
 import { KernelError } from './errors';
+import { expandFilesystem } from './filesystem-layout';
 import { dir, file, type DirNode } from './vfs';
 
 export interface UserAccount {
@@ -23,7 +25,12 @@ export interface Window {
   args?: Record<string, string>;
 }
 
+export interface DesktopWidget { appId: string; x: number; y: number; width: number; height: number; }
+
 export interface SessionState {
+  journey?: JourneyProgress;
+  widgets?: DesktopWidget[];
+  theme?: PluginTheme;
   windows: Window[];
   focusedId: string | null;
   nextId: number;
@@ -33,13 +40,15 @@ export interface SessionState {
 }
 
 export const DEFAULT_DESKTOP = 'plasma';
-export const DEFAULT_WALLPAPER = 'freedom';
+// Keep the default automatic so seasonal artwork can expire even in saved sessions.
+export const DEFAULT_WALLPAPER = 'default';
 
 export function emptySession(): SessionState {
   return { windows: [], focusedId: null, nextId: 1, desktop: DEFAULT_DESKTOP, wallpaper: DEFAULT_WALLPAPER };
 }
 
 export interface KernelState {
+  filesystemVersion?: number;
   hostname: string;
   users: Record<string, UserAccount>;
   fs: DirNode;
@@ -70,7 +79,7 @@ export function createInitialState(username: string, hostname = 'tuxos', now = 0
     `${username}:$y$j9T$tuxos$notarealhash:20000:0:99999:7:::`,
   ].join('\n');
 
-  return {
+  const state: KernelState = {
     hostname,
     users: {
       root: { uid: 0, home: '/root' },
@@ -98,4 +107,6 @@ export function createInitialState(username: string, hostname = 'tuxos', now = 0
     }, now),
     session: emptySession(),
   };
+  expandFilesystem(state, username, now);
+  return state;
 }

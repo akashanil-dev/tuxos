@@ -8,6 +8,7 @@ import type {
   RunResult,
   ShellInternals,
   ShellOptions,
+  ShellIO,
 } from './commands';
 import { strerror } from './commands/helpers';
 import { complete } from './complete';
@@ -45,13 +46,13 @@ export class ShellImpl implements ShellInternals {
     return this.registry.list();
   }
 
-  async run(line: string): Promise<RunResult> {
+  async run(line: string, io: ShellIO = {}): Promise<RunResult> {
     this.remember(line);
     this.ran = [];
     // Slash commands are terminal-native learning controls. Ordinary absolute paths such as /etc/passwd
     // remain untouched; only the explicitly supported learning commands lose their leading slash.
     const executableLine = line.replace(/^(\s*)\/(hint|answer|task|next)(?=\s|$)/, '$1$2');
-    const result = await this.runInternal(executableLine, this.kernel.user);
+    const result = await this.runInternal(executableLine, this.kernel.user, io);
     if (line.trim()) this.record(line, result);
     return result;
   }
@@ -72,14 +73,18 @@ export class ShellImpl implements ShellInternals {
     }, line, cursor);
   }
 
-  async runAsCommand(args: string[], stdin: string, user: string): Promise<RunResult> {
+  async runAsCommand(args: string[], stdin: string, user: string, io: ShellIO = {}): Promise<RunResult> {
     this.ran.push(args[0]!);
     const definition = this.registry.get(args[0]!);
-    if (!definition) return { stdout: '', stderr: `${args[0]}: command not found\n`, code: 127 };
-    return this.executeCommand(definition, args.slice(1), stdin, user);
+    if (!definition) {
+      const stderr = `${args[0]}: command not found\n`;
+      io.stderr?.(stderr);
+      return { stdout: '', stderr, code: 127 };
+    }
+    return this.executeCommand(definition, args.slice(1), stdin, user, undefined, io);
   }
 
-  private async runInternal(line: string, user: string): Promise<RunResult> {
+  private async runInternal(line: string, user: string, io: ShellIO): Promise<RunResult> {
     let parsed: ParsedList;
     try {
       parsed = parse(line);
@@ -89,6 +94,7 @@ export class ShellImpl implements ShellInternals {
         ? error.code
         : 2;
       this.lastStatus = code;
+      io.stderr?.(`${message}\n`);
       return { stdout: '', stderr: `${message}\n`, code };
     }
 
@@ -96,12 +102,13 @@ export class ShellImpl implements ShellInternals {
     let stderr = '';
     let code = this.lastStatus;
     for (let index = 0; index < parsed.pipelines.length; index += 1) {
+      if (io.signal?.aborted) { code = 130; this.lastStatus = code; break; }
       const operator = parsed.operators[index - 1];
       const shouldRun = index === 0
         || operator === ';'
         || (operator === '&&' ? code === 0 : operator === '||' ? code !== 0 : true);
       if (!shouldRun) continue;
-      const result = await this.runPipeline(parsed.pipelines[index]!.commands, user);
+      const result = await this.runPipeline(parsed.pipelines[index]!.commands, user, io);
       stdout += result.stdout;
       stderr += result.stderr;
       code = result.code;
@@ -110,7 +117,7 @@ export class ShellImpl implements ShellInternals {
     return { stdout, stderr, code };
   }
 
-  private async runPipeline(commands: ParsedCommand[], user: string): Promise<RunResult> {
+  private async runPipeline(commands: ParsedCommand[], user: string, io: ShellIO): Promise<RunResult> {
     let input = '';
     let stderr = '';
     let code = 0;
@@ -118,11 +125,25 @@ export class ShellImpl implements ShellInternals {
       const command = commands[index]!;
       const expanded = await this.expandWords(command.words, user);
       const name = expanded[0];
-      if (!name) return { stdout: '', stderr: 'bash: syntax error near unexpected token `newline`\n', code: 2 };
+      if (!name) {
+        const error = 'bash: syntax error near unexpected token `newline`\n';
+        io.stderr?.(error);
+        return { stdout: '', stderr: stderr + error, code: 2 };
+      }
       this.ran.push(name);
       const definition = this.registry.get(name);
-      if (!definition) return { stdout: '', stderr: `${name}: command not found\n`, code: 127 };
-      const result = await this.executeCommand(definition, expanded.slice(1), input, user, command);
+      if (!definition) {
+        const error = `${name}: command not found\n`;
+        io.stderr?.(error);
+        return { stdout: '', stderr: stderr + error, code: 127 };
+      }
+      const terminalInput = index === 0 && !command.redirections.some((redirect) => redirect.op === '<');
+      const terminalOutput = index === commands.length - 1 && !command.redirections.some((redirect) => redirect.op !== '<');
+      const result = await this.executeCommand(definition, expanded.slice(1), input, user, command, {
+        ...io, stdout: terminalOutput ? io.stdout : undefined,
+        readLine: terminalInput ? io.readLine : undefined,
+        terminal: terminalInput && terminalOutput ? io.terminal : undefined,
+      });
       stderr += result.stderr;
       input = result.stdout;
       code = result.code;
@@ -136,6 +157,7 @@ export class ShellImpl implements ShellInternals {
     stdin: string,
     user: string,
     parsed?: ParsedCommand,
+    io: ShellIO = {},
   ): Promise<RunResult> {
     let stdout = '';
     let stderr = '';
@@ -145,7 +167,11 @@ export class ShellImpl implements ShellInternals {
         const [rawPath] = this.expandWord(redirection.word, user);
         const path = resolvePath(rawPath!, this.cwd);
         const result = this.dispatch<string>('fs.read', { path }, user);
-        if (!result.ok) return { stdout: '', stderr: `bash: ${rawPath}: ${strerror(result.error.code)}\n`, code: 1 };
+        if (!result.ok) {
+          const error = `bash: ${rawPath}: ${strerror(result.error.code)}\n`;
+          io.stderr?.(error);
+          return { stdout: '', stderr: error, code: 1 };
+        }
         stdin = result.value;
       }
     }
@@ -154,8 +180,16 @@ export class ShellImpl implements ShellInternals {
       args,
       stdin,
       user,
-      stdout: (text) => { stdout += text; },
-      stderr: (text) => { stderr += text; },
+      stdout: (text) => {
+        stdout += text;
+        // Long-running screen animations stream live; do not retain every frame indefinitely.
+        if (io.terminal && io.stdout && stdout.length > 100_000) stdout = stdout.slice(-100_000);
+        io.stdout?.(text);
+      },
+      stderr: (text) => { stderr += text; io.stderr?.(text); },
+      readLine: io.readLine,
+      signal: io.signal,
+      terminal: io.terminal,
       shell: this,
       kernel: this.kernel,
       dispatch: <R>(type: string, payload: unknown) => this.dispatch<R>(type, payload, user),
@@ -173,7 +207,11 @@ export class ShellImpl implements ShellInternals {
           { path, content: stdout, append: redirection.op === '>>' },
           user,
         );
-        if (!result.ok) return { stdout: '', stderr: `bash: ${rawPath}: ${strerror(result.error.code)}\n`, code: 1 };
+        if (!result.ok) {
+          const error = `bash: ${rawPath}: ${strerror(result.error.code)}\n`;
+          io.stderr?.(error);
+          return { stdout: '', stderr: stderr + error, code: 1 };
+        }
         stdout = '';
       }
     }
@@ -190,6 +228,7 @@ export class ShellImpl implements ShellInternals {
       stdout: cap(result.stdout),
       stderr: cap(result.stderr),
       commands: this.ran,
+      learningModule: this.env.TUXOS_LEARNING_MODULE,
     }, this.kernel.user);
   }
 
@@ -217,6 +256,7 @@ export class ShellImpl implements ShellInternals {
       const value = this.expandSegment(segment);
       if (index === 0 && segment.quoted === 'none' && segment.type === 'text' && value.startsWith('~')) {
         pattern += this.env.HOME + value.slice(1);
+        if (/[?*]/.test(value)) hasGlob = true;
       } else if (segment.quoted === 'none') {
         pattern += value;
         if (/[?*]/.test(value)) hasGlob = true;

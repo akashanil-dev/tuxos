@@ -129,6 +129,9 @@ export function defineModule(definition: ModuleDefinition): ModuleDefinition {
   return definition;
 }
 
+/** Declarative desktop colours. Applying them is an explicit host UI action. */
+export interface PluginTheme { id: string; name: string; accent: string; background: string; surface: string; foreground: string; }
+
 /** A user-installable application package/plugin. */
 export interface PluginManifest {
   readonly id: string;
@@ -140,7 +143,9 @@ export interface PluginManifest {
   readonly entry?: string;
   readonly icon?: string;
   readonly contributes: {
+    readonly themes?: readonly PluginTheme[];
     readonly apps?: readonly (AppContribution & {
+      readonly widget?: boolean;
       readonly defaultGeometry?: {
         readonly width: number;
         readonly height: number;
@@ -179,3 +184,6 @@ export interface PluginRPCEvent {
 }
 
 export * from './plugins';
+
+export { JOURNEY_LESSONS, REWARDS, JOURNEY_THEMES, journeyLevel, unlocked, desktopReward, desktopReady, desktopsFromStatus, DESKTOP_PACKAGES } from './journey';
+export type { JourneyProgress, RewardId } from './journey';

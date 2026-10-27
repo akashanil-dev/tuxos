@@ -12,6 +12,13 @@ export interface Lesson {
   title: string;
   /** Why this lesson matters, shown before the first step. */
   story: string;
+  stage?: string;
+  outcomes?: string[];
+  duration?: number;
+  labKind?: 'terminal' | 'sandbox' | 'workbook';
+  /** Follow-through on a disposable Linux VM, outside the browser simulation. */
+  realLab?: string;
+  references?: { title: string; url: string }[];
   /** Files and folders created (as the learner, under their home) when the lesson starts. */
   setup?: Setup;
   steps: Step[];
@@ -30,6 +37,7 @@ export interface Step {
   id: string;
   task: string;
   hints: string[];
+  teach?: string;
   check: Condition;
   /** Shown once the step is done: what just happened and why it matters. */
   explain?: string;

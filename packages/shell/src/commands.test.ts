@@ -129,7 +129,7 @@ describe('built-in commands', () => {
 
   it('lists hidden entries, byte-sorts names and aligns long rows', async () => {
     const shell = make();
-    await run(shell, 'touch z A a; mkdir D d; echo 123456789 > long-name');
+    await run(shell, 'mkdir list-test; cd list-test; touch z A a; mkdir D d; echo 123456789 > long-name');
     expect((await run(shell, 'ls -a -1')).stdout.split('\n').slice(0, 4)).toEqual(['.', '..', 'A', 'D']);
     const lines = (await run(shell, 'ls -la')).stdout.trimEnd().split('\n').filter((line) => !line.startsWith('total'));
     expect(lines.find((line) => line.endsWith('long-name'))).toMatch(/\s+long-name$/);
@@ -160,12 +160,12 @@ describe('built-in commands', () => {
 
   it('treats -- and a lone dash as operands and supports ls -d totals', async () => {
     const shell = make();
-    await run(shell, 'touch -- -z; mkdir deep; echo xx > f1; echo xx > f2; echo xx > f3');
+    await run(shell, 'mkdir count-test; cd count-test; mkdir Documents; touch -- -z; mkdir deep; echo xx > f1; echo xx > f2; echo xx > f3');
     expect((await run(shell, 'ls -- -z')).stdout).toBe('-z\n');
     expect((await run(shell, 'cat -- -z')).stdout).toBe('');
     expect((await run(shell, 'echo -')).stdout).toBe('-\n');
     expect((await run(shell, 'ls -ld deep')).stdout).toMatch(/^[d-].* deep\n$/);
-    expect((await run(shell, 'ls -l /')).stdout.split('\n')[0]).toBe('total 32');
+    expect((await run(shell, 'ls -l /')).stdout.split('\n')[0]).toBe('total 80');
     expect((await run(shell, 'ls -la')).stdout.split('\n')[0]).toBe('total 28');
   });
 

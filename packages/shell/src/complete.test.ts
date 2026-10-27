@@ -42,7 +42,7 @@ describe('completion', () => {
   it('completes paths everywhere else, marking directories with a slash', async () => {
     const { shell } = await setup();
     expect(shell.complete('cat no', 6)).toEqual({ start: 4, candidates: ['notes.txt'] });
-    expect(shell.complete('cd P', 4)).toEqual({ start: 3, candidates: ['Pictures/'] });
+    expect(shell.complete('cd P', 4)).toEqual({ start: 3, candidates: ['Pictures/', 'Public/'] });
     expect(shell.complete('ls projects/', 12).candidates).toEqual(['projects/alpha/', 'projects/plan.md']);
     expect(shell.complete('ls ~/pro', 8).candidates).toEqual(['~/projects/']);
     expect(shell.complete('ls /e', 5).candidates).toEqual(['/etc/']);
@@ -67,7 +67,7 @@ describe('completion', () => {
 
   it('returns candidates in byte order', async () => {
     const { shell } = await setup();
-    expect(shell.complete('ls ', 3).candidates).toEqual(['Documents/', 'Pictures/', 'notes.txt', 'projects/']);
+    expect(shell.complete('ls ', 3).candidates).toEqual(['Desktop/', 'Documents/', 'Downloads/', 'Music/', 'Pictures/', 'Public/', 'Templates/', 'Videos/', 'notes.txt', 'projects/']);
   });
 });
 

@@ -61,6 +61,8 @@ export interface WallpaperInfo {
 
 const WALLPAPER_NAMES: [id: string, name: string][] = [
   ['freedom', 'Free as in freedom'],
+  ['kde-minimal', 'KDE Minimal'],
+  ['kde-30th', 'KDE 30th Anniversary'],
   ['command', 'At your command'],
   ['root', 'I am root'],
   ['rabbit', 'White rabbit'],
@@ -84,6 +86,6 @@ export const WALLPAPERS: WallpaperInfo[] = WALLPAPER_NAMES.map(([id, name]) => (
 }));
 
 export const desktopById = (id: string): DesktopInfo => DESKTOPS.find((each) => each.id === id) ?? DESKTOPS[0]!;
-/** Unknown ids (such as the gradient wallpapers of older saves) fall back to the default wallpaper. */
-export const wallpaperById = (id: string): WallpaperInfo =>
-  WALLPAPERS.find((each) => each.id === id) ?? WALLPAPERS[0]!;
+// KDE Minimal is the baseline. Anniversary artwork is an earned, explicit choice.
+export const wallpaperById = (id: string, _now = Date.now()): WallpaperInfo =>
+  WALLPAPERS.find(each => each.id === id) ?? WALLPAPERS.find(each => each.id === 'kde-minimal')!;

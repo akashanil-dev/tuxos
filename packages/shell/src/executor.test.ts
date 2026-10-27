@@ -5,6 +5,33 @@ import { createShell } from './index';
 const make = () => createShell(createKernel({ username: 'ada' }));
 
 describe('executor', () => {
+  it('streams terminal output once while keeping piped and redirected output out of the screen', async () => {
+    const shell = make();
+    let stdout = '';
+    let stderr = '';
+    const result = await shell.run('sudo echo saved > f; cat f | cat; sudo cat nope; missing-command', {
+      stdout: (text) => { stdout += text; }, stderr: (text) => { stderr += text; },
+    });
+    expect(stdout).toBe('saved\n');
+    expect(stdout).toBe(result.stdout);
+    expect(stderr).toBe(result.stderr);
+    expect(stderr).toContain('cat: nope: No such file or directory');
+    expect(stderr).toContain('missing-command: command not found');
+    expect((await shell.run('cat f')).stdout).toBe('saved\n');
+  });
+
+  it('streams parsing and redirection errors without prompting for terminal input', async () => {
+    const shell = make();
+    let stderr = '';
+    const io = { stderr: (text: string) => { stderr += text; } };
+    const parse = await shell.run('echo "', io);
+    expect(stderr).toBe(parse.stderr);
+    stderr = '';
+    const redirected = await shell.run('cat < /missing', io);
+    expect(stderr).toBe(redirected.stderr);
+    expect(redirected.code).toBe(1);
+  });
+
   it('routes learning slash commands while preserving ordinary absolute paths', async () => {
     const shell = make();
     shell.register({
@@ -79,6 +106,13 @@ describe('executor', () => {
     // Options after the command belong to the command, not to sudo.
     expect(await shell.run('sudo head -n 1 /etc/shadow')).toMatchObject({ code: 0, stdout: 'root:*:20000:0:99999:7:::\n' });
     expect(await shell.run('sudo -x whoami')).toMatchObject({ code: 1 });
+  });
+
+  it('expands wildcards in home-relative paths while preserving quoted wildcards', async () => {
+    const shell = make();
+    await shell.run('mkdir -p ~/logs; touch ~/logs/a.log ~/logs/b.log ~/logs/note.txt');
+    expect((await shell.run('echo ~/logs/*.log')).stdout).toBe('/home/ada/logs/a.log /home/ada/logs/b.log\n');
+    expect((await shell.run('echo "~/logs/*.log"')).stdout).toBe('~/logs/*.log\n');
   });
 
   it('honors tutor actor capability grants', async () => {

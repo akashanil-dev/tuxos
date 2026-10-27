@@ -474,3 +474,66 @@
 .linux-builtin button:hover { border-color: var(--accent); }
 .linux-builtin button.primary { border-color: var(--accent); background: var(--accent); color: var(--accent-fg, #fff); }
 .linux-builtin-done { margin: 0; color: var(--ok, #3fb950); font-size: 13px; }
+
+/* The learning path starts with one action; details stay available on demand. */
+.linux-curriculum { gap: 24px; padding: 28px 24px; }
+.linux-curriculum > * { max-width: 760px; flex-shrink: 0; }
+.curriculum-welcome h3 { font-size: 23px; font-weight: 600; letter-spacing: -.02em; }
+.curriculum-progress { display: flex; align-items: center; gap: 16px; margin-top: 20px; color: var(--muted); font-size: 12px; }
+.curriculum-progress progress { flex: 1; min-width: 60px; height: 5px; border: 0; border-radius: 8px; overflow: hidden; background: var(--surface-2); accent-color: var(--accent); }
+.curriculum-progress progress::-webkit-progress-bar { background: var(--surface-2); }
+.curriculum-progress progress::-webkit-progress-value { background: var(--accent); border-radius: 8px; }
+.curriculum-progress progress::-moz-progress-bar { background: var(--accent); }
+.curriculum-next { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 20px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius-small); background: var(--window-sidebar); }
+.curriculum-next h4 { margin: 6px 0; font-size: 18px; font-weight: 600; }
+.curriculum-next p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
+.curriculum-next button { flex-shrink: 0; min-height: 36px; }
+.curriculum-next button span { margin-left: 12px; }
+.curriculum-browse-heading { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+.curriculum-browse-heading h4 { margin: 0; font-size: 15px; font-weight: 600; }
+.curriculum-browse-heading > span, .curriculum-search-count { color: var(--muted); font-size: 12px; }
+.curriculum-search { display: grid; gap: 6px; margin-bottom: 14px; color: var(--muted); font-size: 12px; }
+.curriculum-search input { width: 100%; min-height: 34px; border: 1px solid var(--line); border-radius: var(--radius-small); padding: 6px 10px; background: var(--window-sidebar); color: var(--window-fg); font: inherit; }
+.curriculum-stages { border: 1px solid var(--line); border-radius: var(--radius-small); overflow: hidden; }
+.curriculum-stage + .curriculum-stage { border-top: 1px solid var(--line); }
+.curriculum-stage-heading { display: flex; align-items: center; gap: 12px; padding: 14px; margin: 0; font-size: 13px; font-weight: 600; cursor: pointer; list-style: none; }
+.curriculum-stage-heading::before { content: '›'; font-size: 18px; color: var(--muted); width: 12px; text-align: center; }
+.curriculum-stage[open] > .curriculum-stage-heading::before { transform: rotate(90deg); }
+.curriculum-stage-heading:hover { background: var(--hover); }
+.curriculum-stage-heading small { margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 400; white-space: nowrap; }
+.curriculum-stage > ol { padding: 0 12px 12px; }
+.linux-curriculum .curriculum-lesson { align-items: start; padding: 12px; gap: 8px; }
+.curriculum-lesson details { min-width: 0; flex: 1; }
+.curriculum-lesson summary { display: flex; gap: 10px; align-items: center; cursor: pointer; list-style: none; }
+.curriculum-lesson summary::after { content: '+'; color: var(--muted); margin-left: auto; }
+.curriculum-lesson details[open] summary::after { content: '−'; }
+.curriculum-number { color: var(--accent); font: 600 12px var(--font-mono); min-width: 20px; }
+.curriculum-title { font-size: 13px; font-weight: 500; }
+.curriculum-title small { display: block; margin-top: 5px; font-weight: 400; }
+.curriculum-details { font-size: 13px; line-height: 1.6; padding: 8px 0 0 30px; }
+.curriculum-lab-kind { color: var(--muted); }
+.linux-curriculum .curriculum-details ul { margin: 8px 0; padding-left: 18px; }
+.linux-curriculum .curriculum-details li { display: list-item; padding: 0; border: 0; background: none; }
+.curriculum-vm { border-left: 2px solid var(--accent); padding: 8px 12px; margin: 12px 0; background: var(--window-bg); }
+.curriculum-vm p { margin: 5px 0 0; }
+.curriculum-references { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; }
+.curriculum-references a { color: var(--accent); }
+.curriculum-note { color: var(--muted); font-size: 12px; line-height: 1.6; }
+.curriculum-note summary, .linux-task-help summary { cursor: pointer; width: fit-content; }
+.curriculum-note p { max-width: 80ch; }
+.curriculum-empty { padding-block: 12px; color: var(--muted); font-size: 13px; }
+.linux-mission { max-height: 55%; overflow-y: auto; }
+.linux-mission-task code, .linux-help-explanation code { padding: 1px 5px; border-radius: 3px; background: var(--surface-2); color: var(--accent-strong); font-family: var(--font-mono); }
+.linux-task-help { font-size: 13px; line-height: 1.6; }
+.linux-task-help > summary { color: var(--accent); }
+.linux-help-explanation { max-width: 78ch; margin: 10px 0; }
+.linux-lesson-context { margin-top: 10px; color: var(--muted); font-size: 12px; }
+.linux-lesson-context p { max-width: 78ch; margin: 8px 0; }
+.linux-task-help > button { margin-top: 12px; }
+.linux-curriculum :is(button, input, summary):focus-visible,
+.linux-mission :is(button, summary):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (max-width: 560px) {
+  .linux-curriculum { padding: 16px; gap: 18px; }
+  .curriculum-next { flex-wrap: wrap; padding: 16px; }
+  .curriculum-details { padding-left: 0; }
+}
