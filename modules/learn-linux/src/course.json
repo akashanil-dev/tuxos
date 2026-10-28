@@ -1,7 +1,7 @@
 {
   "id": "learn-linux",
   "title": "Learn Linux",
-  "summary": "Use the terminal the way people do every day: look around, move, make, read, search and protect files.",
+  "summary": "A complete learning path from your first command to Linux administration: shell skills, security, services, networking, storage, automation and incident recovery. Practice in TuxOS, then complete the companion labs on a disposable Ubuntu/Debian VM.",
   "lessons": [
     {
       "id": "first-words",
@@ -11,33 +11,80 @@
         {
           "id": "whoami",
           "task": "Ask the computer who you are: type whoami and press Enter.",
-          "hints": ["Open the Terminal (Ctrl+Alt+T), type whoami and press Enter."],
-          "check": { "ran": { "command": "whoami", "code": 0 } },
-          "explain": "whoami prints the user you are logged in as. Everything you do runs as that user."
+          "hints": [
+            "Open the Terminal (Ctrl+Alt+T), type whoami and press Enter."
+          ],
+          "check": {
+            "ran": {
+              "command": "whoami",
+              "code": 0
+            }
+          },
+          "explain": "whoami prints the user you are logged in as. Everything you do runs as that user.",
+          "teach": "whoami prints the user you are logged in as. Everything you do runs as that user. Read the task, inspect the command and its arguments, then run it yourself. Open the Terminal (Ctrl+Alt+T), type whoami and press Enter."
         },
         {
           "id": "pwd",
           "task": "Ask where you are: pwd.",
-          "hints": ["pwd stands for print working directory. Type pwd and press Enter."],
-          "check": { "ran": { "command": "pwd", "code": 0 } },
-          "explain": "You start in your home folder, /home/<you>. The prompt shows it as ~."
+          "hints": [
+            "pwd stands for print working directory. Type pwd and press Enter."
+          ],
+          "check": {
+            "ran": {
+              "command": "pwd",
+              "code": 0
+            }
+          },
+          "explain": "You start in your home folder, /home/<you>. The prompt shows it as ~.",
+          "teach": "You start in your home folder, /home/<you>. The prompt shows it as ~. Read the task, inspect the command and its arguments, then run it yourself. pwd stands for print working directory. Type pwd and press Enter."
         },
         {
           "id": "ls",
           "task": "Look around with ls.",
-          "hints": ["ls lists what is in the current folder. Type ls and press Enter."],
-          "check": { "ran": { "command": "ls", "code": 0 } },
-          "explain": "ls is the command you will type most often. Folders and files are listed by name."
+          "hints": [
+            "ls lists what is in the current folder. Type ls and press Enter."
+          ],
+          "check": {
+            "ran": {
+              "command": "ls",
+              "code": 0
+            }
+          },
+          "explain": "ls is the command you will type most often. Folders and files are listed by name.",
+          "teach": "ls is the command you will type most often. Folders and files are listed by name. Read the task, inspect the command and its arguments, then run it yourself. ls lists what is in the current folder. Type ls and press Enter."
         }
       ],
-      "solution": ["whoami", "pwd", "ls"]
+      "solution": [
+        "whoami",
+        "pwd",
+        "ls"
+      ],
+      "stage": "1 · Linux foundations",
+      "duration": 20,
+      "labKind": "terminal",
+      "outcomes": [
+        "First words with the shell"
+      ],
+      "realLab": "Repeat this lesson in a disposable Ubuntu VM under your own non-root account. Compare help output and note any differences from TuxOS. Use a practice directory and inspect paths before changing files.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ]
     },
     {
       "id": "moving-around",
       "title": "Moving around",
       "story": "Someone left a garden in your home folder, and something is hidden in it. Folders are called directories, and cd (change directory) moves you between them.",
       "setup": {
-        "dirs": ["~/garden/shed"],
+        "dirs": [
+          "~/garden/shed"
+        ],
         "files": {
           "~/garden/roses.txt": "Red, and very thorny.\n",
           "~/garden/.seed-packet": "The hidden seed is a sunflower.\n"
@@ -47,33 +94,84 @@
         {
           "id": "cd-garden",
           "task": "Go into the garden directory: cd garden",
-          "hints": ["From your home folder, type cd garden. Watch the prompt change to ~/garden."],
-          "check": { "cwd": "~/garden" },
-          "explain": "The prompt always shows where you are. cd with no arguments takes you back home."
+          "hints": [
+            "From your home folder, type cd garden. Watch the prompt change to ~/garden."
+          ],
+          "check": {
+            "cwd": "~/garden"
+          },
+          "explain": "The prompt always shows where you are. cd with no arguments takes you back home.",
+          "teach": "The prompt always shows where you are. cd with no arguments takes you back home. Read the task, inspect the command and its arguments, then run it yourself. From your home folder, type cd garden. Watch the prompt change to ~/garden."
         },
         {
           "id": "ls-a",
           "task": "Some files are hidden. Show everything with ls -a",
-          "hints": ["Names starting with a dot are hidden from plain ls.", "Type ls -a inside the garden."],
-          "check": { "ran": { "command": "ls", "line": "-[a-zA-Z]*a", "stdout": "\\.seed-packet" } },
-          "explain": "-a means all. Files whose names start with a dot are hidden by convention, often settings."
+          "hints": [
+            "Names starting with a dot are hidden from plain ls.",
+            "Type ls -a inside the garden."
+          ],
+          "check": {
+            "ran": {
+              "command": "ls",
+              "line": "-[a-zA-Z]*a",
+              "stdout": "\\.seed-packet"
+            }
+          },
+          "explain": "-a means all. Files whose names start with a dot are hidden by convention, often settings.",
+          "teach": "-a means all. Files whose names start with a dot are hidden by convention, often settings. Read the task, inspect the command and its arguments, then run it yourself. Names starting with a dot are hidden from plain ls."
         },
         {
           "id": "cat-seed",
           "task": "Read the hidden file with cat to find out what the seed is.",
-          "hints": ["cat prints a file. The file is called .seed-packet (with the dot).", "Type cat .seed-packet"],
-          "check": { "ran": { "command": "cat", "stdout": "sunflower" } },
-          "explain": "cat (from concatenate) prints files. Tab completes names, so cat .se then Tab saves typing."
+          "hints": [
+            "cat prints a file. The file is called .seed-packet (with the dot).",
+            "Type cat .seed-packet"
+          ],
+          "check": {
+            "ran": {
+              "command": "cat",
+              "stdout": "sunflower"
+            }
+          },
+          "explain": "cat (from concatenate) prints files. Tab completes names, so cat .se then Tab saves typing.",
+          "teach": "cat (from concatenate) prints files. Tab completes names, so cat .se then Tab saves typing. Read the task, inspect the command and its arguments, then run it yourself. cat prints a file. The file is called .seed-packet (with the dot)."
         },
         {
           "id": "back-home",
           "task": "Go back up to your home folder with cd ..",
-          "hints": [".. means the folder above this one. Type cd .."],
-          "check": { "cwd": "~" },
-          "explain": ".. is the parent folder and . is the current one. They work in every path, like ../garden/shed."
+          "hints": [
+            ".. means the folder above this one. Type cd .."
+          ],
+          "check": {
+            "cwd": "~"
+          },
+          "explain": ".. is the parent folder and . is the current one. They work in every path, like ../garden/shed.",
+          "teach": ".. is the parent folder and . is the current one. They work in every path, like ../garden/shed. Read the task, inspect the command and its arguments, then run it yourself. .. means the folder above this one. Type cd .."
         }
       ],
-      "solution": ["cd garden", "ls -a", "cat .seed-packet", "cd .."]
+      "solution": [
+        "cd garden",
+        "ls -a",
+        "cat .seed-packet",
+        "cd .."
+      ],
+      "stage": "1 · Linux foundations",
+      "duration": 20,
+      "labKind": "terminal",
+      "outcomes": [
+        "Moving around"
+      ],
+      "realLab": "Repeat this lesson in a disposable Ubuntu VM under your own non-root account. Compare help output and note any differences from TuxOS. Use a practice directory and inspect paths before changing files.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ]
     },
     {
       "id": "making-things",
@@ -83,47 +181,116 @@
         {
           "id": "mkdir",
           "task": "Make a directory called projects: mkdir projects",
-          "hints": ["mkdir means make directory. Type mkdir projects in your home folder."],
-          "check": { "exists": "~/projects", "kind": "dir" },
-          "explain": "mkdir -p makes a whole path at once, like mkdir -p a/b/c."
+          "hints": [
+            "mkdir means make directory. Type mkdir projects in your home folder."
+          ],
+          "check": {
+            "exists": "~/projects",
+            "kind": "dir"
+          },
+          "explain": "mkdir -p makes a whole path at once, like mkdir -p a/b/c.",
+          "teach": "mkdir -p makes a whole path at once, like mkdir -p a/b/c. Read the task, inspect the command and its arguments, then run it yourself. mkdir means make directory. Type mkdir projects in your home folder."
         },
         {
           "id": "write-plan",
           "task": "Write the words learn linux into projects/plan.txt using echo and >",
-          "hints": ["> sends a command's output into a file instead of the screen.", "Type echo learn linux > projects/plan.txt"],
-          "check": { "contains": { "path": "~/projects/plan.txt", "pattern": "learn linux" } },
-          "explain": "> replaces a file's contents and >> adds to the end. Careful: > overwrites without asking."
+          "hints": [
+            "> sends a command's output into a file instead of the screen.",
+            "Type echo learn linux > projects/plan.txt"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/projects/plan.txt",
+              "pattern": "learn linux"
+            }
+          },
+          "explain": "> replaces a file's contents and >> adds to the end. Careful: > overwrites without asking.",
+          "teach": "> replaces a file's contents and >> adds to the end. Careful: > overwrites without asking. Read the task, inspect the command and its arguments, then run it yourself. > sends a command's output into a file instead of the screen."
         },
         {
           "id": "copy",
           "task": "Make a backup: copy plan.txt to plan.bak in the same folder.",
-          "hints": ["cp takes a source and a destination.", "Type cp projects/plan.txt projects/plan.bak"],
-          "check": { "contains": { "path": "~/projects/plan.bak", "pattern": "learn linux" } },
-          "explain": "cp copies, mv moves or renames, and both take the source first and the destination second."
+          "hints": [
+            "cp takes a source and a destination.",
+            "Type cp projects/plan.txt projects/plan.bak"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/projects/plan.bak",
+              "pattern": "learn linux"
+            }
+          },
+          "explain": "cp copies, mv moves or renames, and both take the source first and the destination second.",
+          "teach": "cp copies, mv moves or renames, and both take the source first and the destination second. Read the task, inspect the command and its arguments, then run it yourself. cp takes a source and a destination."
         },
         {
           "id": "open-files",
           "task": "Open the Files app from the desktop and look inside projects.",
-          "hints": ["Double-click the Files icon on the desktop, then double-click projects."],
-          "check": { "opened": "files" },
-          "explain": "Files and the terminal show the same filesystem. Change something in one and the other sees it."
+          "hints": [
+            "Double-click the Files icon on the desktop, then double-click projects."
+          ],
+          "check": {
+            "opened": "files"
+          },
+          "explain": "Files and the terminal show the same filesystem. Change something in one and the other sees it.",
+          "teach": "Files and the terminal show the same filesystem. Change something in one and the other sees it. Read the task, inspect the command and its arguments, then run it yourself. Double-click the Files icon on the desktop, then double-click projects."
         },
         {
           "id": "remove",
           "task": "You don't need the backup after all. Delete projects/plan.bak with rm.",
-          "hints": ["rm removes files. There is no recycle bin in the terminal.", "Type rm projects/plan.bak"],
-          "check": { "all": [{ "missing": "~/projects/plan.bak" }, { "exists": "~/projects/plan.txt" }] },
-          "explain": "rm deletes for good. rm -r removes a folder and everything in it, so read twice before pressing Enter."
+          "hints": [
+            "rm removes files. There is no recycle bin in the terminal.",
+            "Type rm projects/plan.bak"
+          ],
+          "check": {
+            "all": [
+              {
+                "missing": "~/projects/plan.bak"
+              },
+              {
+                "exists": "~/projects/plan.txt"
+              }
+            ]
+          },
+          "explain": "rm deletes for good. rm -r removes a folder and everything in it, so read twice before pressing Enter.",
+          "teach": "rm deletes for good. rm -r removes a folder and everything in it, so read twice before pressing Enter. Read the task, inspect the command and its arguments, then run it yourself. rm removes files. There is no recycle bin in the terminal."
         }
       ],
-      "solution": ["mkdir projects", "echo learn linux > projects/plan.txt", "cp projects/plan.txt projects/plan.bak", { "open": "files" }, "rm projects/plan.bak"]
+      "solution": [
+        "mkdir projects",
+        "echo learn linux > projects/plan.txt",
+        "cp projects/plan.txt projects/plan.bak",
+        {
+          "open": "files"
+        },
+        "rm projects/plan.bak"
+      ],
+      "stage": "1 · Linux foundations",
+      "duration": 20,
+      "labKind": "terminal",
+      "outcomes": [
+        "Making, copying and removing"
+      ],
+      "realLab": "Repeat this lesson in a disposable Ubuntu VM under your own non-root account. Compare help output and note any differences from TuxOS. Use a practice directory and inspect paths before changing files.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ]
     },
     {
       "id": "reading-and-searching",
       "title": "Reading and searching",
       "story": "A web server has been writing a log all night. Logs are long, so instead of reading everything you'll ask questions about it.",
       "setup": {
-        "dirs": ["~/logs"],
+        "dirs": [
+          "~/logs"
+        ],
         "files": {
           "~/logs/server.log": "08:00 INFO server started\n08:01 INFO request /home\n08:02 ERROR database timeout\n08:03 INFO request /about\n08:04 WARN slow response\n08:05 ERROR disk almost full\n08:06 INFO request /home\n08:07 ERROR database timeout\n08:08 INFO request /contact\n08:09 INFO server healthy\n"
         }
@@ -132,33 +299,93 @@
         {
           "id": "head",
           "task": "Show only the first 3 lines of logs/server.log with head.",
-          "hints": ["head shows the start of a file. -n chooses how many lines.", "Type head -n 3 logs/server.log"],
-          "check": { "ran": { "command": "head", "line": "-n\\s*3\\b", "stdout": "08:02 ERROR database timeout" } },
-          "explain": "tail shows the end instead, which is where the newest log lines are."
+          "hints": [
+            "head shows the start of a file. -n chooses how many lines.",
+            "Type head -n 3 logs/server.log"
+          ],
+          "check": {
+            "ran": {
+              "command": "head",
+              "line": "-n\\s*3\\b",
+              "stdout": "08:02 ERROR database timeout"
+            }
+          },
+          "explain": "tail shows the end instead, which is where the newest log lines are.",
+          "teach": "tail shows the end instead, which is where the newest log lines are. Read the task, inspect the command and its arguments, then run it yourself. head shows the start of a file. -n chooses how many lines."
         },
         {
           "id": "wc",
           "task": "How many lines does the log have? Count them with wc -l",
-          "hints": ["wc counts lines, words and characters; -l means just lines.", "Type wc -l logs/server.log"],
-          "check": { "ran": { "command": "wc", "stdout": "^10\\b" } },
-          "explain": "10 lines. On a real server, logs can have millions, which is why these tools matter."
+          "hints": [
+            "wc counts lines, words and characters; -l means just lines.",
+            "Type wc -l logs/server.log"
+          ],
+          "check": {
+            "ran": {
+              "command": "wc",
+              "stdout": "^10\\b"
+            }
+          },
+          "explain": "10 lines. On a real server, logs can have millions, which is why these tools matter.",
+          "teach": "10 lines. On a real server, logs can have millions, which is why these tools matter. Read the task, inspect the command and its arguments, then run it yourself. wc counts lines, words and characters; -l means just lines."
         },
         {
           "id": "grep",
           "task": "Show only the ERROR lines with grep.",
-          "hints": ["grep prints the lines that contain a pattern.", "Type grep ERROR logs/server.log"],
-          "check": { "ran": { "command": "grep", "stdout": "disk almost full" } },
-          "explain": "grep is one of the most useful commands there is. grep -i ignores case and grep -r searches folders."
+          "hints": [
+            "grep prints the lines that contain a pattern.",
+            "Type grep ERROR logs/server.log"
+          ],
+          "check": {
+            "ran": {
+              "command": "grep",
+              "stdout": "disk almost full"
+            }
+          },
+          "explain": "grep is one of the most useful commands there is. grep -i ignores case and grep -r searches folders.",
+          "teach": "grep is one of the most useful commands there is. grep -i ignores case and grep -r searches folders. Read the task, inspect the command and its arguments, then run it yourself. grep prints the lines that contain a pattern."
         },
         {
           "id": "grep-c",
           "task": "Now just count the errors with grep -c",
-          "hints": ["-c makes grep print how many lines matched instead of the lines.", "Type grep -c ERROR logs/server.log"],
-          "check": { "ran": { "command": "grep", "line": "-[a-zA-Z]*c", "stdout": "^3$" } },
-          "explain": "Three errors. Small questions with exact answers are how you find problems quickly."
+          "hints": [
+            "-c makes grep print how many lines matched instead of the lines.",
+            "Type grep -c ERROR logs/server.log"
+          ],
+          "check": {
+            "ran": {
+              "command": "grep",
+              "line": "-[a-zA-Z]*c",
+              "stdout": "^3$"
+            }
+          },
+          "explain": "Three errors. Small questions with exact answers are how you find problems quickly.",
+          "teach": "Three errors. Small questions with exact answers are how you find problems quickly. Read the task, inspect the command and its arguments, then run it yourself. -c makes grep print how many lines matched instead of the lines."
         }
       ],
-      "solution": ["head -n 3 logs/server.log", "wc -l logs/server.log", "grep ERROR logs/server.log", "grep -c ERROR logs/server.log"]
+      "solution": [
+        "head -n 3 logs/server.log",
+        "wc -l logs/server.log",
+        "grep ERROR logs/server.log",
+        "grep -c ERROR logs/server.log"
+      ],
+      "stage": "1 · Linux foundations",
+      "duration": 20,
+      "labKind": "terminal",
+      "outcomes": [
+        "Reading and searching"
+      ],
+      "realLab": "Repeat this lesson in a disposable Ubuntu VM under your own non-root account. Compare help output and note any differences from TuxOS. Use a practice directory and inspect paths before changing files.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ]
     },
     {
       "id": "pipes",
@@ -173,26 +400,74 @@
         {
           "id": "sort",
           "task": "Sort fruit.txt alphabetically.",
-          "hints": ["Type sort fruit.txt"],
-          "check": { "ran": { "command": "sort", "stdout": "^apple\\napple\\napple\\nbanana" } },
-          "explain": "sort puts lines in order. sort -r reverses it and sort -n sorts numbers properly."
+          "hints": [
+            "Type sort fruit.txt"
+          ],
+          "check": {
+            "ran": {
+              "command": "sort",
+              "stdout": "^apple\\napple\\napple\\nbanana"
+            }
+          },
+          "explain": "sort puts lines in order. sort -r reverses it and sort -n sorts numbers properly.",
+          "teach": "sort puts lines in order. sort -r reverses it and sort -n sorts numbers properly. Read the task, inspect the command and its arguments, then run it yourself. Type sort fruit.txt"
         },
         {
           "id": "count",
           "task": "Count how many of each fruit there are by piping sort into uniq -c",
-          "hints": ["uniq only merges repeated lines that are next to each other, so sort first.", "Type sort fruit.txt | uniq -c"],
-          "check": { "ran": { "command": "uniq", "line": "\\|", "stdout": "3 apple" } },
-          "explain": "sort | uniq -c is a classic: it turns a list into a tally. Add | sort -rn to rank it."
+          "hints": [
+            "uniq only merges repeated lines that are next to each other, so sort first.",
+            "Type sort fruit.txt | uniq -c"
+          ],
+          "check": {
+            "ran": {
+              "command": "uniq",
+              "line": "\\|",
+              "stdout": "3 apple"
+            }
+          },
+          "explain": "sort | uniq -c is a classic: it turns a list into a tally. Add | sort -rn to rank it.",
+          "teach": "sort | uniq -c is a classic: it turns a list into a tally. Add | sort -rn to rank it. Read the task, inspect the command and its arguments, then run it yourself. uniq only merges repeated lines that are next to each other, so sort first."
         },
         {
           "id": "save",
           "task": "Save the sorted fruit into sorted.txt using >",
-          "hints": ["Redirection works after any command, including a pipeline.", "Type sort fruit.txt > sorted.txt"],
-          "check": { "contains": { "path": "~/sorted.txt", "pattern": "^apple\\napple\\napple\\nbanana\\nbanana\\ncherry" } },
-          "explain": "Commands, pipes and redirection together are how people automate work on Linux."
+          "hints": [
+            "Redirection works after any command, including a pipeline.",
+            "Type sort fruit.txt > sorted.txt"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/sorted.txt",
+              "pattern": "^apple\\napple\\napple\\nbanana\\nbanana\\ncherry"
+            }
+          },
+          "explain": "Commands, pipes and redirection together are how people automate work on Linux.",
+          "teach": "Commands, pipes and redirection together are how people automate work on Linux. Read the task, inspect the command and its arguments, then run it yourself. Redirection works after any command, including a pipeline."
         }
       ],
-      "solution": ["sort fruit.txt", "sort fruit.txt | uniq -c", "sort fruit.txt > sorted.txt"]
+      "solution": [
+        "sort fruit.txt",
+        "sort fruit.txt | uniq -c",
+        "sort fruit.txt > sorted.txt"
+      ],
+      "stage": "1 · Linux foundations",
+      "duration": 20,
+      "labKind": "terminal",
+      "outcomes": [
+        "Pipes: chaining commands"
+      ],
+      "realLab": "Repeat this lesson in a disposable Ubuntu VM under your own non-root account. Compare help output and note any differences from TuxOS. Use a practice directory and inspect paths before changing files.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ]
     },
     {
       "id": "permissions",
@@ -207,33 +482,91 @@
         {
           "id": "ls-l",
           "task": "See the permissions of your files with ls -l",
-          "hints": ["Type ls -l. The first column, like -rw-r--r--, is the permissions."],
-          "check": { "ran": { "command": "ls", "line": "-[a-zA-Z]*l", "stdout": "diary\\.txt" } },
-          "explain": "rw-r--r-- means: you (owner) can read and write, your group and everyone else can only read."
+          "hints": [
+            "Type ls -l. The first column, like -rw-r--r--, is the permissions."
+          ],
+          "check": {
+            "ran": {
+              "command": "ls",
+              "line": "-[a-zA-Z]*l",
+              "stdout": "diary\\.txt"
+            }
+          },
+          "explain": "rw-r--r-- means: you (owner) can read and write, your group and everyone else can only read.",
+          "teach": "rw-r--r-- means: you (owner) can read and write, your group and everyone else can only read. Read the task, inspect the command and its arguments, then run it yourself. Type ls -l. The first column, like -rw-r--r--, is the permissions."
         },
         {
           "id": "denied",
           "task": "Try to read the password file: cat /etc/shadow",
-          "hints": ["Type cat /etc/shadow. It's supposed to fail!"],
-          "check": { "ran": { "command": "cat", "stderr": "/etc/shadow: Permission denied" } },
-          "explain": "/etc/shadow holds password hashes, so only root, the administrator, may read it."
+          "hints": [
+            "Type cat /etc/shadow. It's supposed to fail!"
+          ],
+          "check": {
+            "ran": {
+              "command": "cat",
+              "stderr": "/etc/shadow: Permission denied"
+            }
+          },
+          "explain": "/etc/shadow holds password hashes, so only root, the administrator, may read it.",
+          "teach": "/etc/shadow holds password hashes, so only root, the administrator, may read it. Read the task, inspect the command and its arguments, then run it yourself. Type cat /etc/shadow. It's supposed to fail!"
         },
         {
           "id": "sudo",
           "task": "Run the same command as root by putting sudo in front of it.",
-          "hints": ["sudo means do this as the superuser.", "Type sudo cat /etc/shadow"],
-          "check": { "ran": { "command": "sudo", "line": "shadow", "code": 0 } },
-          "explain": "sudo is powerful: root can change or delete anything. Use it only when you understand the command."
+          "hints": [
+            "sudo means do this as the superuser.",
+            "Type sudo cat /etc/shadow"
+          ],
+          "check": {
+            "ran": {
+              "command": "sudo",
+              "line": "shadow",
+              "code": 0
+            }
+          },
+          "explain": "sudo is powerful: root can change or delete anything. Use it only when you understand the command.",
+          "teach": "sudo is powerful: root can change or delete anything. Use it only when you understand the command. Read the task, inspect the command and its arguments, then run it yourself. sudo means do this as the superuser."
         },
         {
           "id": "chmod",
           "task": "Make your diary private: only you may read or write it. Use chmod 600 diary.txt",
-          "hints": ["600 means read+write (6) for you, nothing (0) for group, nothing (0) for others.", "Type chmod 600 diary.txt, then ls -l to check."],
-          "check": { "mode": { "path": "~/diary.txt", "is": "600" } },
-          "explain": "Each digit adds read (4), write (2) and execute (1). 644 is a typical file and 755 a typical program."
+          "hints": [
+            "600 means read+write (6) for you, nothing (0) for group, nothing (0) for others.",
+            "Type chmod 600 diary.txt, then ls -l to check."
+          ],
+          "check": {
+            "mode": {
+              "path": "~/diary.txt",
+              "is": "600"
+            }
+          },
+          "explain": "Each digit adds read (4), write (2) and execute (1). 644 is a typical file and 755 a typical program.",
+          "teach": "Each digit adds read (4), write (2) and execute (1). 644 is a typical file and 755 a typical program. Read the task, inspect the command and its arguments, then run it yourself. 600 means read+write (6) for you, nothing (0) for group, nothing (0) for others."
         }
       ],
-      "solution": ["ls -l", "cat /etc/shadow", "sudo cat /etc/shadow", "chmod 600 diary.txt"]
+      "solution": [
+        "ls -l",
+        "cat /etc/shadow",
+        "sudo cat /etc/shadow",
+        "chmod 600 diary.txt"
+      ],
+      "stage": "1 · Linux foundations",
+      "duration": 20,
+      "labKind": "terminal",
+      "outcomes": [
+        "Permissions and sudo"
+      ],
+      "realLab": "Repeat this lesson in a disposable Ubuntu VM under your own non-root account. Compare help output and note any differences from TuxOS. Use a practice directory and inspect paths before changing files.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ]
     },
     {
       "id": "installing-software",
@@ -243,33 +576,3142 @@
         {
           "id": "apt-denied",
           "task": "Try to install the tree program without sudo: apt install tree",
-          "hints": ["Type apt install tree. It's supposed to fail!"],
-          "check": { "ran": { "command": "apt", "stderr": "are you root\\?" } },
-          "explain": "Installing software changes the whole system, so apt only lets root do it."
+          "hints": [
+            "Type apt install tree. It's supposed to fail!"
+          ],
+          "check": {
+            "ran": {
+              "command": "apt",
+              "stderr": "are you root\\?"
+            }
+          },
+          "explain": "Installing software changes the whole system, so apt only lets root do it.",
+          "teach": "Installing software changes the whole system, so apt only lets root do it. Read the task, inspect the command and its arguments, then run it yourself. Type apt install tree. It's supposed to fail!"
         },
         {
           "id": "apt-update",
           "task": "Refresh the list of available packages as root: sudo apt update",
-          "hints": ["apt update downloads the latest list of packages. It needs root too.", "Type sudo apt update"],
-          "check": { "ran": { "command": "apt", "line": "update", "code": 0 } },
-          "explain": "apt update refreshes the package lists. Do it before installing, or apt may not find the package."
+          "hints": [
+            "apt update downloads the latest list of packages. It needs root too.",
+            "Type sudo apt update"
+          ],
+          "check": {
+            "ran": {
+              "command": "apt",
+              "line": "update",
+              "code": 0
+            }
+          },
+          "explain": "apt update refreshes the package lists. Do it before installing, or apt may not find the package.",
+          "teach": "apt update refreshes the package lists. Do it before installing, or apt may not find the package. Read the task, inspect the command and its arguments, then run it yourself. apt update downloads the latest list of packages. It needs root too."
         },
         {
           "id": "apt-install",
           "task": "Install tree as root: sudo apt install tree",
-          "hints": ["Put sudo in front: sudo apt install tree"],
-          "check": { "exists": "/usr/bin/tree" },
-          "explain": "apt downloaded the package, unpacked it, and put the tree program in /usr/bin."
+          "hints": [
+            "Put sudo in front: sudo apt install tree"
+          ],
+          "check": {
+            "exists": "/usr/bin/tree"
+          },
+          "explain": "apt downloaded the package, unpacked it, and put the tree program in /usr/bin.",
+          "teach": "apt downloaded the package, unpacked it, and put the tree program in /usr/bin. Read the task, inspect the command and its arguments, then run it yourself. Put sudo in front: sudo apt install tree"
         },
         {
           "id": "use-tree",
           "task": "Run your new program: tree",
-          "hints": ["Just type tree and press Enter."],
-          "check": { "ran": { "command": "tree", "code": 0 } },
-          "explain": "tree draws your folders as a tree. sudo apt remove uninstalls a package, and apt list --installed shows what you have."
+          "hints": [
+            "Just type tree and press Enter."
+          ],
+          "check": {
+            "ran": {
+              "command": "tree",
+              "code": 0
+            }
+          },
+          "explain": "tree draws your folders as a tree. sudo apt remove uninstalls a package, and apt list --installed shows what you have.",
+          "teach": "tree draws your folders as a tree. sudo apt remove uninstalls a package, and apt list --installed shows what you have. Read the task, inspect the command and its arguments, then run it yourself. Just type tree and press Enter."
         }
       ],
-      "solution": ["apt install tree", "sudo apt update", "sudo apt install tree", "tree"]
+      "solution": [
+        "apt install tree",
+        "sudo apt update",
+        "sudo apt install tree",
+        "tree"
+      ],
+      "stage": "1 · Linux foundations",
+      "duration": 20,
+      "labKind": "terminal",
+      "outcomes": [
+        "Installing software with apt"
+      ],
+      "realLab": "Repeat this lesson in a disposable Ubuntu VM under your own non-root account. Compare help output and note any differences from TuxOS. Use a practice directory and inspect paths before changing files.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ]
+    },
+    {
+      "id": "paths-and-layout",
+      "title": "Absolute paths and the Linux directory tree",
+      "stage": "2 · Shell fluency",
+      "duration": 25,
+      "labKind": "terminal",
+      "story": "You are taking over an unfamiliar server. Learn where configuration, logs, user files and temporary files belong.",
+      "outcomes": [
+        "Absolute paths and the Linux directory tree",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "paths-and-layout-root",
+          "task": "List the top-level directories.",
+          "teach": "An absolute path begins at /. Relative paths begin at your current directory. /etc holds configuration, /var changing data, /home user files and /tmp temporary files.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: ls /"
+          ],
+          "check": {
+            "ran": {
+              "command": "ls",
+              "code": 0,
+              "stdout": "etc",
+              "line": "\\s/"
+            }
+          },
+          "explain": "An absolute path begins at /. Relative paths begin at your current directory. /etc holds configuration, /var changing data, /home user files and /tmp temporary files."
+        },
+        {
+          "id": "paths-and-layout-home",
+          "task": "Return to your home directory.",
+          "teach": "~ expands to your home. cd with no argument also returns home.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cd ~"
+          ],
+          "check": {
+            "cwd": "~"
+          },
+          "explain": "~ expands to your home. cd with no argument also returns home."
+        },
+        {
+          "id": "paths-and-layout-nested",
+          "task": "Create a nested practice workspace.",
+          "teach": "mkdir -p creates missing parent directories and succeeds when a directory already exists.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: mkdir -p ~/admin-practice/reports"
+          ],
+          "check": {
+            "exists": "~/admin-practice/reports",
+            "kind": "dir"
+          },
+          "explain": "mkdir -p creates missing parent directories and succeeds when a directory already exists."
+        },
+        {
+          "id": "paths-and-layout-confirm",
+          "task": "List the workspace by its absolute-home path.",
+          "teach": "Paths beginning with ~ are expanded by the shell. You can work on a path without changing directories.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: ls ~/admin-practice"
+          ],
+          "check": {
+            "ran": {
+              "command": "ls",
+              "code": 0,
+              "stdout": "reports"
+            }
+          },
+          "explain": "Paths beginning with ~ are expanded by the shell. You can work on a path without changing directories."
+        }
+      ],
+      "solution": [
+        "ls /",
+        "cd ~",
+        "mkdir -p ~/admin-practice/reports",
+        "ls ~/admin-practice"
+      ],
+      "realLab": "Repeat the exercise in a disposable Ubuntu/Debian VM. Use the command manual to compare supported flags, inspect exit codes, and record evidence of the result.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ]
+    },
+    {
+      "id": "quoting-and-globs",
+      "title": "Quoting, wildcards and safe filenames",
+      "stage": "2 · Shell fluency",
+      "duration": 25,
+      "labKind": "terminal",
+      "story": "A report directory contains names with spaces. Select exactly the files you mean before copying or deleting.",
+      "outcomes": [
+        "Quoting, wildcards and safe filenames",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "quoting-and-globs-quoted",
+          "task": "Read the file whose name contains a space.",
+          "teach": "Quote the part of a path that contains spaces: ~/quoting/\"month report.txt\". Leave ~ unquoted so the shell expands it to your home directory. Quotes keep the filename in one argument.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cat ~/quoting/\"month report.txt\""
+          ],
+          "check": {
+            "ran": {
+              "command": "cat",
+              "code": 0,
+              "stdout": "Quarterly revenue"
+            }
+          },
+          "explain": "In TuxOS, a leading ~ is expanded during path resolution even inside quotes; in Bash use \"$HOME/quoting/month report.txt\" or quote only the space-containing part. Quotes keep spaces in one argument."
+        },
+        {
+          "id": "quoting-and-globs-glob",
+          "task": "List just the .log files.",
+          "teach": "The shell expands * to matching filenames. Check the expansion with ls before using a destructive command.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: ls ~/quoting/*.log"
+          ],
+          "check": {
+            "ran": {
+              "command": "ls",
+              "code": 0,
+              "stdout": "access.log"
+            }
+          },
+          "explain": "The shell expands * to matching filenames. Check the expansion with ls before using a destructive command."
+        },
+        {
+          "id": "quoting-and-globs-literal",
+          "task": "Write a literal dollar sign to a note.",
+          "teach": "Single quotes preserve literal characters such as $. Double quotes preserve spaces but still allow variable expansion.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: echo 'Cost: $5' > ~/quoting/cost.txt"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/quoting/cost.txt",
+              "pattern": "^Cost: \\$5$"
+            }
+          },
+          "explain": "Single quotes preserve literal characters such as $. Double quotes preserve spaces but still allow variable expansion."
+        },
+        {
+          "id": "quoting-and-globs-rename",
+          "task": "Rename the report to a name without spaces.",
+          "teach": "mv takes a source and destination. Quoting the source keeps it one filename.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: mv ~/quoting/\"month report.txt\" ~/quoting/month-report.txt"
+          ],
+          "check": {
+            "all": [
+              {
+                "exists": "~/quoting/month-report.txt"
+              },
+              {
+                "missing": "~/quoting/month report.txt"
+              }
+            ]
+          },
+          "explain": "mv takes a source and destination. Quoting the source keeps it one filename."
+        }
+      ],
+      "solution": [
+        "cat ~/quoting/\"month report.txt\"",
+        "ls ~/quoting/*.log",
+        "echo 'Cost: $5' > ~/quoting/cost.txt",
+        "mv ~/quoting/\"month report.txt\" ~/quoting/month-report.txt"
+      ],
+      "realLab": "Repeat the exercise in a disposable Ubuntu/Debian VM. Use the command manual to compare supported flags, inspect exit codes, and record evidence of the result.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ],
+      "setup": {
+        "dirs": [
+          "~/quoting"
+        ],
+        "files": {
+          "~/quoting/month report.txt": "Quarterly revenue\n",
+          "~/quoting/access.log": "GET /\n",
+          "~/quoting/error.log": "timeout\n"
+        }
+      }
+    },
+    {
+      "id": "environment-and-status",
+      "title": "Environment variables and exit status",
+      "stage": "2 · Shell fluency",
+      "duration": 25,
+      "labKind": "terminal",
+      "story": "Commands communicate through both text and an exit status. Learn to distinguish success from failure before automating work.",
+      "outcomes": [
+        "Environment variables and exit status",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "environment-and-status-export",
+          "task": "Set the ROLE environment variable to operator.",
+          "teach": "export NAME=value sets a shell variable for subsequent commands. Do not put spaces around =.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: export ROLE=operator"
+          ],
+          "check": {
+            "ran": {
+              "command": "export",
+              "code": 0,
+              "line": "ROLE=operator"
+            }
+          },
+          "explain": "export NAME=value sets a shell variable for subsequent commands. Do not put spaces around =."
+        },
+        {
+          "id": "environment-and-status-expand",
+          "task": "Print ROLE using variable expansion.",
+          "teach": "Double quotes allow $ROLE to expand while keeping the result one argument.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: echo \"$ROLE\""
+          ],
+          "check": {
+            "ran": {
+              "command": "echo",
+              "code": 0,
+              "stdout": "^operator$"
+            }
+          },
+          "explain": "Double quotes allow $ROLE to expand while keeping the result one argument."
+        },
+        {
+          "id": "environment-and-status-env",
+          "task": "Find ROLE in the environment.",
+          "teach": "env lists environment variables. Pipes pass text from stdout into the next command.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: env | grep ROLE"
+          ],
+          "check": {
+            "ran": {
+              "command": "grep",
+              "code": 0,
+              "stdout": "^ROLE=operator$"
+            }
+          },
+          "explain": "env lists environment variables. Pipes pass text from stdout into the next command."
+        },
+        {
+          "id": "environment-and-status-failure",
+          "task": "Run false to produce a failure exit status.",
+          "teach": "An exit code of zero means success; nonzero means failure. false deliberately returns 1.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: false"
+          ],
+          "check": {
+            "ran": {
+              "command": "false",
+              "code": 1
+            }
+          },
+          "explain": "An exit code of zero means success; nonzero means failure. false deliberately returns 1."
+        },
+        {
+          "id": "environment-and-status-status",
+          "task": "Print the previous exit status immediately.",
+          "teach": "$? contains the last command status. Inspect it immediately: even echo changes the next status.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: echo $?"
+          ],
+          "check": {
+            "ran": {
+              "command": "echo",
+              "code": 0,
+              "stdout": "^1$"
+            }
+          },
+          "explain": "$? contains the last command status. Inspect it immediately: even echo changes the next status."
+        }
+      ],
+      "solution": [
+        "export ROLE=operator",
+        "echo \"$ROLE\"",
+        "env | grep ROLE",
+        "false",
+        "echo $?"
+      ],
+      "realLab": "Repeat the exercise in a disposable Ubuntu/Debian VM. Use the command manual to compare supported flags, inspect exit codes, and record evidence of the result.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ]
+    },
+    {
+      "id": "text-pipelines",
+      "title": "Operational reports with text pipelines",
+      "stage": "2 · Shell fluency",
+      "duration": 25,
+      "labKind": "terminal",
+      "story": "Turn a small access log into a report that helps decide which incident to investigate.",
+      "outcomes": [
+        "Operational reports with text pipelines",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "text-pipelines-errors",
+          "task": "Extract ERROR lines into a new report.",
+          "teach": "grep selects matching lines; > saves stdout. The original log remains available as evidence.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: grep ERROR ~/pipeline/app.log > ~/pipeline/errors.txt"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/pipeline/errors.txt",
+              "pattern": "ERROR database"
+            }
+          },
+          "explain": "grep selects matching lines; > saves stdout. The original log remains available as evidence."
+        },
+        {
+          "id": "text-pipelines-tail",
+          "task": "Inspect the two newest log lines.",
+          "teach": "tail shows recent entries. Real tail -f follows a growing log; this simulation reads a snapshot.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: tail -n 2 ~/pipeline/app.log"
+          ],
+          "check": {
+            "ran": {
+              "command": "tail",
+              "code": 0,
+              "stdout": "service recovered",
+              "line": "-n\\s+2"
+            }
+          },
+          "explain": "tail shows recent entries. Real tail -f follows a growing log; this simulation reads a snapshot."
+        },
+        {
+          "id": "text-pipelines-count",
+          "task": "Count the selected errors.",
+          "teach": "Count lines after filtering to get the number of matching events. Counts need context: a repeated error may have one root cause.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: wc -l ~/pipeline/errors.txt"
+          ],
+          "check": {
+            "ran": {
+              "command": "wc",
+              "code": 0,
+              "stdout": "^2\\b"
+            }
+          },
+          "explain": "Count lines after filtering to get the number of matching events. Counts need context: a repeated error may have one root cause."
+        },
+        {
+          "id": "text-pipelines-rank",
+          "task": "Count repeated event names.",
+          "teach": "uniq only combines adjacent equal lines, so sort first. This pattern is useful for aggregating repeated events.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: sort ~/pipeline/events.txt | uniq -c"
+          ],
+          "check": {
+            "ran": {
+              "command": "uniq",
+              "code": 0,
+              "stdout": "3 timeout",
+              "line": "\\|"
+            }
+          },
+          "explain": "uniq only combines adjacent equal lines, so sort first. This pattern is useful for aggregating repeated events."
+        }
+      ],
+      "solution": [
+        "grep ERROR ~/pipeline/app.log > ~/pipeline/errors.txt",
+        "tail -n 2 ~/pipeline/app.log",
+        "wc -l ~/pipeline/errors.txt",
+        "sort ~/pipeline/events.txt | uniq -c"
+      ],
+      "realLab": "Repeat the exercise in a disposable Ubuntu/Debian VM. Use the command manual to compare supported flags, inspect exit codes, and record evidence of the result.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ],
+      "setup": {
+        "dirs": [
+          "~/pipeline"
+        ],
+        "files": {
+          "~/pipeline/app.log": "INFO boot\nERROR database\nINFO retry\nERROR database\nINFO service recovered\n",
+          "~/pipeline/events.txt": "timeout\nlogin\ntimeout\ntimeout\nlogin\n"
+        }
+      }
+    },
+    {
+      "id": "shell-checkpoint",
+      "title": "Checkpoint: prepare an operations handover",
+      "stage": "2 · Shell fluency",
+      "duration": 30,
+      "labKind": "terminal",
+      "story": "Apply the fundamentals without a command in each task. Build a protected report, preserve the source and verify your work.",
+      "outcomes": [
+        "Checkpoint: prepare an operations handover",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "shell-checkpoint-mkdir",
+          "task": "Create ~/handover/output.",
+          "teach": "Choose mkdir when you need a directory, with -p for missing parents.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: mkdir -p ~/handover/output"
+          ],
+          "check": {
+            "exists": "~/handover/output",
+            "kind": "dir"
+          },
+          "explain": "Choose mkdir when you need a directory, with -p for missing parents."
+        },
+        {
+          "id": "shell-checkpoint-filter",
+          "task": "Save only WARN lines from ~/handover/events.log to ~/handover/output/warnings.txt.",
+          "teach": "A good handover includes the relevant evidence and preserves the raw log.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: grep WARN ~/handover/events.log > ~/handover/output/warnings.txt"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/handover/output/warnings.txt",
+              "pattern": "^WARN queue depth 80$"
+            }
+          },
+          "explain": "A good handover includes the relevant evidence and preserves the raw log."
+        },
+        {
+          "id": "shell-checkpoint-protect",
+          "task": "Allow only the owner to read and write the warnings report.",
+          "teach": "Choose the least permission needed. 6 is read plus write; zero removes access from a class.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: chmod 600 ~/handover/output/warnings.txt"
+          ],
+          "check": {
+            "mode": {
+              "path": "~/handover/output/warnings.txt",
+              "is": "600"
+            }
+          },
+          "explain": "Choose the least permission needed. 6 is read plus write; zero removes access from a class."
+        },
+        {
+          "id": "shell-checkpoint-verify",
+          "task": "Read the finished warnings report.",
+          "teach": "Always inspect an output artifact; a zero exit code alone does not prove the content is correct.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cat ~/handover/output/warnings.txt"
+          ],
+          "check": {
+            "ran": {
+              "command": "cat",
+              "code": 0,
+              "stdout": "WARN queue depth 80"
+            }
+          },
+          "explain": "Always inspect an output artifact; a zero exit code alone does not prove the content is correct."
+        }
+      ],
+      "solution": [
+        "mkdir -p ~/handover/output",
+        "grep WARN ~/handover/events.log > ~/handover/output/warnings.txt",
+        "chmod 600 ~/handover/output/warnings.txt",
+        "cat ~/handover/output/warnings.txt"
+      ],
+      "realLab": "Repeat the exercise in a disposable Ubuntu/Debian VM. Use the command manual to compare supported flags, inspect exit codes, and record evidence of the result.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ],
+      "setup": {
+        "dirs": [
+          "~/handover"
+        ],
+        "files": {
+          "~/handover/events.log": "INFO healthy\nWARN queue depth 80\nERROR dependency timeout\n"
+        }
+      }
+    },
+    {
+      "id": "admin-orientation",
+      "title": "Meet the administration sandbox",
+      "stage": "3 · Accounts and security",
+      "duration": 25,
+      "labKind": "sandbox",
+      "story": "TuxOS now has a separate training server model. Its users, services, network and disks are simulated; they do not change your computer or the desktop login account.",
+      "outcomes": [
+        "Meet the administration sandbox",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "admin-orientation-reset",
+          "task": "Initialize a clean administration sandbox.",
+          "teach": "lab reset is a TuxOS teaching command. It resets training accounts, services, processes, firewall rules and schedules. It does not delete your course progress or practice files.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: lab reset"
+          ],
+          "check": {
+            "ran": {
+              "command": "lab",
+              "code": 0,
+              "stdout": "Reset complete"
+            }
+          },
+          "explain": "lab reset is a TuxOS teaching command. It resets training accounts, services, processes, firewall rules and schedules. It does not delete your course progress or practice files."
+        },
+        {
+          "id": "admin-orientation-kernel",
+          "task": "Inspect the TuxOS kernel identity.",
+          "teach": "uname -a reports kernel and architecture information. A Linux distribution combines a kernel with user-space software.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: uname -a"
+          ],
+          "check": {
+            "ran": {
+              "command": "uname",
+              "code": 0,
+              "stdout": "Linux tuxos"
+            }
+          },
+          "explain": "uname -a reports kernel and architecture information. A Linux distribution combines a kernel with user-space software."
+        },
+        {
+          "id": "admin-orientation-hostname",
+          "task": "Inspect the training hostname.",
+          "teach": "A hostname identifies the machine. DNS resolution and the hostname setting are related but distinct.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: hostname"
+          ],
+          "check": {
+            "ran": {
+              "command": "hostname",
+              "code": 0,
+              "stdout": "^server.lab$"
+            }
+          },
+          "explain": "A hostname identifies the machine. DNS resolution and the hostname setting are related but distinct."
+        },
+        {
+          "id": "admin-orientation-identity",
+          "task": "Inspect your training identity and groups.",
+          "teach": "uid identifies an account; a primary group and supplementary groups affect access. These training identities are separate from the TuxOS filesystem permission model.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: id"
+          ],
+          "check": {
+            "ran": {
+              "command": "id",
+              "code": 0,
+              "stdout": "uid=1000"
+            }
+          },
+          "explain": "uid identifies an account; a primary group and supplementary groups affect access. These training identities are separate from the TuxOS filesystem permission model."
+        }
+      ],
+      "solution": [
+        "lab reset",
+        "uname -a",
+        "hostname",
+        "id"
+      ],
+      "realLab": "Create an Ubuntu VM with a non-root sudo account and take a snapshot. Record uname -a, hostname, id and /etc/os-release. Confirm the VM uses a private or NAT network and keep the console available.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ]
+    },
+    {
+      "id": "users-and-groups",
+      "title": "Provision users and supplementary groups",
+      "stage": "3 · Accounts and security",
+      "duration": 25,
+      "labKind": "sandbox",
+      "story": "An operator needs membership in a project group. Practice the account workflow on the isolated administration model.",
+      "outcomes": [
+        "Provision users and supplementary groups",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "users-and-groups-reset",
+          "task": "Start with a clean training account database.",
+          "teach": "Account exercises use an isolated database. A fresh scenario makes the result reproducible.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: lab reset"
+          ],
+          "check": {
+            "ran": {
+              "command": "lab",
+              "code": 0,
+              "stdout": "Reset complete"
+            }
+          },
+          "explain": "Account exercises use an isolated database. A fresh scenario makes the result reproducible."
+        },
+        {
+          "id": "users-and-groups-group",
+          "task": "Create a group named operators.",
+          "teach": "groupadd is an administrative operation. Use sudo for the one operation that needs privilege.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: sudo groupadd operators"
+          ],
+          "check": {
+            "ran": {
+              "command": "groupadd",
+              "code": 0,
+              "line": "groupadd\\s+operators"
+            }
+          },
+          "explain": "groupadd is an administrative operation. Use sudo for the one operation that needs privilege."
+        },
+        {
+          "id": "users-and-groups-user",
+          "task": "Create the training account trainee with a home directory flag.",
+          "teach": "On Ubuntu, useradd -m creates a home directory. Here it creates a training account record only; it cannot log in or own desktop files.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: sudo useradd -m trainee"
+          ],
+          "check": {
+            "ran": {
+              "command": "useradd",
+              "code": 0,
+              "line": "useradd\\s+\\-m\\s+trainee"
+            }
+          },
+          "explain": "On Ubuntu, useradd -m creates a home directory. Here it creates a training account record only; it cannot log in or own desktop files."
+        },
+        {
+          "id": "users-and-groups-membership",
+          "task": "Append trainee to the operators group.",
+          "teach": "-G sets supplementary groups; -a appends rather than replacing existing membership. Forgetting -a can remove needed access.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: sudo usermod -aG operators trainee"
+          ],
+          "check": {
+            "ran": {
+              "command": "usermod",
+              "code": 0,
+              "line": "usermod\\s+\\-aG\\s+operators\\s+trainee"
+            }
+          },
+          "explain": "-G sets supplementary groups; -a appends rather than replacing existing membership. Forgetting -a can remove needed access."
+        },
+        {
+          "id": "users-and-groups-verify",
+          "task": "Verify trainee belongs to operators.",
+          "teach": "Inspect membership after changing it. On real systems, existing login sessions may need to be renewed.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: id trainee"
+          ],
+          "check": {
+            "ran": {
+              "command": "id",
+              "code": 0,
+              "stdout": "operators"
+            }
+          },
+          "explain": "Inspect membership after changing it. On real systems, existing login sessions may need to be renewed."
+        }
+      ],
+      "solution": [
+        "lab reset",
+        "sudo groupadd operators",
+        "sudo useradd -m trainee",
+        "sudo usermod -aG operators trainee",
+        "id trainee"
+      ],
+      "realLab": "On a disposable VM, create a practice group and account, verify getent passwd and id, and inspect the home ownership. Set credentials interactively only if login is needed. Test membership from a new session; remove the practice account when finished.",
+      "references": [
+        {
+          "title": "Ubuntu user management",
+          "url": "https://ubuntu.com/server/docs/security-users/"
+        }
+      ]
+    },
+    {
+      "id": "directory-permissions",
+      "title": "Directory permissions and least privilege",
+      "stage": "3 · Accounts and security",
+      "duration": 25,
+      "labKind": "terminal",
+      "story": "Secure a workspace and distinguish permission to list a directory from permission to traverse it.",
+      "outcomes": [
+        "Directory permissions and least privilege",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "directory-permissions-private",
+          "task": "Make ~/secure-work accessible only to its owner.",
+          "teach": "For directories, read lists names, write changes directory entries and execute permits traversal. A private directory is usually 700.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: chmod 700 ~/secure-work"
+          ],
+          "check": {
+            "mode": {
+              "path": "~/secure-work",
+              "is": "700"
+            }
+          },
+          "explain": "For directories, read lists names, write changes directory entries and execute permits traversal. A private directory is usually 700."
+        },
+        {
+          "id": "directory-permissions-config",
+          "task": "Protect a configuration file with mode 600.",
+          "teach": "Secrets should be readable only by the account that needs them. File permissions complement directory permissions.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: chmod 600 ~/secure-work/app.conf"
+          ],
+          "check": {
+            "mode": {
+              "path": "~/secure-work/app.conf",
+              "is": "600"
+            }
+          },
+          "explain": "Secrets should be readable only by the account that needs them. File permissions complement directory permissions."
+        },
+        {
+          "id": "directory-permissions-inspect",
+          "task": "Inspect the configuration permissions.",
+          "teach": "Read the owner, group and mode together. A correct mode on the wrong owner may still grant unintended access.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: ls -l ~/secure-work/app.conf"
+          ],
+          "check": {
+            "ran": {
+              "command": "ls",
+              "code": 0,
+              "stdout": "rw-------"
+            }
+          },
+          "explain": "Read the owner, group and mode together. A correct mode on the wrong owner may still grant unintended access."
+        },
+        {
+          "id": "directory-permissions-public",
+          "task": "Set a non-secret documentation file to 644.",
+          "teach": "644 means owner read/write and others read. Do not apply executable permissions to every file as a shortcut.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: chmod 644 ~/secure-work/readme.txt"
+          ],
+          "check": {
+            "mode": {
+              "path": "~/secure-work/readme.txt",
+              "is": "644"
+            }
+          },
+          "explain": "644 means owner read/write and others read. Do not apply executable permissions to every file as a shortcut."
+        }
+      ],
+      "solution": [
+        "chmod 700 ~/secure-work",
+        "chmod 600 ~/secure-work/app.conf",
+        "ls -l ~/secure-work/app.conf",
+        "chmod 644 ~/secure-work/readme.txt"
+      ],
+      "realLab": "Use two VM accounts to test directory traversal and file access. Practice chown, chgrp, umask, the setgid directory bit and a sticky shared directory. Use getfacl/setfacl for one explicit exception, then remove it and retest. TuxOS currently models only basic owner/group/other bits.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ],
+      "setup": {
+        "dirs": [
+          "~/secure-work"
+        ],
+        "files": {
+          "~/secure-work/app.conf": "token=TRAINING_PLACEHOLDER\n",
+          "~/secure-work/readme.txt": "Public operational notes\n"
+        }
+      }
+    },
+    {
+      "id": "ssh-and-hardening",
+      "title": "SSH configuration and layered hardening",
+      "stage": "3 · Accounts and security",
+      "duration": 25,
+      "labKind": "workbook",
+      "story": "Review an example SSH configuration as a workbook. This does not open an SSH connection or change a real daemon.",
+      "outcomes": [
+        "SSH configuration and layered hardening",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "ssh-and-hardening-review",
+          "task": "Read the supplied SSH configuration.",
+          "teach": "SSH encrypts a remote session. Use separate accounts, public keys and a verified host key. Never disable existing access until a replacement login is tested.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cat ~/hardening/sshd_config"
+          ],
+          "check": {
+            "ran": {
+              "command": "cat",
+              "code": 0,
+              "stdout": "PermitRootLogin yes"
+            }
+          },
+          "explain": "SSH encrypts a remote session. Use separate accounts, public keys and a verified host key. Never disable existing access until a replacement login is tested."
+        },
+        {
+          "id": "ssh-and-hardening-backup",
+          "task": "Back up the sample configuration.",
+          "teach": "Back up the exact file before editing and keep an existing session plus console access during remote changes.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cp ~/hardening/sshd_config ~/hardening/sshd_config.bak"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/hardening/sshd_config.bak",
+              "pattern": "PermitRootLogin yes"
+            }
+          },
+          "explain": "Back up the exact file before editing and keep an existing session plus console access during remote changes."
+        },
+        {
+          "id": "ssh-and-hardening-root",
+          "task": "Write a policy that disables direct root login.",
+          "teach": "PermitRootLogin no prevents direct root SSH logins. Use a named account and controlled sudo privileges.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: echo PermitRootLogin no > ~/hardening/proposed.conf"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/hardening/proposed.conf",
+              "pattern": "^PermitRootLogin no$"
+            }
+          },
+          "explain": "PermitRootLogin no prevents direct root SSH logins. Use a named account and controlled sudo privileges."
+        },
+        {
+          "id": "ssh-and-hardening-keys",
+          "task": "Append a public-key-only authentication policy.",
+          "teach": "Disabling password authentication is appropriate only after public-key login has been verified. Include files and Match blocks can affect effective sshd settings.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: echo PasswordAuthentication no >> ~/hardening/proposed.conf"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/hardening/proposed.conf",
+              "pattern": "PasswordAuthentication no"
+            }
+          },
+          "explain": "Disabling password authentication is appropriate only after public-key login has been verified. Include files and Match blocks can affect effective sshd settings."
+        },
+        {
+          "id": "ssh-and-hardening-check",
+          "task": "Review both proposed directives.",
+          "teach": "On a VM, validate with sshd -t and inspect sshd -T before reloading. TuxOS checks the workbook, not a running SSH daemon.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cat ~/hardening/proposed.conf"
+          ],
+          "check": {
+            "ran": {
+              "command": "cat",
+              "code": 0,
+              "stdout": "PermitRootLogin no\nPasswordAuthentication no"
+            }
+          },
+          "explain": "On a VM, validate with sshd -t and inspect sshd -T before reloading. TuxOS checks the workbook, not a running SSH daemon."
+        }
+      ],
+      "solution": [
+        "cat ~/hardening/sshd_config",
+        "cp ~/hardening/sshd_config ~/hardening/sshd_config.bak",
+        "echo PermitRootLogin no > ~/hardening/proposed.conf",
+        "echo PasswordAuthentication no >> ~/hardening/proposed.conf",
+        "cat ~/hardening/proposed.conf"
+      ],
+      "realLab": "In a disposable VM, generate a passphrase-protected key, verify the server host key, and establish key login. Keep the console and original session open. Back up config, use sshd -t and sshd -T, reload, and verify a second login before closing the first. Review sudoers with visudo, security updates and AppArmor (or SELinux on a suitable distro). Do not copy private keys into TuxOS.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ],
+      "setup": {
+        "dirs": [
+          "~/hardening"
+        ],
+        "files": {
+          "~/hardening/sshd_config": "PermitRootLogin yes\nPasswordAuthentication yes\n"
+        }
+      }
+    },
+    {
+      "id": "processes",
+      "title": "Processes, signals and graceful shutdown",
+      "stage": "4 · Services and operations",
+      "duration": 25,
+      "labKind": "sandbox",
+      "story": "A report worker needs to stop. Identify its PID and owner before sending a signal.",
+      "outcomes": [
+        "Processes, signals and graceful shutdown",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "processes-reset",
+          "task": "Reset the sandbox to create a sample worker.",
+          "teach": "A process is a running program with a PID and owner. PID 1 is the init/service manager and has special responsibilities.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: lab reset"
+          ],
+          "check": {
+            "ran": {
+              "command": "lab",
+              "code": 0,
+              "stdout": "Reset complete"
+            }
+          },
+          "explain": "A process is a running program with a PID and owner. PID 1 is the init/service manager and has special responsibilities."
+        },
+        {
+          "id": "processes-list",
+          "task": "Inspect all training processes.",
+          "teach": "ps aux is a snapshot of all processes. Real output includes CPU, memory and state columns; the training model shows identity and command.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: ps aux"
+          ],
+          "check": {
+            "ran": {
+              "command": "ps",
+              "code": 0,
+              "stdout": "420 report-worker"
+            }
+          },
+          "explain": "ps aux is a snapshot of all processes. Real output includes CPU, memory and state columns; the training model shows identity and command."
+        },
+        {
+          "id": "processes-stop",
+          "task": "Send SIGTERM to report-worker at PID 420.",
+          "teach": "SIGTERM asks a process to exit gracefully. SIGKILL cannot be handled and should be a last resort. Check ownership and PID before signaling.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: kill -TERM 420"
+          ],
+          "check": {
+            "ran": {
+              "command": "kill",
+              "code": 0,
+              "line": "kill\\s+\\-TERM\\s+420"
+            }
+          },
+          "explain": "SIGTERM asks a process to exit gracefully. SIGKILL cannot be handled and should be a last resort. Check ownership and PID before signaling."
+        },
+        {
+          "id": "processes-confirm",
+          "task": "Confirm report-worker has exited.",
+          "teach": "Verify the process is gone. Real processes can take time to stop; service managers may restart them automatically.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: ps aux"
+          ],
+          "check": {
+            "all": [
+              {
+                "ran": {
+                  "command": "ps",
+                  "code": 0,
+                  "stdout": "systemd"
+                }
+              },
+              {
+                "not": {
+                  "ran": {
+                    "command": "ps",
+                    "code": 0,
+                    "stdout": "report-worker"
+                  }
+                }
+              }
+            ]
+          },
+          "explain": "Verify the process is gone. Real processes can take time to stop; service managers may restart them automatically."
+        }
+      ],
+      "solution": [
+        "lab reset",
+        "ps aux",
+        "kill -TERM 420",
+        "ps aux"
+      ],
+      "realLab": "Start sleep 300 in a VM shell, inspect it with ps and jobs, move it between foreground/background, and stop it with SIGTERM. Compare nice/renice, top and process states. Never signal an unrelated service.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ]
+    },
+    {
+      "id": "systemd-services",
+      "title": "Service lifecycle and boot enablement",
+      "stage": "4 · Services and operations",
+      "duration": 30,
+      "labKind": "sandbox",
+      "story": "Bring a stopped web service online and arrange for it to start at boot. Running now and enabled at boot are different states.",
+      "outcomes": [
+        "Service lifecycle and boot enablement",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "systemd-services-reset",
+          "task": "Reset the service scenario.",
+          "teach": "The sandbox starts nginx stopped and disabled, while ssh and cron are running.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: lab reset"
+          ],
+          "check": {
+            "ran": {
+              "command": "lab",
+              "code": 0,
+              "stdout": "Reset complete"
+            }
+          },
+          "explain": "The sandbox starts nginx stopped and disabled, while ssh and cron are running."
+        },
+        {
+          "id": "systemd-services-inspect",
+          "task": "Inspect nginx before making changes.",
+          "teach": "status reports current activity and enablement. An inactive unit normally returns a nonzero status, which is evidence rather than a command syntax error.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: systemctl status nginx"
+          ],
+          "check": {
+            "ran": {
+              "command": "systemctl",
+              "code": 3,
+              "stdout": "inactive"
+            }
+          },
+          "explain": "status reports current activity and enablement. An inactive unit normally returns a nonzero status, which is evidence rather than a command syntax error."
+        },
+        {
+          "id": "systemd-services-start",
+          "task": "Start nginx.",
+          "teach": "start activates the service now. It does not automatically enable startup at boot.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: sudo systemctl start nginx"
+          ],
+          "check": {
+            "ran": {
+              "command": "systemctl",
+              "code": 0,
+              "line": "start nginx"
+            }
+          },
+          "explain": "start activates the service now. It does not automatically enable startup at boot."
+        },
+        {
+          "id": "systemd-services-enable",
+          "task": "Enable nginx at boot.",
+          "teach": "enable configures boot activation; it does not itself start a stopped service. These two operations are modeled separately.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: sudo systemctl enable nginx"
+          ],
+          "check": {
+            "ran": {
+              "command": "systemctl",
+              "code": 0,
+              "line": "enable nginx"
+            }
+          },
+          "explain": "enable configures boot activation; it does not itself start a stopped service. These two operations are modeled separately."
+        },
+        {
+          "id": "systemd-services-verify",
+          "task": "Verify nginx is both running and enabled.",
+          "teach": "Check both Active and Loaded/enablement fields before declaring a deployment complete.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: systemctl status nginx"
+          ],
+          "check": {
+            "ran": {
+              "command": "systemctl",
+              "code": 0,
+              "stdout": "enabled\nActive: active"
+            }
+          },
+          "explain": "Check both Active and Loaded/enablement fields before declaring a deployment complete."
+        }
+      ],
+      "solution": [
+        "lab reset",
+        "systemctl status nginx",
+        "sudo systemctl start nginx",
+        "sudo systemctl enable nginx",
+        "systemctl status nginx"
+      ],
+      "realLab": "Create a harmless custom systemd service in a VM. Inspect its unit file, run daemon-reload after editing, start it, enable it, reboot the VM and verify. Compare restart versus reload and examine unit dependencies.",
+      "references": [
+        {
+          "title": "systemctl manual",
+          "url": "https://www.freedesktop.org/software/systemd/man/latest/systemctl.html"
+        }
+      ]
+    },
+    {
+      "id": "journals",
+      "title": "Journal investigation and incident evidence",
+      "stage": "4 · Services and operations",
+      "duration": 25,
+      "labKind": "sandbox",
+      "story": "Correlate a service restart with its journal instead of restarting repeatedly without understanding what happened.",
+      "outcomes": [
+        "Journal investigation and incident evidence",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "journals-reset",
+          "task": "Initialize the journal scenario.",
+          "teach": "Logs provide a timeline. Preserve evidence before changing service state.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: lab reset"
+          ],
+          "check": {
+            "ran": {
+              "command": "lab",
+              "code": 0,
+              "stdout": "Reset complete"
+            }
+          },
+          "explain": "Logs provide a timeline. Preserve evidence before changing service state."
+        },
+        {
+          "id": "journals-read",
+          "task": "Read the nginx journal.",
+          "teach": "journalctl -u filters one unit. On a real server, -b selects a boot and --since narrows time; the simulator supports -u and -n.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: journalctl -u nginx"
+          ],
+          "check": {
+            "ran": {
+              "command": "journalctl",
+              "code": 0,
+              "stdout": "no listener"
+            }
+          },
+          "explain": "journalctl -u filters one unit. On a real server, -b selects a boot and --since narrows time; the simulator supports -u and -n."
+        },
+        {
+          "id": "journals-restart",
+          "task": "Restart nginx once.",
+          "teach": "A restart stops and starts the unit. It can disrupt active work, so record the reason and verify afterward.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: sudo systemctl restart nginx"
+          ],
+          "check": {
+            "ran": {
+              "command": "systemctl",
+              "code": 0,
+              "line": "restart nginx"
+            }
+          },
+          "explain": "A restart stops and starts the unit. It can disrupt active work, so record the reason and verify afterward."
+        },
+        {
+          "id": "journals-latest",
+          "task": "Read the most recent nginx entry.",
+          "teach": "-n limits the number of recent entries. Compare the recorded action with the current state.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: journalctl -u nginx -n 1"
+          ],
+          "check": {
+            "ran": {
+              "command": "journalctl",
+              "code": 0,
+              "stdout": "restart; active=true",
+              "line": "-n 1"
+            }
+          },
+          "explain": "-n limits the number of recent entries. Compare the recorded action with the current state."
+        },
+        {
+          "id": "journals-evidence",
+          "task": "Save the journal in your home directory.",
+          "teach": "A report should retain the relevant evidence and timestamps. This teaching journal uses ordered entries rather than real time.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: journalctl -u nginx > ~/nginx-incident.log"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/nginx-incident.log",
+              "pattern": "restart; active=true"
+            }
+          },
+          "explain": "A report should retain the relevant evidence and timestamps. This teaching journal uses ordered entries rather than real time."
+        }
+      ],
+      "solution": [
+        "lab reset",
+        "journalctl -u nginx",
+        "sudo systemctl restart nginx",
+        "journalctl -u nginx -n 1",
+        "journalctl -u nginx > ~/nginx-incident.log"
+      ],
+      "realLab": "In a VM, investigate journalctl -b, -u, --since and -p. Compare /var/log files, persistent journaling and logrotate policy. Document a start failure, its error, the fix and a successful health check.",
+      "references": [
+        {
+          "title": "systemctl manual",
+          "url": "https://www.freedesktop.org/software/systemd/man/latest/systemctl.html"
+        }
+      ]
+    },
+    {
+      "id": "packages-maintenance",
+      "title": "Package inventory and maintenance",
+      "stage": "4 · Services and operations",
+      "duration": 25,
+      "labKind": "terminal",
+      "story": "Treat package changes as a controlled operation: inspect, refresh metadata, install, verify and clean up only the intended package.",
+      "outcomes": [
+        "Package inventory and maintenance",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "packages-maintenance-refresh",
+          "task": "Refresh package metadata.",
+          "teach": "apt update refreshes metadata; apt upgrade installs available upgrades. They are separate operations.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: sudo apt update"
+          ],
+          "check": {
+            "ran": {
+              "command": "apt",
+              "code": 0,
+              "line": "update"
+            }
+          },
+          "explain": "apt update refreshes metadata; apt upgrade installs available upgrades. They are separate operations."
+        },
+        {
+          "id": "packages-maintenance-install",
+          "task": "Install the teaching package hello.",
+          "teach": "Package managers track installed files and dependencies. Review proposed changes before accepting a real transaction.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: sudo apt install hello"
+          ],
+          "check": {
+            "exists": "/usr/bin/hello"
+          },
+          "explain": "Package managers track installed files and dependencies. Review proposed changes before accepting a real transaction."
+        },
+        {
+          "id": "packages-maintenance-run",
+          "task": "Run hello to verify installation.",
+          "teach": "Verify the installed program itself, not just the package manager exit status.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: hello"
+          ],
+          "check": {
+            "ran": {
+              "command": "hello",
+              "code": 0,
+              "stdout": "Hello"
+            }
+          },
+          "explain": "Verify the installed program itself, not just the package manager exit status."
+        },
+        {
+          "id": "packages-maintenance-inventory",
+          "task": "List installed packages.",
+          "teach": "An inventory supports reproducibility and incident diagnosis. Record versions before and after maintenance.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: apt list --installed"
+          ],
+          "check": {
+            "ran": {
+              "command": "apt",
+              "code": 0,
+              "stdout": "hello"
+            }
+          },
+          "explain": "An inventory supports reproducibility and incident diagnosis. Record versions before and after maintenance."
+        },
+        {
+          "id": "packages-maintenance-remove",
+          "task": "Remove the hello package.",
+          "teach": "remove uninstalls a package. Real purge additionally removes package configuration; autoremove targets no-longer-needed automatic dependencies. Review the package removal plan, then type y at the confirmation prompt. You can also use -y to approve this disposable package removal in advance.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: sudo apt remove -y hello"
+          ],
+          "check": {
+            "all": [
+              {
+                "ran": {
+                  "command": "apt",
+                  "code": 0,
+                  "line": "remove\\s+(?:-y\\s+)?hello"
+                }
+              },
+              {
+                "missing": "/usr/bin/hello"
+              }
+            ]
+          },
+          "explain": "remove uninstalls a package. Real purge additionally removes package configuration; autoremove targets no-longer-needed automatic dependencies."
+        }
+      ],
+      "solution": [
+        "sudo apt update",
+        "sudo apt install hello",
+        "hello",
+        "apt list --installed",
+        "sudo apt remove -y hello"
+      ],
+      "realLab": "Take a VM snapshot, inspect apt-cache policy and dpkg -l, install a small package, verify files with dpkg -L, remove it and inspect retained configuration. Review upgrade, autoremove and unattended-upgrades plans before executing. Learn the equivalent dnf/rpm workflow on a separate Fedora/RHEL-family VM.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ]
+    },
+    {
+      "id": "boot-and-recovery",
+      "title": "Boot chain and recovery planning",
+      "stage": "4 · Services and operations",
+      "duration": 25,
+      "labKind": "workbook",
+      "story": "Trace firmware → bootloader → kernel/initramfs → systemd → services. Build a recovery runbook from a supplied boot log.",
+      "outcomes": [
+        "Boot chain and recovery planning",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "boot-and-recovery-read",
+          "task": "Read the boot incident log.",
+          "teach": "The bootloader loads the kernel and initramfs; the kernel discovers hardware and mounts the root filesystem; PID 1 starts user-space services.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cat ~/boot-lab/boot.log"
+          ],
+          "check": {
+            "ran": {
+              "command": "cat",
+              "code": 0,
+              "stdout": "FAILED mount"
+            }
+          },
+          "explain": "The bootloader loads the kernel and initramfs; the kernel discovers hardware and mounts the root filesystem; PID 1 starts user-space services."
+        },
+        {
+          "id": "boot-and-recovery-failure",
+          "task": "Extract failed boot operations.",
+          "teach": "Diagnose the earliest meaningful failure rather than every downstream symptom. A missing mount can block dependent services.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: grep FAILED ~/boot-lab/boot.log"
+          ],
+          "check": {
+            "ran": {
+              "command": "grep",
+              "code": 0,
+              "stdout": "data-volume"
+            }
+          },
+          "explain": "Diagnose the earliest meaningful failure rather than every downstream symptom. A missing mount can block dependent services."
+        },
+        {
+          "id": "boot-and-recovery-fstab",
+          "task": "Inspect the sample filesystem table.",
+          "teach": "/etc/fstab describes mounts using identifiers, mount points, types and options. Wrong identifiers or required unavailable volumes can affect boot.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cat ~/boot-lab/fstab"
+          ],
+          "check": {
+            "ran": {
+              "command": "cat",
+              "code": 0,
+              "stdout": "UUID=missing"
+            }
+          },
+          "explain": "/etc/fstab describes mounts using identifiers, mount points, types and options. Wrong identifiers or required unavailable volumes can affect boot."
+        },
+        {
+          "id": "boot-and-recovery-plan",
+          "task": "Write the first recovery action to a runbook.",
+          "teach": "Use a console and backups. Compare identifiers before editing fstab; do not format a device to solve a mount typo.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: echo \"console access; inspect UUID with lsblk -f; back up fstab\" > ~/boot-lab/recovery.txt"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/boot-lab/recovery.txt",
+              "pattern": "inspect UUID with lsblk -f"
+            }
+          },
+          "explain": "Use a console and backups. Compare identifiers before editing fstab; do not format a device to solve a mount typo."
+        }
+      ],
+      "solution": [
+        "cat ~/boot-lab/boot.log",
+        "grep FAILED ~/boot-lab/boot.log",
+        "cat ~/boot-lab/fstab",
+        "echo \"console access; inspect UUID with lsblk -f; back up fstab\" > ~/boot-lab/recovery.txt"
+      ],
+      "realLab": "On a snapshot-backed VM, inspect boot targets, kernel command line and journalctl -b -1. Practice recovery using a deliberately incorrect optional mount on a disposable extra disk. Restore the snapshot afterward. Do not experiment on your host bootloader.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ],
+      "setup": {
+        "dirs": [
+          "~/boot-lab"
+        ],
+        "files": {
+          "~/boot-lab/boot.log": "OK kernel loaded\nOK root mounted\nFAILED mount data-volume\nFAILED dependency application\n",
+          "~/boot-lab/fstab": "UUID=missing /srv/data ext4 defaults 0 2\n"
+        }
+      }
+    },
+    {
+      "id": "network-basics",
+      "title": "Addresses, routes and DNS diagnosis",
+      "stage": "5 · Networking and storage",
+      "duration": 25,
+      "labKind": "sandbox",
+      "story": "Work from local configuration toward the destination: address, route, reachability, then name resolution.",
+      "outcomes": [
+        "Addresses, routes and DNS diagnosis",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "network-basics-address",
+          "task": "Inspect the training interface addresses.",
+          "teach": "An address/prefix identifies a host and subnet. 127.0.0.1 is loopback; 192.0.2.0/24 is a documentation network used here for simulation.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: ip addr"
+          ],
+          "check": {
+            "ran": {
+              "command": "ip",
+              "code": 0,
+              "stdout": "192.0.2.10/24"
+            }
+          },
+          "explain": "An address/prefix identifies a host and subnet. 127.0.0.1 is loopback; 192.0.2.0/24 is a documentation network used here for simulation."
+        },
+        {
+          "id": "network-basics-route",
+          "task": "Find the default gateway.",
+          "teach": "A default route is used when no more-specific route matches. A correct IP address alone does not guarantee remote reachability.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: ip route"
+          ],
+          "check": {
+            "ran": {
+              "command": "ip",
+              "code": 0,
+              "stdout": "default via 192.0.2.1"
+            }
+          },
+          "explain": "A default route is used when no more-specific route matches. A correct IP address alone does not guarantee remote reachability."
+        },
+        {
+          "id": "network-basics-gateway",
+          "task": "Send one training probe to the gateway.",
+          "teach": "ping tests ICMP reachability. Failure may mean filtering, not a dead host; success does not prove an application is healthy.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: ping -c 1 192.0.2.1"
+          ],
+          "check": {
+            "ran": {
+              "command": "ping",
+              "code": 0,
+              "stdout": "0% packet loss",
+              "line": "ping\\s+\\-c\\s+1\\s+192\\.0\\.2\\.1"
+            }
+          },
+          "explain": "ping tests ICMP reachability. Failure may mean filtering, not a dead host; success does not prove an application is healthy."
+        },
+        {
+          "id": "network-basics-dns",
+          "task": "Probe the training hostname.",
+          "teach": "Compare name and IP behavior to isolate DNS. This sandbox resolves a fixed local name and never performs real DNS queries.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: ping -c 1 server.lab"
+          ],
+          "check": {
+            "ran": {
+              "command": "ping",
+              "code": 0,
+              "stdout": "server.lab",
+              "line": "ping\\s+\\-c\\s+1\\s+server\\.lab"
+            }
+          },
+          "explain": "Compare name and IP behavior to isolate DNS. This sandbox resolves a fixed local name and never performs real DNS queries."
+        }
+      ],
+      "solution": [
+        "ip addr",
+        "ip route",
+        "ping -c 1 192.0.2.1",
+        "ping -c 1 server.lab"
+      ],
+      "realLab": "In a VM inspect ip addr, ip route and resolvectl status. Compare localhost, gateway and a permitted destination; use getent hosts or dig for DNS. Document TCP/UDP, ports, CIDR and the difference between DNS failure, timeout and connection refused. Practice Netplan on a private VM with console rollback.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ]
+    },
+    {
+      "id": "listeners-and-firewall",
+      "title": "Listening ports and firewall policy",
+      "stage": "5 · Networking and storage",
+      "duration": 25,
+      "labKind": "sandbox",
+      "story": "A service can be running without being reachable. Inspect listeners, then apply a minimal allow policy while preserving administrative access.",
+      "outcomes": [
+        "Listening ports and firewall policy",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "listeners-and-firewall-reset",
+          "task": "Reset the network service scenario.",
+          "teach": "The training firewall stores rules but does not filter real packets. Rules and listening sockets are separate concepts.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: lab reset"
+          ],
+          "check": {
+            "ran": {
+              "command": "lab",
+              "code": 0,
+              "stdout": "Reset complete"
+            }
+          },
+          "explain": "The training firewall stores rules but does not filter real packets. Rules and listening sockets are separate concepts."
+        },
+        {
+          "id": "listeners-and-firewall-listen",
+          "task": "Inspect listening TCP ports.",
+          "teach": "ss -tln shows TCP listening sockets without DNS resolution. A listener on all interfaces has a wider reach than loopback.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: ss -tln"
+          ],
+          "check": {
+            "ran": {
+              "command": "ss",
+              "code": 0,
+              "stdout": ":22"
+            }
+          },
+          "explain": "ss -tln shows TCP listening sockets without DNS resolution. A listener on all interfaces has a wider reach than loopback."
+        },
+        {
+          "id": "listeners-and-firewall-ssh",
+          "task": "Allow TCP port 22 before enabling the firewall.",
+          "teach": "Keep SSH access available before enabling a remote firewall. On a VM restrict source addresses when appropriate.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: sudo ufw allow 22/tcp"
+          ],
+          "check": {
+            "ran": {
+              "command": "ufw",
+              "code": 0,
+              "stdout": "updated",
+              "line": "ufw\\s+allow\\s+22/tcp"
+            }
+          },
+          "explain": "Keep SSH access available before enabling a remote firewall. On a VM restrict source addresses when appropriate."
+        },
+        {
+          "id": "listeners-and-firewall-web",
+          "task": "Allow TCP port 80.",
+          "teach": "Open only the ports the service needs. An allow rule does not start a web server.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: sudo ufw allow 80/tcp"
+          ],
+          "check": {
+            "ran": {
+              "command": "ufw",
+              "code": 0,
+              "stdout": "updated",
+              "line": "ufw\\s+allow\\s+80/tcp"
+            }
+          },
+          "explain": "Open only the ports the service needs. An allow rule does not start a web server."
+        },
+        {
+          "id": "listeners-and-firewall-enable",
+          "task": "Enable the training firewall.",
+          "teach": "On real systems, check the complete ruleset and recovery console before enabling a firewall.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: sudo ufw enable"
+          ],
+          "check": {
+            "ran": {
+              "command": "ufw",
+              "code": 0,
+              "stdout": "updated",
+              "line": "ufw\\s+enable"
+            }
+          },
+          "explain": "On real systems, check the complete ruleset and recovery console before enabling a firewall."
+        },
+        {
+          "id": "listeners-and-firewall-verify",
+          "task": "Verify the enabled policy and both rules.",
+          "teach": "Validate policy after every change and test access from a separate allowed host on a real lab network.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: ufw status"
+          ],
+          "check": {
+            "ran": {
+              "command": "ufw",
+              "code": 0,
+              "stdout": "Status: active\n22/tcp ALLOW Anywhere\n80/tcp ALLOW Anywhere",
+              "line": "ufw\\s+status"
+            }
+          },
+          "explain": "Validate policy after every change and test access from a separate allowed host on a real lab network."
+        }
+      ],
+      "solution": [
+        "lab reset",
+        "ss -tln",
+        "sudo ufw allow 22/tcp",
+        "sudo ufw allow 80/tcp",
+        "sudo ufw enable",
+        "ufw status"
+      ],
+      "realLab": "On an isolated VM, inspect ss -tlnp, allow a tested administration path, enable UFW, and test allowed and blocked ports from another lab VM. Explain default policy, stateful filtering, source restrictions and nftables beneath UFW.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ]
+    },
+    {
+      "id": "disk-and-memory",
+      "title": "Capacity, inodes and memory pressure",
+      "stage": "5 · Networking and storage",
+      "duration": 25,
+      "labKind": "sandbox",
+      "story": "A full disk, exhausted inodes and memory pressure are different incidents. Choose the measurement that matches the symptom.",
+      "outcomes": [
+        "Capacity, inodes and memory pressure",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "disk-and-memory-disk",
+          "task": "Inspect filesystem capacity.",
+          "teach": "df reports filesystem capacity, not sizes of individual directories. -h formats values for humans. These capacity values are fixed training fixtures.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: df -h"
+          ],
+          "check": {
+            "ran": {
+              "command": "df",
+              "code": 0,
+              "stdout": "40% /"
+            }
+          },
+          "explain": "df reports filesystem capacity, not sizes of individual directories. -h formats values for humans. These capacity values are fixed training fixtures."
+        },
+        {
+          "id": "disk-and-memory-inodes",
+          "task": "Inspect inode capacity.",
+          "teach": "A filesystem can run out of inodes while bytes remain free. Many small files can cause this pattern.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: df -i"
+          ],
+          "check": {
+            "ran": {
+              "command": "df",
+              "code": 0,
+              "stdout": "IUse%"
+            }
+          },
+          "explain": "A filesystem can run out of inodes while bytes remain free. Many small files can cause this pattern."
+        },
+        {
+          "id": "disk-and-memory-blocks",
+          "task": "Inspect the block device layout.",
+          "teach": "lsblk shows disks and partitions. A device existing does not mean it is formatted or mounted.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: lsblk"
+          ],
+          "check": {
+            "ran": {
+              "command": "lsblk",
+              "code": 0,
+              "stdout": "vdb 10G disk"
+            }
+          },
+          "explain": "lsblk shows disks and partitions. A device existing does not mean it is formatted or mounted."
+        },
+        {
+          "id": "disk-and-memory-memory",
+          "task": "Inspect memory availability.",
+          "teach": "Available memory accounts for reclaimable caches. Low free memory alone is not proof of pressure; inspect available memory, swap activity and workload.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: free -h"
+          ],
+          "check": {
+            "ran": {
+              "command": "free",
+              "code": 0,
+              "stdout": "available"
+            }
+          },
+          "explain": "Available memory accounts for reclaimable caches. Low free memory alone is not proof of pressure; inspect available memory, swap activity and workload."
+        }
+      ],
+      "solution": [
+        "df -h",
+        "df -i",
+        "lsblk",
+        "free -h"
+      ],
+      "realLab": "In a VM compare df -h, df -i, du -sh, lsblk -f, free -h and vmstat. Identify the actual mount containing a large practice file. Explain why deleting an open file may not free space until the process releases it.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ]
+    },
+    {
+      "id": "filesystems-and-lvm",
+      "title": "Filesystems, mounts, LVM and RAID",
+      "stage": "5 · Networking and storage",
+      "duration": 40,
+      "labKind": "workbook",
+      "story": "Plan a data volume from device discovery through backup and recovery. TuxOS provides a workbook; it does not format disks or emulate LVM.",
+      "outcomes": [
+        "Filesystems, mounts, LVM and RAID",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "filesystems-and-lvm-devices",
+          "task": "Inspect the unused training disk.",
+          "teach": "Partition tables, filesystems and mounts are different layers. LVM adds physical volumes, volume groups and logical volumes; RAID adds redundancy but is not a backup.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: lsblk"
+          ],
+          "check": {
+            "ran": {
+              "command": "lsblk",
+              "code": 0,
+              "stdout": "vdb"
+            }
+          },
+          "explain": "Partition tables, filesystems and mounts are different layers. LVM adds physical volumes, volume groups and logical volumes; RAID adds redundancy but is not a backup."
+        },
+        {
+          "id": "filesystems-and-lvm-plan",
+          "task": "Read the proposed volume plan.",
+          "teach": "Use stable filesystem identifiers for persistent mounts. Choose a filesystem based on support, resize constraints and recovery requirements.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cat ~/storage-lab/plan.txt"
+          ],
+          "check": {
+            "ran": {
+              "command": "cat",
+              "code": 0,
+              "stdout": "/srv/data"
+            }
+          },
+          "explain": "Use stable filesystem identifiers for persistent mounts. Choose a filesystem based on support, resize constraints and recovery requirements."
+        },
+        {
+          "id": "filesystems-and-lvm-mount",
+          "task": "Record a UUID-based example fstab entry.",
+          "teach": "The six fstab fields describe source, target, filesystem, options, dump and fsck order. This is a sample identifier, not a device to mount.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: echo \"UUID=training-data /srv/data ext4 defaults 0 2\" > ~/storage-lab/fstab"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/storage-lab/fstab",
+              "pattern": "UUID=training-data /srv/data ext4 defaults 0 2"
+            }
+          },
+          "explain": "The six fstab fields describe source, target, filesystem, options, dump and fsck order. This is a sample identifier, not a device to mount."
+        },
+        {
+          "id": "filesystems-and-lvm-rollback",
+          "task": "Write the prerequisite for changing a volume.",
+          "teach": "Before partitioning or resizing, verify device identity, backups and a recovery route. Formatting destroys existing data.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: echo \"verified backup and disposable disk; record lsblk -f before changes\" > ~/storage-lab/checklist.txt"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/storage-lab/checklist.txt",
+              "pattern": "verified backup"
+            }
+          },
+          "explain": "Before partitioning or resizing, verify device identity, backups and a recovery route. Formatting destroys existing data."
+        }
+      ],
+      "solution": [
+        "lsblk",
+        "cat ~/storage-lab/plan.txt",
+        "echo \"UUID=training-data /srv/data ext4 defaults 0 2\" > ~/storage-lab/fstab",
+        "echo \"verified backup and disposable disk; record lsblk -f before changes\" > ~/storage-lab/checklist.txt"
+      ],
+      "realLab": "Attach an empty disposable disk to a VM and snapshot it. Identify it with lsblk -f, create a partition/filesystem, mount it, add its real UUID to fstab and verify mount -a plus reboot. Repeat with LVM: pvcreate/vgcreate/lvcreate, extend LV and filesystem, verify size. Compare ext4/XFS resize limitations. Study mdadm RAID failure/rebuild on disposable disks and explain why RAID is not backup.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ],
+      "setup": {
+        "dirs": [
+          "~/storage-lab"
+        ],
+        "files": {
+          "~/storage-lab/plan.txt": "Disposable extra disk -> partition -> filesystem -> /srv/data -> UUID in fstab -> mount test -> reboot test\nLVM: PV -> VG -> LV -> filesystem\nRAID redundancy does not replace backups\n"
+        }
+      }
+    },
+    {
+      "id": "network-storage",
+      "title": "Shared storage and mount permissions",
+      "stage": "5 · Networking and storage",
+      "duration": 25,
+      "labKind": "workbook",
+      "story": "Compare block storage to NFS/SMB file shares and plan a restricted network mount without making a real network connection.",
+      "outcomes": [
+        "Shared storage and mount permissions",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "network-storage-exports",
+          "task": "Read a restricted NFS export example.",
+          "teach": "NFS serves directories over the network. Access depends on export policy, identity mapping, filesystem permissions and network controls.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cat ~/shares/exports"
+          ],
+          "check": {
+            "ran": {
+              "command": "cat",
+              "code": 0,
+              "stdout": "root_squash"
+            }
+          },
+          "explain": "NFS serves directories over the network. Access depends on export policy, identity mapping, filesystem permissions and network controls."
+        },
+        {
+          "id": "network-storage-restrict",
+          "task": "Find the allowed client subnet.",
+          "teach": "Limit exports to intended clients. root_squash maps remote root to an unprivileged identity; do not disable it merely to bypass a permission error.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: grep 192.0.2.0 ~/shares/exports"
+          ],
+          "check": {
+            "ran": {
+              "command": "grep",
+              "code": 0,
+              "stdout": "192.0.2.0/24"
+            }
+          },
+          "explain": "Limit exports to intended clients. root_squash maps remote root to an unprivileged identity; do not disable it merely to bypass a permission error."
+        },
+        {
+          "id": "network-storage-mount",
+          "task": "Write an example read-only client mount entry.",
+          "teach": "ro requests read-only access; _netdev identifies network-dependent storage. The example is a workbook entry, not an active mount.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: echo \"files.lab:/exports/docs /mnt/docs nfs ro,_netdev 0 0\" > ~/shares/fstab"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/shares/fstab",
+              "pattern": "nfs ro,_netdev"
+            }
+          },
+          "explain": "ro requests read-only access; _netdev identifies network-dependent storage. The example is a workbook entry, not an active mount."
+        },
+        {
+          "id": "network-storage-check",
+          "task": "Review the proposed client mount.",
+          "teach": "Test both intended access and denied access. Plan what should happen if the server is unavailable at boot.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cat ~/shares/fstab"
+          ],
+          "check": {
+            "ran": {
+              "command": "cat",
+              "code": 0,
+              "stdout": "files.lab:/exports/docs"
+            }
+          },
+          "explain": "Test both intended access and denied access. Plan what should happen if the server is unavailable at boot."
+        }
+      ],
+      "solution": [
+        "cat ~/shares/exports",
+        "grep 192.0.2.0 ~/shares/exports",
+        "echo \"files.lab:/exports/docs /mnt/docs nfs ro,_netdev 0 0\" > ~/shares/fstab",
+        "cat ~/shares/fstab"
+      ],
+      "realLab": "Use two isolated VMs to export a non-sensitive directory with NFS, mount it read-only and verify allowed and denied writes. Test server unavailability and boot behavior. Compare SMB authentication, credentials-file permissions and UID/GID mapping.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ],
+      "setup": {
+        "dirs": [
+          "~/shares"
+        ],
+        "files": {
+          "~/shares/exports": "/exports/docs 192.0.2.0/24(ro,sync,root_squash)\n"
+        }
+      }
+    },
+    {
+      "id": "backup-and-restore",
+      "title": "Create, inspect and restore a backup",
+      "stage": "6 · Automation and recovery",
+      "duration": 35,
+      "labKind": "sandbox",
+      "story": "A backup is useful only when it can be restored. Archive virtual files, inspect the archive and restore into a separate directory.",
+      "outcomes": [
+        "Create, inspect and restore a backup",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "backup-and-restore-home",
+          "task": "Begin from your home directory.",
+          "teach": "Relative archive members are resolved from the current directory. Keep the restore target separate from the original.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cd ~"
+          ],
+          "check": {
+            "cwd": "~"
+          },
+          "explain": "Relative archive members are resolved from the current directory. Keep the restore target separate from the original."
+        },
+        {
+          "id": "backup-and-restore-archive",
+          "task": "Archive the two practice files.",
+          "teach": "Real tar stores file metadata and contents. TuxOS supports virtual text files in a JSON teaching archive; it is not a portable .tar file.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: tar -cf backup.tar backup-lab/config.txt backup-lab/data.txt"
+          ],
+          "check": {
+            "all": [
+              {
+                "ran": {
+                  "command": "tar",
+                  "code": 0,
+                  "line": "-cf"
+                }
+              },
+              {
+                "exists": "~/backup.tar"
+              }
+            ]
+          },
+          "explain": "Real tar stores file metadata and contents. TuxOS supports virtual text files in a JSON teaching archive; it is not a portable .tar file."
+        },
+        {
+          "id": "backup-and-restore-list",
+          "task": "Inspect the archive members.",
+          "teach": "List the archive before extracting. On real systems check paths, ownership and permissions; do not blindly extract an untrusted archive as root.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: tar -tf backup.tar"
+          ],
+          "check": {
+            "ran": {
+              "command": "tar",
+              "code": 0,
+              "stdout": "backup-lab/config.txt"
+            }
+          },
+          "explain": "List the archive before extracting. On real systems check paths, ownership and permissions; do not blindly extract an untrusted archive as root."
+        },
+        {
+          "id": "backup-and-restore-restore",
+          "task": "Extract into the prepared restore directory.",
+          "teach": "-C selects a destination directory. A restore drill should avoid overwriting the live source.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: tar -xf backup.tar -C restore-lab"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/restore-lab/backup-lab/data.txt",
+              "pattern": "customer-count=42"
+            }
+          },
+          "explain": "-C selects a destination directory. A restore drill should avoid overwriting the live source."
+        },
+        {
+          "id": "backup-and-restore-verify",
+          "task": "Verify the restored data.",
+          "teach": "Compare restored contents and metadata against expectations. Define recovery point and recovery time objectives, retention and off-site copies.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cat ~/restore-lab/backup-lab/data.txt"
+          ],
+          "check": {
+            "ran": {
+              "command": "cat",
+              "code": 0,
+              "stdout": "customer-count=42"
+            }
+          },
+          "explain": "Compare restored contents and metadata against expectations. Define recovery point and recovery time objectives, retention and off-site copies."
+        }
+      ],
+      "solution": [
+        "cd ~",
+        "tar -cf backup.tar backup-lab/config.txt backup-lab/data.txt",
+        "tar -tf backup.tar",
+        "tar -xf backup.tar -C restore-lab",
+        "cat ~/restore-lab/backup-lab/data.txt"
+      ],
+      "realLab": "On a VM, use tar and rsync to back up a practice directory, inspect permissions and checksums, delete only a disposable copy and restore it. Measure recovery time and document RPO/RTO, off-site copies, encryption and retention. Use real tar for portable backups.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ],
+      "setup": {
+        "dirs": [
+          "~/backup-lab",
+          "~/restore-lab"
+        ],
+        "files": {
+          "~/backup-lab/config.txt": "port=8080\n",
+          "~/backup-lab/data.txt": "customer-count=42\n"
+        }
+      }
+    },
+    {
+      "id": "cron-scheduling",
+      "title": "Schedule recurring work with cron",
+      "stage": "6 · Automation and recovery",
+      "duration": 25,
+      "labKind": "sandbox",
+      "story": "Install and inspect a training schedule. Scheduled jobs need explicit paths, a minimal environment and a way to observe failure.",
+      "outcomes": [
+        "Schedule recurring work with cron",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "cron-scheduling-read",
+          "task": "Read the supplied daily schedule.",
+          "teach": "Cron fields are minute, hour, day of month, month, day of week, then command. 0 2 * * * runs at 02:00 in the scheduler timezone.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cat ~/automation/daily.cron"
+          ],
+          "check": {
+            "ran": {
+              "command": "cat",
+              "code": 0,
+              "stdout": "0 2 \\* \\* \\*"
+            }
+          },
+          "explain": "Cron fields are minute, hour, day of month, month, day of week, then command. 0 2 * * * runs at 02:00 in the scheduler timezone."
+        },
+        {
+          "id": "cron-scheduling-install",
+          "task": "Install the schedule for your training user.",
+          "teach": "crontab FILE replaces that user's schedule. Inspect the file first and preserve any existing jobs on a real system. The sandbox stores schedules without executing them.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: crontab ~/automation/daily.cron"
+          ],
+          "check": {
+            "ran": {
+              "command": "crontab",
+              "code": 0,
+              "line": "daily.cron"
+            }
+          },
+          "explain": "crontab FILE replaces that user's schedule. Inspect the file first and preserve any existing jobs on a real system. The sandbox stores schedules without executing them."
+        },
+        {
+          "id": "cron-scheduling-list",
+          "task": "Verify the installed schedule.",
+          "teach": "A job may run with a different PATH and working directory than your interactive shell. Use absolute command and file paths.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: crontab -l"
+          ],
+          "check": {
+            "ran": {
+              "command": "crontab",
+              "code": 0,
+              "stdout": "0 2 \\* \\* \\*"
+            }
+          },
+          "explain": "A job may run with a different PATH and working directory than your interactive shell. Use absolute command and file paths."
+        },
+        {
+          "id": "cron-scheduling-remove",
+          "task": "Remove the disposable training schedule.",
+          "teach": "-r removes the entire user crontab. Use it only for this disposable lab; on a shared machine edit specific jobs instead.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: crontab -r"
+          ],
+          "check": {
+            "ran": {
+              "command": "crontab",
+              "code": 0,
+              "line": "-r"
+            }
+          },
+          "explain": "-r removes the entire user crontab. Use it only for this disposable lab; on a shared machine edit specific jobs instead."
+        }
+      ],
+      "solution": [
+        "cat ~/automation/daily.cron",
+        "crontab ~/automation/daily.cron",
+        "crontab -l",
+        "crontab -r"
+      ],
+      "realLab": "Back up your VM crontab, create a harmless script that appends a timestamp to a practice log, schedule it and observe execution. Restore the original schedule. Compare cron with systemd timers, timezone/DST behavior, missed runs, overlapping jobs and failure reporting.",
+      "references": [
+        {
+          "title": "Crontab file format",
+          "url": "https://man7.org/linux/man-pages/man5/crontab.5.html"
+        }
+      ],
+      "setup": {
+        "dirs": [
+          "~/automation"
+        ],
+        "files": {
+          "~/automation/daily.cron": "0 2 * * * /usr/local/bin/backup-report\n"
+        }
+      }
+    },
+    {
+      "id": "shell-scripting",
+      "title": "Design reliable shell scripts",
+      "stage": "6 · Automation and recovery",
+      "duration": 40,
+      "labKind": "workbook",
+      "story": "Read and review a Bash script before running it in a VM. TuxOS supports interactive pipelines but not the full Bash interpreter, loops or functions.",
+      "outcomes": [
+        "Design reliable shell scripts",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "shell-scripting-read",
+          "task": "Read the sample script.",
+          "teach": "A shebang selects the interpreter. Quote variable expansions, validate inputs and explicitly check important commands. set -e has exceptions and is not complete error handling.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cat ~/scripts/health-check.sh"
+          ],
+          "check": {
+            "ran": {
+              "command": "cat",
+              "code": 0,
+              "stdout": "#!/usr/bin/env bash"
+            }
+          },
+          "explain": "A shebang selects the interpreter. Quote variable expansions, validate inputs and explicitly check important commands. set -e has exceptions and is not complete error handling."
+        },
+        {
+          "id": "shell-scripting-syntax",
+          "task": "Find the conditional used for error handling.",
+          "teach": "if tests a command's exit status. Functions package repeated work; loops repeat over inputs. All need tests for empty input and failure paths.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: grep \"if \" ~/scripts/health-check.sh"
+          ],
+          "check": {
+            "ran": {
+              "command": "grep",
+              "code": 0,
+              "stdout": "systemctl is-active"
+            }
+          },
+          "explain": "if tests a command's exit status. Functions package repeated work; loops repeat over inputs. All need tests for empty input and failure paths."
+        },
+        {
+          "id": "shell-scripting-copy",
+          "task": "Make a working copy for a VM exercise.",
+          "teach": "Keep a reviewable copy and test it with bash -n before execution on the VM. ShellCheck can catch common quoting and logic mistakes.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cp ~/scripts/health-check.sh ~/scripts/reviewed.sh"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/scripts/reviewed.sh",
+              "pattern": "exit 1"
+            }
+          },
+          "explain": "Keep a reviewable copy and test it with bash -n before execution on the VM. ShellCheck can catch common quoting and logic mistakes."
+        },
+        {
+          "id": "shell-scripting-mode",
+          "task": "Mark the reviewed script executable for its owner.",
+          "teach": "Executable permission is required for ./script execution; bash script reads the file directly. The teaching shell does not execute script files.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: chmod 700 ~/scripts/reviewed.sh"
+          ],
+          "check": {
+            "mode": {
+              "path": "~/scripts/reviewed.sh",
+              "is": "700"
+            }
+          },
+          "explain": "Executable permission is required for ./script execution; bash script reads the file directly. The teaching shell does not execute script files."
+        }
+      ],
+      "solution": [
+        "cat ~/scripts/health-check.sh",
+        "grep \"if \" ~/scripts/health-check.sh",
+        "cp ~/scripts/health-check.sh ~/scripts/reviewed.sh",
+        "chmod 700 ~/scripts/reviewed.sh"
+      ],
+      "realLab": "In a VM implement and test a script with positional parameters, a function, a for loop, a conditional, exit codes and a cleanup trap. Add input validation and quote paths with spaces. Run bash -n and ShellCheck; test success, missing arguments and failed commands. Schedule it only after these tests pass.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ],
+      "setup": {
+        "dirs": [
+          "~/scripts"
+        ],
+        "files": {
+          "~/scripts/health-check.sh": "#!/usr/bin/env bash\nservice=\"${1:-nginx}\"\nif systemctl is-active --quiet \"$service\"; then\n  printf \"%s is healthy\\n\" \"$service\"\nelse\n  printf \"%s failed\\n\" \"$service\" >&2\n  exit 1\nfi\n"
+        }
+      }
+    },
+    {
+      "id": "config-management",
+      "title": "Configuration changes and rollback",
+      "stage": "6 · Automation and recovery",
+      "duration": 25,
+      "labKind": "terminal",
+      "story": "Make a small configuration change, verify it, then perform a rollback. Consistent procedures matter more than clever one-liners.",
+      "outcomes": [
+        "Configuration changes and rollback",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "config-management-backup",
+          "task": "Preserve the original application configuration.",
+          "teach": "Record a baseline before a change. On real systems track reviewed configuration in version control while excluding credentials.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cp ~/change/app.conf ~/change/app.conf.before"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/change/app.conf.before",
+              "pattern": "workers=2"
+            }
+          },
+          "explain": "Record a baseline before a change. On real systems track reviewed configuration in version control while excluding credentials."
+        },
+        {
+          "id": "config-management-change",
+          "task": "Set the practice worker count to four.",
+          "teach": "Make one deliberate change at a time. Write down the expected result and the rollback trigger.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: echo workers=4 > ~/change/app.conf"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/change/app.conf",
+              "pattern": "^workers=4$"
+            }
+          },
+          "explain": "Make one deliberate change at a time. Write down the expected result and the rollback trigger."
+        },
+        {
+          "id": "config-management-verify",
+          "task": "Verify the changed configuration.",
+          "teach": "A file check is only the first layer. Also validate syntax, reload if supported, test application health and observe resource usage.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cat ~/change/app.conf"
+          ],
+          "check": {
+            "ran": {
+              "command": "cat",
+              "code": 0,
+              "stdout": "^workers=4$"
+            }
+          },
+          "explain": "A file check is only the first layer. Also validate syntax, reload if supported, test application health and observe resource usage."
+        },
+        {
+          "id": "config-management-rollback",
+          "task": "Restore the original configuration.",
+          "teach": "Rollback restores a known baseline. Verify the restored content and the service health after reverting.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cp ~/change/app.conf.before ~/change/app.conf"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/change/app.conf",
+              "pattern": "^workers=2$"
+            }
+          },
+          "explain": "Rollback restores a known baseline. Verify the restored content and the service health after reverting."
+        }
+      ],
+      "solution": [
+        "cp ~/change/app.conf ~/change/app.conf.before",
+        "echo workers=4 > ~/change/app.conf",
+        "cat ~/change/app.conf",
+        "cp ~/change/app.conf.before ~/change/app.conf"
+      ],
+      "realLab": "Track a VM practice configuration with Git, review a diff, validate it, apply and roll back. Use an Ansible playbook for one idempotent change and run it twice; the second run should report no change. Keep secrets out of the repository.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ],
+      "setup": {
+        "dirs": [
+          "~/change"
+        ],
+        "files": {
+          "~/change/app.conf": "workers=2\n"
+        }
+      }
+    },
+    {
+      "id": "monitoring-and-response",
+      "title": "Monitoring, alerts and incident reports",
+      "stage": "6 · Automation and recovery",
+      "duration": 25,
+      "labKind": "terminal",
+      "story": "Distinguish a user-visible symptom from resource metrics. Gather evidence, test a hypothesis, apply the smallest fix and verify recovery.",
+      "outcomes": [
+        "Monitoring, alerts and incident reports",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "monitoring-and-response-read",
+          "task": "Read the incident timeline.",
+          "teach": "Start with impact, scope and timeline. CPU, memory and disk metrics are signals; they do not independently establish a root cause.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cat ~/incident/timeline.log"
+          ],
+          "check": {
+            "ran": {
+              "command": "cat",
+              "code": 0,
+              "stdout": "503"
+            }
+          },
+          "explain": "Start with impact, scope and timeline. CPU, memory and disk metrics are signals; they do not independently establish a root cause."
+        },
+        {
+          "id": "monitoring-and-response-errors",
+          "task": "Extract the application errors.",
+          "teach": "Correlate errors with the time the user-visible problem began. Preserve evidence before log rotation or restarts.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: grep ERROR ~/incident/timeline.log"
+          ],
+          "check": {
+            "ran": {
+              "command": "grep",
+              "code": 0,
+              "stdout": "connection refused"
+            }
+          },
+          "explain": "Correlate errors with the time the user-visible problem began. Preserve evidence before log rotation or restarts."
+        },
+        {
+          "id": "monitoring-and-response-memory",
+          "task": "Check training memory availability.",
+          "teach": "Use evidence to eliminate hypotheses. A normal memory snapshot does not explain a refused service connection.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: free -h"
+          ],
+          "check": {
+            "ran": {
+              "command": "free",
+              "code": 0,
+              "stdout": "1.3Gi"
+            }
+          },
+          "explain": "Use evidence to eliminate hypotheses. A normal memory snapshot does not explain a refused service connection."
+        },
+        {
+          "id": "monitoring-and-response-report",
+          "task": "Record the working hypothesis and next verification.",
+          "teach": "A useful incident record separates observed facts from hypotheses, names the recovery action and records a prevention follow-up.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: echo \"hypothesis: dependency stopped; verify service state and listener\" > ~/incident/report.txt"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/incident/report.txt",
+              "pattern": "verify service state and listener"
+            }
+          },
+          "explain": "A useful incident record separates observed facts from hypotheses, names the recovery action and records a prevention follow-up."
+        }
+      ],
+      "solution": [
+        "cat ~/incident/timeline.log",
+        "grep ERROR ~/incident/timeline.log",
+        "free -h",
+        "echo \"hypothesis: dependency stopped; verify service state and listener\" > ~/incident/report.txt"
+      ],
+      "realLab": "Build a VM health checklist covering service status, listeners, logs, filesystem space, inodes and memory. Create a harmless failure, observe it, recover and document the timeline. Define an alert with a threshold, duration, owner and actionable runbook.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ],
+      "setup": {
+        "dirs": [
+          "~/incident"
+        ],
+        "files": {
+          "~/incident/timeline.log": "09:00 INFO deployment\n09:01 ERROR upstream connection refused\n09:01 WARN HTTP 503\n"
+        }
+      }
+    },
+    {
+      "id": "capstone-web",
+      "title": "Capstone: bring a web service online",
+      "stage": "7 · Administrator assessments",
+      "duration": 45,
+      "labKind": "sandbox",
+      "story": "Your ticket: the training web service is unreachable. Inspect its state, start it, enable it, establish the expected listener and save evidence.",
+      "outcomes": [
+        "Capstone: bring a web service online",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "capstone-web-reset",
+          "task": "Load the stopped-service scenario.",
+          "teach": "This assessment combines service lifecycle, networking and evidence collection. Hints remain available for revision.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: lab reset"
+          ],
+          "check": {
+            "ran": {
+              "command": "lab",
+              "code": 0,
+              "stdout": "Reset complete"
+            }
+          },
+          "explain": "This assessment combines service lifecycle, networking and evidence collection. Hints remain available for revision."
+        },
+        {
+          "id": "capstone-web-inspect",
+          "task": "Prove nginx is inactive.",
+          "teach": "Establish a baseline before a change.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: systemctl status nginx"
+          ],
+          "check": {
+            "ran": {
+              "command": "systemctl",
+              "code": 3,
+              "stdout": "inactive"
+            }
+          },
+          "explain": "Establish a baseline before a change."
+        },
+        {
+          "id": "capstone-web-start",
+          "task": "Start nginx.",
+          "teach": "Change only the service identified in the ticket.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: sudo systemctl start nginx"
+          ],
+          "check": {
+            "ran": {
+              "command": "systemctl",
+              "code": 0,
+              "line": "start nginx"
+            }
+          },
+          "explain": "Change only the service identified in the ticket."
+        },
+        {
+          "id": "capstone-web-enable",
+          "task": "Ensure nginx is enabled for boot.",
+          "teach": "Persist the intended service lifecycle.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: sudo systemctl enable nginx"
+          ],
+          "check": {
+            "ran": {
+              "command": "systemctl",
+              "code": 0,
+              "line": "enable nginx"
+            }
+          },
+          "explain": "Persist the intended service lifecycle."
+        },
+        {
+          "id": "capstone-web-listener",
+          "task": "Prove that TCP port 80 is listening.",
+          "teach": "Application reachability requires a listener; a running process alone is not enough.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: ss -tln"
+          ],
+          "check": {
+            "ran": {
+              "command": "ss",
+              "code": 0,
+              "stdout": ":80"
+            }
+          },
+          "explain": "Application reachability requires a listener; a running process alone is not enough."
+        },
+        {
+          "id": "capstone-web-record",
+          "task": "Save evidence that nginx is active and enabled.",
+          "teach": "A handover should contain verifiable results. In a VM also make an HTTP request and check the response.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: systemctl status nginx > ~/web-handover.txt"
+          ],
+          "check": {
+            "all": [
+              {
+                "contains": {
+                  "path": "~/web-handover.txt",
+                  "pattern": "enabled"
+                }
+              },
+              {
+                "contains": {
+                  "path": "~/web-handover.txt",
+                  "pattern": "Active: active"
+                }
+              }
+            ]
+          },
+          "explain": "A handover should contain verifiable results. In a VM also make an HTTP request and check the response."
+        }
+      ],
+      "solution": [
+        "lab reset",
+        "systemctl status nginx",
+        "sudo systemctl start nginx",
+        "sudo systemctl enable nginx",
+        "ss -tln",
+        "systemctl status nginx > ~/web-handover.txt"
+      ],
+      "realLab": "On a disposable VM, deploy a static site, enable the service, configure the firewall, test HTTP from a second VM, reboot and retest. Deliver a runbook with logs, rollback and an explanation of each open port.",
+      "references": [
+        {
+          "title": "systemctl manual",
+          "url": "https://www.freedesktop.org/software/systemd/man/latest/systemctl.html"
+        }
+      ]
+    },
+    {
+      "id": "capstone-access",
+      "title": "Capstone: onboard an operations teammate",
+      "stage": "7 · Administrator assessments",
+      "duration": 45,
+      "labKind": "sandbox",
+      "story": "Provision a training account, append the correct group, then protect a separate desktop handover file with least privilege.",
+      "outcomes": [
+        "Capstone: onboard an operations teammate",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "capstone-access-reset",
+          "task": "Initialize the assessment sandbox.",
+          "teach": "Training account membership and desktop file permissions are separate models; this assessment verifies each explicitly.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: lab reset"
+          ],
+          "check": {
+            "ran": {
+              "command": "lab",
+              "code": 0,
+              "stdout": "Reset complete"
+            }
+          },
+          "explain": "Training account membership and desktop file permissions are separate models; this assessment verifies each explicitly."
+        },
+        {
+          "id": "capstone-access-group",
+          "task": "Create the support group.",
+          "teach": "Use a group to express a shared responsibility.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: sudo groupadd support"
+          ],
+          "check": {
+            "ran": {
+              "command": "groupadd",
+              "code": 0,
+              "line": "support"
+            }
+          },
+          "explain": "Use a group to express a shared responsibility."
+        },
+        {
+          "id": "capstone-access-user",
+          "task": "Create the analyst account.",
+          "teach": "Give each operator an individual account for accountability.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: sudo useradd -m analyst"
+          ],
+          "check": {
+            "ran": {
+              "command": "useradd",
+              "code": 0,
+              "line": "analyst"
+            }
+          },
+          "explain": "Give each operator an individual account for accountability."
+        },
+        {
+          "id": "capstone-access-member",
+          "task": "Append analyst to support.",
+          "teach": "Preserve existing groups when adding access.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: sudo usermod -aG support analyst"
+          ],
+          "check": {
+            "ran": {
+              "command": "usermod",
+              "code": 0,
+              "line": "support analyst"
+            }
+          },
+          "explain": "Preserve existing groups when adding access."
+        },
+        {
+          "id": "capstone-access-verify",
+          "task": "Verify the support membership.",
+          "teach": "Check the actual result before closing an access ticket.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: id analyst"
+          ],
+          "check": {
+            "ran": {
+              "command": "id",
+              "code": 0,
+              "stdout": "support"
+            }
+          },
+          "explain": "Check the actual result before closing an access ticket."
+        },
+        {
+          "id": "capstone-access-protect",
+          "task": "Protect the desktop handover note as owner-only read/write.",
+          "teach": "This file belongs to your desktop account. The training analyst account does not change its owner.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: chmod 600 ~/access-handover.txt"
+          ],
+          "check": {
+            "mode": {
+              "path": "~/access-handover.txt",
+              "is": "600"
+            }
+          },
+          "explain": "This file belongs to your desktop account. The training analyst account does not change its owner."
+        }
+      ],
+      "solution": [
+        "lab reset",
+        "sudo groupadd support",
+        "sudo useradd -m analyst",
+        "sudo usermod -aG support analyst",
+        "id analyst",
+        "chmod 600 ~/access-handover.txt"
+      ],
+      "realLab": "On a VM onboard a named test account with a project group, shared directory permissions, SSH public key and narrowly scoped sudo rule reviewed with visudo. Verify intended actions succeed and forbidden actions fail. Document offboarding and remove the disposable account afterward.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ],
+      "setup": {
+        "dirs": [],
+        "files": {
+          "~/access-handover.txt": "Onboarding checklist: named account, limited group access, verified login, reviewed sudo\n"
+        }
+      }
+    },
+    {
+      "id": "capstone-recovery",
+      "title": "Capstone: restore data and hand over a server",
+      "stage": "7 · Administrator assessments",
+      "duration": 60,
+      "labKind": "sandbox",
+      "story": "Complete the browser path by restoring a damaged practice configuration from backup, verifying it and writing a recovery handover. Real VM assessments are still required for hands-on administrator proficiency.",
+      "outcomes": [
+        "Capstone: restore data and hand over a server",
+        "Verify the result before moving on"
+      ],
+      "steps": [
+        {
+          "id": "capstone-recovery-home",
+          "task": "Start from your home directory.",
+          "teach": "Check the current directory before using relative archive paths.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cd ~"
+          ],
+          "check": {
+            "cwd": "~"
+          },
+          "explain": "Check the current directory before using relative archive paths."
+        },
+        {
+          "id": "capstone-recovery-archive",
+          "task": "Back up recovery-source/service.conf.",
+          "teach": "Capture a known-good baseline using the training archive format.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: tar -cf recovery.tar recovery-source/service.conf"
+          ],
+          "check": {
+            "all": [
+              {
+                "ran": {
+                  "command": "tar",
+                  "code": 0,
+                  "line": "-cf"
+                }
+              },
+              {
+                "exists": "~/recovery.tar"
+              }
+            ]
+          },
+          "explain": "Capture a known-good baseline using the training archive format."
+        },
+        {
+          "id": "capstone-recovery-damage",
+          "task": "Simulate a damaged practice configuration.",
+          "teach": "This deliberately changes only the supplied practice file. Real incidents require evidence preservation first.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: echo broken > ~/recovery-source/service.conf"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/recovery-source/service.conf",
+              "pattern": "^broken$"
+            }
+          },
+          "explain": "This deliberately changes only the supplied practice file. Real incidents require evidence preservation first."
+        },
+        {
+          "id": "capstone-recovery-restore",
+          "task": "Restore the backup into recovery-check.",
+          "teach": "Restore separately and inspect the recovered data before replacing live data.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: tar -xf recovery.tar -C recovery-check"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/recovery-check/recovery-source/service.conf",
+              "pattern": "port=8080"
+            }
+          },
+          "explain": "Restore separately and inspect the recovered data before replacing live data."
+        },
+        {
+          "id": "capstone-recovery-verify",
+          "task": "Read the restored configuration.",
+          "teach": "Verify content and behavior, not just archive extraction success.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: cat ~/recovery-check/recovery-source/service.conf"
+          ],
+          "check": {
+            "ran": {
+              "command": "cat",
+              "code": 0,
+              "stdout": "port=8080"
+            }
+          },
+          "explain": "Verify content and behavior, not just archive extraction success."
+        },
+        {
+          "id": "capstone-recovery-handover",
+          "task": "Write a handover recording verified recovery and the remaining VM assessment.",
+          "teach": "You have completed the browser curriculum. Demonstrate the companion VM objectives, failure diagnosis and recovery independently before claiming production administration readiness.",
+          "hints": [
+            "Use the syntax from the explanation, and check the target path or unit.",
+            "Try: echo \"restore verified; next: complete VM service, access and recovery assessments\" > ~/admin-handover.txt"
+          ],
+          "check": {
+            "contains": {
+              "path": "~/admin-handover.txt",
+              "pattern": "restore verified; next: complete VM"
+            }
+          },
+          "explain": "You have completed the browser curriculum. Demonstrate the companion VM objectives, failure diagnosis and recovery independently before claiming production administration readiness."
+        }
+      ],
+      "solution": [
+        "cd ~",
+        "tar -cf recovery.tar recovery-source/service.conf",
+        "echo broken > ~/recovery-source/service.conf",
+        "tar -xf recovery.tar -C recovery-check",
+        "cat ~/recovery-check/recovery-source/service.conf",
+        "echo \"restore verified; next: complete VM service, access and recovery assessments\" > ~/admin-handover.txt"
+      ],
+      "realLab": "Independently build a VM with named accounts, limited sudo, a persistent data volume, a running web service, firewall policy, a tested backup and a scheduled health check. Inject a stopped service and a damaged practice file, diagnose each from evidence and recover. Reboot, verify persistence and deliver the runbook. Review all earlier workbook VM exercises, including scripting, LVM, SSH and shared storage.",
+      "references": [
+        {
+          "title": "Ubuntu Server documentation",
+          "url": "https://documentation.ubuntu.com/server/"
+        },
+        {
+          "title": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/bash.html"
+        }
+      ],
+      "setup": {
+        "dirs": [
+          "~/recovery-source",
+          "~/recovery-check"
+        ],
+        "files": {
+          "~/recovery-source/service.conf": "port=8080\nworkers=2\n"
+        }
+      }
     }
   ]
 }

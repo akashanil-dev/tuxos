@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { apt } from '../../apt/src/index';
 import { createLocalSystem, type KeyValueStorage } from '@tuxos/system';
 import { TerminalController, titleFor, toTerminal } from './controller';
 import { terminal } from './index';
@@ -12,10 +13,10 @@ const memory = (): KeyValueStorage => {
   };
 };
 
-async function setup() {
+async function setup(colourOutput = false) {
   const system = createLocalSystem({
     storage: memory(),
-    modules: [{ manifest: terminal.manifest, load: async () => terminal }],
+    modules: [{ manifest: terminal.manifest, load: async () => terminal }, { manifest: apt.manifest, load: async () => apt }],
   });
   await system.boot('ada');
   let output = '';
@@ -25,11 +26,72 @@ async function setup() {
   const controller = new TerminalController(screen, await system.createTerminal(), {
     close: () => { window.closed = true; },
     setTitle: (title) => window.titles.push(title),
-  });
-  return { controller, window, read: () => output, reset: () => { output = ''; }, cleared: () => cleared };
+  }, { colourOutput });
+  return { system, controller, window, read: () => output, reset: () => { output = ''; }, cleared: () => cleared };
 }
 
 describe('TerminalController', () => {
+  it('colours learning output without changing file contents or the next prompt', async () => {
+    const { controller, read, system } = await setup(true);
+    await controller.start();
+    await controller.input('echo Hello world > greeting.txt; cat greeting.txt\r');
+    expect(read()).toContain('\x1b[96mHello world\r\n\x1b[0m');
+    expect(read().endsWith('ada@tuxos:~$ ')).toBe(true);
+    expect(await system.dispatch('fs.read', { path: '/home/ada/greeting.txt' })).toMatchObject({ ok: true, value: 'Hello world\n' });
+  });
+  it('accepts an apt answer as input rather than another shell command', async () => {
+    const { controller, read } = await setup();
+    await controller.start();
+    await controller.input('sudo apt update\r');
+    const installing = controller.input('sudo apt install cowsay\r');
+    await vi.waitFor(() => expect(read()).toContain('Do you want to continue? [Y/n] '));
+    await controller.input('y\r');
+    await installing;
+    expect(read().match(/Setting up cowsay/g)).toHaveLength(1);
+    await controller.input('cowsay hi\r');
+    expect(read()).toContain('< hi >');
+    expect(read()).not.toContain('y: command not found');
+  });
+
+  it.each(['\x03', '\x04'])('cancels an apt prompt with %j and keeps the terminal open', async (key) => {
+    const { controller, window, read, system } = await setup();
+    await controller.start();
+    await controller.input('sudo apt update\r');
+    const installing = controller.input('sudo apt install cowsay\r');
+    await vi.waitFor(() => expect(read()).toContain('Do you want to continue?'));
+    await controller.input(key);
+    await installing;
+    expect(window.closed).toBe(false);
+    expect(read()).toContain('Abort.');
+    const other = await system.createTerminal();
+    expect((await other.run('cowsay hi')).code).toBe(127);
+    expect((await other.run('sudo apt install tree')).code).toBe(0);
+  });
+
+  it('closing a terminal aborts a pending package install and releases its lock', async () => {
+    const { controller, read, system } = await setup();
+    await controller.start();
+    await controller.input('sudo apt update\r');
+    const installing = controller.input('sudo apt install cowsay\r');
+    await vi.waitFor(() => expect(read()).toContain('Do you want to continue?'));
+    controller.dispose();
+    await installing;
+    const other = await system.createTerminal();
+    expect((await other.run('cowsay hi')).code).toBe(127);
+    expect((await other.run('sudo apt install tree')).code).toBe(0);
+  });
+
+  it('returns to the prompt when Ctrl+C stops cmatrix', async () => {
+    const { controller, read } = await setup();
+    await controller.start();
+    await controller.input('sudo apt update && sudo apt install cmatrix\r');
+    const animation = controller.input('cmatrix\r');
+    await vi.waitFor(() => expect(read()).toContain('Ctrl+C to exit'));
+    await controller.input('\x03');
+    await animation;
+    expect(read().endsWith('ada@tuxos:~$ ')).toBe(true);
+  });
+
   it('prints the motd and a bash prompt, and titles the window', async () => {
     const { controller, window, read } = await setup();
     await controller.start('Welcome');

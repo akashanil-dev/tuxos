@@ -9,6 +9,8 @@ import { course, learnLinux, survey } from './index';
 import { terminal } from '../../terminal/src/index';
 import { learnDocker } from '../../learn-docker/src/index';
 import { apt } from '../../apt/src/index';
+import { files } from '../../files/src/index';
+import { about } from '../../about/src/index';
 
 const memory = (): KeyValueStorage => {
   const values = new Map<string, string>();
@@ -38,6 +40,7 @@ const aiLearning = (): LearningBackend => ({
 
 /** The learner rates their experience; the syllabus is designed only after that. */
 async function rate(system: SystemClient, stars = 3): Promise<void> {
+  await system.dispatch('learn-linux.retakeSurvey', {});
   const result = await system.dispatch('learn-linux.survey', { answers: Object.fromEntries(survey.map((question) => [question.id, stars])) });
   if (!result.ok) throw new Error(result.error.message);
   await new Promise((resolve) => setTimeout(resolve, 0));
@@ -81,6 +84,8 @@ describe('Learn Linux course', () => {
       modules: [{ manifest: learnLinux.manifest, load: async () => learnLinux }],
     });
     await system.boot('ada');
+    expect((await status(system)).builtIn).toBeDefined();
+    await system.dispatch('learn-linux.retakeSurvey', {});
     const waiting = await status(system);
     expect(waiting.survey?.questions).toHaveLength(survey.length);
     expect(plans).toHaveLength(0);
@@ -264,7 +269,7 @@ describe('Learn Linux course', () => {
     expect(plans).toHaveLength(0);
 
     hasKey = true;
-    expect((await status(system)).survey?.questions).toHaveLength(survey.length);
+    expect((await status(system)).builtIn).toBeDefined();
     await rate(system, 4);
     expect(plans).toHaveLength(1);
     const ai = await status(system);
@@ -280,6 +285,7 @@ describe('Learn Linux course', () => {
       modules: [{ manifest: learnLinux.manifest, load: async () => learnLinux }],
     });
     await system.boot('ada');
+    await system.dispatch('learn-linux.retakeSurvey', {});
     expect((await status(system)).survey).toBeDefined();
     hasKey = false;
     expect(await system.dispatch('learn-linux.survey', { answers: { terminal: 3 } })).toMatchObject({
@@ -335,7 +341,7 @@ describe('Learn Linux course', () => {
   });
 
   // Lesson CI for the built-in course (used without an AI key): each lesson's solution must complete it.
-  it.each(course.lessons.filter((lesson) => lesson.solution.every((step) => typeof step === 'string')).map((lesson) => [lesson.id]))(
+  it.each(course.lessons.map((lesson) => [lesson.id]))(
     'built-in lesson %s is completed by its own solution',
     async (id) => {
       const system = createLocalSystem({
@@ -345,6 +351,8 @@ describe('Learn Linux course', () => {
           { manifest: learnLinux.manifest, load: async () => learnLinux },
           { manifest: terminal.manifest, load: async () => terminal },
           { manifest: apt.manifest, load: async () => apt },
+          { manifest: files.manifest, load: async () => files },
+          { manifest: about.manifest, load: async () => about },
         ],
       });
       await system.boot('ada');
@@ -352,12 +360,62 @@ describe('Learn Linux course', () => {
       const lesson = course.lessons.find((each) => each.id === id)!;
       expect(await system.dispatch('learn-linux.start', { lesson: id })).toMatchObject({ ok: true });
       const shell = await system.createTerminal({ learningModule: 'learn-linux' });
-      for (const step of lesson.solution) await shell.run(step as string);
+      for (const [index, step] of lesson.solution.entries()) {
+        const result = typeof step === 'string' ? await shell.run(step) : await system.openApp(step.open);
+        expect((await status(system)).lessons.find((each) => each.id === id)?.completed, JSON.stringify({ step, result })).toBe(index + 1);
+      }
       const done = await status(system);
       expect(done.active).toBeNull();
       expect(done.lessons.find((each) => each.id === id)?.completed).toBe(lesson.steps.length);
     },
   );
+
+  it('upgrades a seven-lesson saved curriculum and resumes without replacing practice files', async () => {
+    const saved = memory();
+    const make = () => createLocalSystem({ storage: saved, modules: [{ manifest: learnLinux.manifest, load: async () => learnLinux }] });
+    const first = make();
+    await first.boot('ada');
+    await first.dispatch('learn-linux.start', { lesson: 'making-things' });
+    const shell = await first.createTerminal({ learningModule: 'learn-linux' });
+    await shell.run('mkdir projects');
+    await shell.run('echo learn linux > projects/plan.txt');
+    const path = '/home/ada/.local/share/tuxos/ai-learning/learn-linux-built-in.json';
+    const read = await first.dispatch<string>('fs.read', { path });
+    if (!read.ok) throw new Error(read.error.message);
+    const old = JSON.parse(read.value);
+    old.syllabus.days = old.syllabus.days.slice(0, 7);
+    await first.dispatch('fs.write', { path, content: JSON.stringify(old) });
+    await first.flush();
+    const second = make();
+    await second.boot('ada');
+    expect((await status(second)).lessons).toHaveLength(course.lessons.length);
+    expect((await status(second)).active?.step.id).toBe('copy');
+    await second.dispatch('learn-linux.quit', {});
+    await second.dispatch('learn-linux.start', { lesson: 'making-things' });
+    expect((await status(second)).active?.step.id).toBe('copy');
+    expect(await second.dispatch('fs.read', { path: '/home/ada/projects/plan.txt' })).toMatchObject({ ok: true, value: 'learn linux\n' });
+  });
+
+  it('restarts completed lessons and keeps curriculum and AI lab progress separate', async () => {
+    const system = await boot();
+    const shell = await system.createTerminal({ learningModule: 'learn-linux' });
+    await shell.run('whoami');
+    await system.dispatch('learn-linux.curriculum', {});
+    expect((await status(system)).builtIn).toBeDefined();
+    await system.dispatch('learn-linux.start', { lesson: 'first-words' });
+    for (const command of ['whoami', 'pwd', 'ls']) await shell.run(command);
+    expect((await status(system)).active).toBeNull();
+    await system.dispatch('learn-linux.start', { lesson: 'first-words' });
+    expect((await status(system)).active?.step.id).toBe('whoami');
+    expect((await status(system)).lessons[0]?.completed).toBe(0);
+    const ai = await system.dispatch<string>('fs.read', { path: '/home/ada/.local/share/tuxos/ai-learning/learn-linux-v2.json' });
+    expect(ai.ok && JSON.parse(ai.value).completed).toContain('whoami');
+    await system.dispatch('learn-linux.personalize', {});
+    expect((await status(system)).builtIn).toBeUndefined();
+    expect((await status(system)).active?.step.id).toBe('pwd');
+    await system.dispatch('learn-linux.curriculum', {});
+    expect((await status(system)).active?.step.id).toBe('whoami');
+  });
 
   it('rejects unknown lessons with a clear error', async () => {
     const system = await boot();

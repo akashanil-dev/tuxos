@@ -1,0 +1,40 @@
+export interface Lab {
+  id: string; title: string; source: string; goal: string; hint: string; starter: string;
+  check(text: string): boolean; after: string;
+}
+const lines = (text: string) => text.split('\n').map(line => line.replace(/#.*/, '').trim()).filter(Boolean);
+export const LABS: Lab[] = [
+  { id: 'hostname', title: 'Name a machine', source: '/etc/hostname',
+    goal: 'Give the practice machine the name penguin-lab. Keep just one line.',
+    hint: 'Replace tuxos with penguin-lab. A hostname is a name, not an IP address.', starter: 'tuxos\n',
+    check: text => text.trim() === 'penguin-lab', after: 'On real Linux, use the distribution’s hostname tool to update the live hostname too. This copy does not rename TuxOS.' },
+  { id: 'hosts', title: 'Give an address a name', source: '/etc/hosts',
+    goal: 'Keep localhost and add a mapping from 192.0.2.10 to penguin.lab.',
+    hint: 'Put the IP address first, then a space and the name: 192.0.2.10 penguin.lab', starter: '127.0.0.1 localhost\n',
+    check: text => lines(text).some(l => /^127\.0\.0\.1\s+localhost$/.test(l)) && lines(text).some(l => /^192\.0\.2\.10\s+penguin\.lab$/.test(l)),
+    after: 'A real hosts file supplies local name mappings. This documentation IP address and practice copy do not change DNS or the network.' },
+  { id: 'kde', title: 'Read a KDE setting', source: '~/.config/kdeglobals',
+    goal: 'Under [General], change ColorScheme from BreezeDark to BreezeLight.',
+    hint: 'Keep the [General] section heading. Set ColorScheme=BreezeLight on the next line.',
+    starter: '[General]\nColorScheme=BreezeDark\n',
+    check: text => /^\[General\]\nColorScheme=BreezeLight$/.test(lines(text).join('\n')),
+    after: 'Sections group related preferences. On real KDE, prefer System Settings for appearance. This exercise does not apply a TuxOS theme.' },
+  { id: 'ssh', title: 'Read an SSH policy', source: '/etc/ssh/sshd_config',
+    goal: 'Keep Port 22 and change PermitRootLogin from yes to no.',
+    hint: 'SSH config uses spaces: PermitRootLogin no. This controls direct administrator login.',
+    starter: '# Deliberately permissive practice copy\nPort 22\nPermitRootLogin yes\n',
+    check: text => lines(text).join('\n') === 'Port 22\nPermitRootLogin no',
+    after: 'On a real server, confirm another administrator account works, validate with sshd -t, then reload using the distribution’s service tools. This copy affects no service.' },
+  { id: 'fstab', title: 'Understand mount settings', source: '/etc/fstab',
+    goal: 'Change only the mount location from /mnt/old to /mnt/practice.',
+    hint: 'There are six fields: device, mount location, filesystem type, options, dump, check order.',
+    starter: '# Device  Mount point  Type  Options  Dump  Pass\n/dev/vdb1 /mnt/old ext4 defaults 0 2\n',
+    check: text => lines(text).length === 1 && lines(text)[0]!.split(/\s+/).join(' ') === '/dev/vdb1 /mnt/practice ext4 defaults 0 2',
+    after: 'Real mount settings must match the actual device and filesystem. This example does not mount or format anything.' },
+  { id: 'service', title: 'Describe a service', source: '/etc/systemd/system/hello.service',
+    goal: 'Change Description to My first service. Keep the service command unchanged.',
+    hint: 'In the [Unit] section use Description=My first service. Leave [Service], Type and ExecStart as they are.',
+    starter: '[Unit]\nDescription=Hello service\n[Service]\nType=oneshot\nExecStart=/usr/bin/echo Hello\n',
+    check: text => lines(text).join('\n') === '[Unit]\nDescription=My first service\n[Service]\nType=oneshot\nExecStart=/usr/bin/echo Hello',
+    after: 'The Description is a human-readable label. Real unit changes need validation and systemctl daemon-reload; that does not start the unit by itself. This copy does not run a service.' },
+];

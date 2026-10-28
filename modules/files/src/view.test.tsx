@@ -28,6 +28,19 @@ async function renderFiles(): Promise<SystemClient> {
 afterEach(() => cleanup());
 
 describe('Files', () => {
+  it('opens a requested system folder and provides a shortcut to the root', async () => {
+    const system = createLocalSystem({ storage: memory(), modules: [{ manifest: files.manifest, load: async () => files }] });
+    await system.boot('ada');
+    render(<FilesView system={system} windowId="folder" args={{ path: '/etc/ssh' }} />);
+    expect(await screen.findByText('sshd_config')).toBeTruthy();
+    expect(screen.getByLabelText<HTMLInputElement>('Location').value).toBe('/etc/ssh');
+    fireEvent.click(screen.getByRole('button', { name: 'Filesystem /' }));
+    expect(await screen.findByText('proc')).toBeTruthy();
+    expect(screen.getByLabelText<HTMLInputElement>('Location').value).toBe('/');
+    fireEvent.click(screen.getByRole('button', { name: 'Home' }));
+    expect(await screen.findByText('Documents')).toBeTruthy();
+  });
+
   it('opens in the home folder and enters a folder on double-click', async () => {
     await renderFiles();
     expect(screen.getByLabelText<HTMLInputElement>('Location').value).toBe('/home/ada');

@@ -8,11 +8,13 @@ export interface Screen {
   write(data: string): void;
   clear(): void;
   readonly cols: number;
+  readonly rows?: number;
 }
 
 export interface WindowActions {
   close(): void;
   setTitle(title: string): void;
+  runningChanged?(running: boolean): void;
 }
 
 const EXIT = /^\s*exit(\s+\d+)?\s*$/;
@@ -22,11 +24,23 @@ export class TerminalController {
   private busy = true;
   private pending = '';
   private title = '';
+  private answer?: (line: string | null) => void;
+  private running?: AbortController;
+  private disposed = false;
+
+  dispose(): void {
+    this.disposed = true;
+    this.pending = '';
+    this.running?.abort();
+    this.answer?.(null);
+    this.answer = undefined;
+  }
 
   constructor(
     private readonly screen: Screen,
     private readonly session: TerminalSession,
     private readonly window: WindowActions,
+    private readonly options: { colourOutput?: boolean } = {},
   ) {}
 
   async start(motd?: string): Promise<void> {
@@ -36,7 +50,33 @@ export class TerminalController {
 
   /** Keystrokes typed while a command runs are kept and replayed at the next prompt, like a real tty. */
   async input(data: string): Promise<void> {
+    if (this.disposed) return;
+    if (this.answer) {
+      this.editor.columns = this.screen.cols;
+      const { output, events } = this.editor.input(data);
+      this.screen.write(output);
+      for (const event of events) {
+        if (event.type === 'submit' || event.type === 'interrupt' || event.type === 'eof') {
+          const resolve = this.answer;
+          this.answer = undefined;
+          if (event.type === 'interrupt') this.running?.abort();
+          if (event.type === 'eof') this.screen.write('\r\n');
+          resolve?.(event.type === 'submit' ? event.line : null);
+          break;
+        }
+        if (event.type === 'clear-screen') {
+          this.screen.clear();
+          this.screen.write(this.editor.cleared());
+        }
+      }
+      return;
+    }
     if (this.busy) {
+      if (data.includes('\x03')) {
+        this.running?.abort();
+        this.pending = '';
+        return;
+      }
       this.pending += data;
       return;
     }
@@ -74,10 +114,47 @@ export class TerminalController {
       return;
     }
     this.busy = true;
-    const result = await this.session.run(line);
-    this.screen.write(toTerminal(result.stdout + result.stderr));
-    if (result.feedback) this.screen.write(formatFeedback(result.feedback, this.screen.cols));
-    await this.showPrompt();
+    this.running = new AbortController();
+    this.window.runningChanged?.(true);
+    const lessonHelp = /^\s*\/?(?:hint|answer|task)(?:\s|$)/.test(line);
+    if (lessonHelp) this.screen.write('\r\n');
+    let streamed = false;
+    const paint = (text: string, error = false) => this.options.colourOutput && text && !text.includes('\x1b') ? `\x1b[${error ? '91' : '96'}m${text}\x1b[0m` : text;
+    const write = (text: string, error = false) => {
+      streamed = true;
+      if (!this.disposed) this.screen.write(toTerminal(paint(text, error)));
+    };
+    try {
+      const result = await this.session.run(line, {
+        stdout: text => write(text), stderr: text => write(text, true), signal: this.running.signal,
+        terminal: { columns: this.screen.cols, rows: this.screen.rows ?? 24 },
+        readLine: (prompt) => {
+          if (this.disposed || this.running?.signal.aborted) return Promise.resolve(null);
+          return new Promise<string | null>((resolve) => {
+            this.answer = resolve;
+            this.editor.columns = this.screen.cols;
+            this.screen.write(this.editor.start(prompt, []));
+            if (this.pending) {
+              const typed = this.pending;
+              this.pending = '';
+              void this.input(typed);
+            }
+          });
+        },
+      });
+      if (!this.disposed) {
+        if (!streamed) this.screen.write(toTerminal(paint(result.stdout) + paint(result.stderr, true)));
+        if (result.feedback) this.screen.write(formatFeedback(result.feedback, this.screen.cols));
+        else if (lessonHelp) this.screen.write('\r\n');
+      }
+    } catch (error) {
+      write(`Terminal: ${error instanceof Error ? error.message : String(error)}\n`);
+    } finally {
+      this.running = undefined;
+      this.answer = undefined;
+      if (!this.disposed) this.window.runningChanged?.(false);
+      if (!this.disposed) await this.showPrompt();
+    }
   }
 
   private async showPrompt(): Promise<void> {
@@ -112,9 +189,11 @@ export function formatFeedback(feedback: { correct: boolean; text: string }, col
   const next = feedback.correct ? 'Your next task is ready above.' : 'Try again, or type /hint for a nudge.';
   const lines = [
     '',
+    '',
     `${colour}┃${RESET} ${colour}${heading}${RESET}`,
     ...wrap(feedback.text, width).map((line) => `${colour}┃${RESET} ${line}`),
     `${colour}┃${RESET} ${DIM}${next}${RESET}`,
+    '',
     '',
   ];
   return lines.join('\r\n');

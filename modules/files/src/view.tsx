@@ -11,7 +11,7 @@ type Pending =
   | { kind: 'delete'; entry: Stat }
   | null;
 
-export default function FilesView({ system }: AppViewProps) {
+export default function FilesView({ system, args }: AppViewProps) {
   const [path, setPath] = useState('');
   const [typedPath, setTypedPath] = useState('');
   const [back, setBack] = useState<string[]>([]);
@@ -22,8 +22,10 @@ export default function FilesView({ system }: AppViewProps) {
   const { entries, error } = useDirectory(system, path);
 
   useEffect(() => {
-    void system.user().then((user) => go(`/home/${user}`, false));
-  }, [system]);
+    let active = true;
+    void system.user().then((user) => { if (active) go(args?.path ?? `/home/${user}`, false); });
+    return () => { active = false; };
+  }, [system, args?.path]);
 
   function go(next: string, remember = true) {
     if (remember && path) setBack((history) => [...history, path]);
@@ -98,6 +100,12 @@ export default function FilesView({ system }: AppViewProps) {
         Delete
       </button>
     </div>
+    <nav className="files-bar" aria-label="Places">
+      <button onClick={() => go('/')}>Filesystem /</button>
+      <button onClick={() => void system.user().then(user => go(`/home/${user}`))}>Home</button>
+      <button onClick={() => setShowHidden(value => !value)} aria-pressed={showHidden}>Hidden files</button>
+      <button onClick={() => void system.openApp('learn-filesystem').then(result => { if (!result.ok) setNotice(result.error.message); })}>Learn this filesystem ↗</button>
+    </nav>
     {pending && pending.kind !== 'delete' && <NamePrompt
       label={pending.kind === 'new-folder' ? 'Folder name' : 'File name'}
       pending={pending}

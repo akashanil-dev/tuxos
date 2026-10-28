@@ -9,6 +9,7 @@ export const manifest: ModuleManifest = {
   capabilities: ['fs:read', 'fs:write', 'user:switch'],
   activation: ['onStartup'],
   contributes: {
+    apps: [{ id: 'software', title: 'Software', icon: 'software', category: 'System', defaultGeometry: { width: 1040, height: 720 } }],
     commands: [
       { name: 'apt', summary: 'Install, remove and search for software packages' },
       { name: 'apt-get', summary: 'Install and remove packages (the older apt interface)' },

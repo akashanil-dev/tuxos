@@ -1,5 +1,5 @@
 import { createLocalSystem, type KeyValueStorage, type SystemClient, type TerminalSession } from '@tuxos/system';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { apt } from './index';
 
 const memory = (): KeyValueStorage => {
@@ -52,7 +52,9 @@ describe('apt', () => {
   it('knows no packages until apt update fetches the lists', async () => {
     const { sh } = await boot();
     const before = await sh.run('sudo apt install tree');
-    expect(before).toMatchObject({ code: 100, stderr: 'E: Unable to locate package tree\n' });
+    expect(before.code).toBe(100);
+    expect(before.stderr).toContain('E: Unable to locate package tree\n');
+    expect(before.stderr).toContain('sudo apt update');
     const update = await sh.run('sudo apt update');
     expect(update.code).toBe(0);
     expect(update.stdout).toContain('Hit:1 http://archive.ubuntu.com/ubuntu noble InRelease');
@@ -77,8 +79,9 @@ describe('apt', () => {
 
     await sh.run('mkdir -p Documents/notes');
     await sh.run('echo hi > Documents/notes/a.txt');
-    expect((await sh.run('tree')).stdout).toBe('.\n└── Documents\n    └── notes\n        └── a.txt\n\n2 directories, 1 file\n');
-    expect((await sh.run('tree -d')).stdout).toBe('.\n└── Documents\n    └── notes\n\n2 directories\n');
+    await sh.run('cd Documents');
+    expect((await sh.run('tree')).stdout).toBe('.\n└── notes\n    └── a.txt\n\n1 directory, 1 file\n');
+    expect((await sh.run('tree -d')).stdout).toBe('.\n└── notes\n\n1 directory\n');
   });
 
   it('installs dependencies too, asks first, and installs with -y', async () => {
@@ -158,6 +161,90 @@ describe('apt', () => {
     await first.system.flush();
     const second = await boot(storage);
     expect((await second.sh.run('hello')).stdout).toBe('Hello, world!\n');
+  });
+
+  it('installs cmatrix, exposes the command, persists it and removes it', async () => {
+    const storage = memory();
+    const { system, sh } = await boot(storage);
+    expect((await sh.run('cmatrix')).code).toBe(127);
+    await sh.run('sudo apt update');
+    expect((await sh.run('sudo apt install cmatrix')).code).toBe(0);
+    expect((await sh.run('which cmatrix')).stdout).toBe('/usr/bin/cmatrix\n');
+    expect((await sh.run('cmatrix')).stdout).toContain('\x1b[');
+    expect((await sh.run('apt search matrix')).stdout).toContain('cmatrix/noble,now');
+    await system.flush();
+    const restored = await boot(storage);
+    expect((await restored.sh.run('cmatrix --help')).stdout).toContain('Ctrl+C');
+    expect((await restored.sh.run('sudo apt remove cmatrix', { readLine: async () => 'y' })).code).toBe(0);
+    expect((await restored.sh.run('cmatrix')).code).toBe(127);
+  });
+
+  it('explains when an updated practice repository does not have a package', async () => {
+    const { sh } = await boot();
+    await sh.run('sudo apt update');
+    const result = await sh.run('sudo apt install nonexistent');
+    expect(result.code).toBe(100);
+    expect(result.stderr).toContain('small practice repository');
+    expect(result.stderr).not.toContain('Hint: run sudo apt update');
+  });
+
+  it('waits for confirmation, streams the plan once through sudo, and locks concurrent changes', async () => {
+    const { system, sh } = await boot();
+    await sh.run('sudo apt update');
+    let answer!: (line: string | null) => void;
+    let output = '';
+    const readLine = vi.fn(() => new Promise<string | null>((resolve) => { answer = resolve; }));
+    const operation = sh.run('sudo apt install cowsay', { readLine, stdout: (text) => { output += text; } });
+    await vi.waitFor(() => expect(readLine).toHaveBeenCalledOnce());
+    expect(output.match(/Reading package lists/g)).toHaveLength(1);
+    expect(await read(system, '/usr/bin/cowsay')).toBeUndefined();
+    const other = await system.createTerminal();
+    expect((await other.run('sudo apt install tree')).stderr).toContain('Another package operation');
+    answer('');
+    const result = await operation;
+    expect(result.code).toBe(0);
+    expect(output).toBe(result.stdout);
+    expect((await sh.run('cowsay hello')).stdout).toContain('< hello >');
+    expect((await other.run('sudo apt install tree')).code).toBe(0);
+  });
+
+  it.each(['n', null])('leaves files unchanged when confirmation is %s', async (answer) => {
+    const { system, sh } = await boot();
+    await sh.run('sudo apt update');
+    const before = await read(system, '/var/lib/dpkg/status');
+    const result = await sh.run('sudo apt install cowsay', { readLine: async () => answer });
+    expect(result.code).toBe(1);
+    expect(await read(system, '/var/lib/dpkg/status')).toBe(before);
+    expect(await read(system, '/usr/bin/cowsay')).toBeUndefined();
+  });
+
+  it('supports piped confirmation and previews without changing package files', async () => {
+    const { system, sh } = await boot();
+    await sh.run('sudo apt update');
+    expect((await sh.run('apt install -s cowsay')).stdout).toContain('Inst cowsay');
+    expect(await read(system, '/usr/bin/cowsay')).toBeUndefined();
+    expect((await sh.run('echo y | sudo apt install cowsay')).code).toBe(0);
+    expect((await sh.run('apt remove --dry-run cowsay')).stdout).toContain('Remv cowsay');
+    expect((await sh.run('cowsay hello')).code).toBe(0);
+    expect((await sh.run('sudo apt remove --assume-no -y cowsay')).code).toBe(1);
+    expect((await sh.run('cowsay hello')).code).toBe(0);
+  });
+
+  it('animates cmatrix until cancelled, then restores the terminal', async () => {
+    const { sh } = await boot();
+    await sh.run('sudo apt update && sudo apt install cmatrix');
+    const controller = new AbortController();
+    let output = '';
+    const operation = sh.run('cmatrix', {
+      signal: controller.signal, terminal: { columns: 40, rows: 12 },
+      stdout: (text) => { output += text; },
+    });
+    await vi.waitFor(() => expect(output).toContain('Ctrl+C to exit'));
+    controller.abort();
+    expect((await operation).code).toBe(130);
+    expect(output).toContain('\x1b[?1049h');
+    expect(output.endsWith('\x1b[0m\x1b[?25h\x1b[?1049l')).toBe(true);
+    expect((await sh.run('echo still working')).stdout).toBe('still working\n');
   });
 });
 
