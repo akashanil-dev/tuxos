@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { REWARDS, unlocked } from '@tuxos/sdk';
 import { AppIcon } from '../../desktop/AppIcon';
 import { Tux } from '../../desktop/Tux';
 import { numericDateText, timeText, useNow } from '../shared/Clock';
@@ -14,7 +15,8 @@ const PINNED = ['terminal', 'files', 'learn-linux'];
 
 /** KDE Plasma's panel: launcher, task manager, system tray, clock and Peek at Desktop. */
 export function PlasmaShell(props: ShellProps) {
-  const { session, apps, open, activate, minimize, power, launcherRequest } = props;
+  const { session, apps, open, activate, minimize, power, launcherRequest, onAchievements } = props;
+  const earned = session.journey ? REWARDS.filter(reward => unlocked(session.journey, reward.id)).length : 0;
   const [kickoff, setKickoff] = useState(false);
   const [krunner, setKRunner] = useState(false);
   const [powerMenu, setPowerMenu] = useState<{ x: number; y: number } | null>(null);
@@ -87,6 +89,13 @@ export function PlasmaShell(props: ShellProps) {
           ><AppIcon name={app.icon} /></button>;
         })}
       </nav>
+      {onAchievements && session.journey && <button
+        className="plasma-achievements"
+        aria-label="Achievements"
+        aria-haspopup="dialog"
+        title={`Achievements · ${earned}/${REWARDS.length} unlocked · ${session.journey.steps.length * 10} XP`}
+        onClick={onAchievements}
+      ><Icon name="trophy" /><span aria-hidden="true">{earned}/{REWARDS.length}</span></button>}
       <div className="plasma-tray">
         <StatusIcons />
         <div className="plasma-clock" title={now.toLocaleString()}>

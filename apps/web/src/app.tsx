@@ -1,5 +1,7 @@
 import { DEFAULT_DESKTOP } from '@tuxos/kernel';
+import { JourneyScreen } from './journey/JourneyScreen';
 import { desktopById, wallpaperById } from '@tuxos/appearance';
+import { useWallpaper } from './hooks/useWallpaper';
 import type { SystemClient } from '@tuxos/system';
 import type { Transport } from '@tuxos/tutor';
 import { useCallback, useEffect, useState } from 'react';
@@ -15,16 +17,15 @@ import { Tuigreet } from './greeters/Tuigreet';
 import type { LoginRequest } from './greeters/types';
 import { preloadIconTheme } from './desktop/AppIcon';
 import { lastAppearance } from './screens/appearance-memory';
-import { Desktop } from './screens/Desktop';
 
 export { Desktop } from './screens/Desktop';
 
 type Screen = 'grub' | 'boot' | 'greeter' | 'desktop' | 'off';
 
-/** Accounts, when the API offers them: the client, and where the system's saves should go. */
+/** Required account service and persistent account storage. */
 export interface AccountsWiring {
   client: AccountsClient;
-  /** Point the system's storage (and AI key) at this browser (guests) or at the signed-in account. */
+  /** Point storage and the AI key at the signed-in account. Local is retained for legacy adapters. */
   use(target: 'local' | 'account'): void | Promise<void>;
   /** This browser's guest save, read directly, to move it into a new account. */
   localSave(): Promise<string | null>;
@@ -39,10 +40,10 @@ const GREETERS = { sddm: Sddm, gdm: Gdm, dtlogin: Dtlogin, tuigreet: Tuigreet };
  * The whole machine, like a real PC: GRUB, the boot log, the login screen of the chosen desktop
  * environment, then the desktop. Power actions loop back to the right step.
  */
-export function App({ system, tutor, accounts, start = 'grub' }: {
+export function App({ system, tutor, accounts, start = 'greeter' }: {
   system: SystemClient;
   tutor?: Transport;
-  /** Without it (tests, offline builds) the login screen offers guests only. */
+  /** Without an account service, show a connection error rather than an anonymous session. */
   accounts?: AccountsWiring;
   /** Tests can skip straight to the login screen. */
   start?: Screen;
@@ -52,9 +53,13 @@ export function App({ system, tutor, accounts, start = 'grub' }: {
   // undefined while we still look for a saved guest and a signed-in account: the login screen waits for both.
   const [savedUser, setSavedUser] = useState<string | null | undefined>(undefined);
   const [account, setAccount] = useState<string | null | undefined>(undefined);
-  /** Who is running right now, as "guest:ada" or "account:ada", so unlocking keeps the same session. */
+  /** The signed-in account, so unlocking keeps the same session. */
   const [booted, setBooted] = useState<string | null>(null);
-  const [desktop, setDesktop] = useState(() => lastAppearance().desktop ?? DEFAULT_DESKTOP);
+  const [desktop, setDesktop] = useState(DEFAULT_DESKTOP);
+  const [accountError, setAccountError] = useState('');
+  const [retry, setRetry] = useState(0);
+  const [powerError, setPowerError] = useState('');
+  const wallpaper = useWallpaper('default').background;
 
   // Warm the cache for the desktop that will start, so its icons and wallpaper are ready at login.
   useEffect(() => {
@@ -64,19 +69,23 @@ export function App({ system, tutor, accounts, start = 'grub' }: {
 
   useEffect(() => {
     if (screen !== 'greeter') return;
+    let active = true;
     setSavedUser(undefined);
     setAccount(undefined);
     // Read the guest save directly: a locked account session keeps running, and its storage must not change.
     const guestSave = accounts
       ? accounts.localSave().then((saved) => (saved ? (JSON.parse(saved) as { username?: string }).username ?? null : null))
       : system.hasSave();
-    void guestSave.then(setSavedUser).catch(() => setSavedUser(null));
-    if (accounts) void accounts.client.me().then(setAccount);
-    else setAccount(null);
-  }, [system, screen, accounts]);
+    void guestSave.then(value => { if (active) setSavedUser(value); }).catch(() => { if (active) setSavedUser(null); });
+    setAccountError('');
+    if (accounts) void accounts.client.me().then(value => { if (active) setAccount(value); }).catch(cause => { if (active) setAccountError(String(cause)); });
+    else setAccountError('The account service is required. Start the TuxOS API and try again.');
+    return () => { active = false; };
+  }, [system, screen, accounts, retry]);
 
   const login = useCallback(async ({ mode, username, password }: LoginRequest) => {
-    if (mode !== 'guest' && !accounts) throw new Error('Accounts are not available here.');
+    if (!accounts) throw new Error('Accounts are not available here.');
+    if (booted) await system.flush();
     if (mode === 'signin') await accounts!.client.login(username, password);
     // Unlocking, or returning to a still-signed-in account after a restart: check the password first.
     if (mode === 'account' && !(await accounts!.client.verify(password))) throw new Error('Wrong password. Try again.');
@@ -90,44 +99,33 @@ export function App({ system, tutor, accounts, start = 'grub' }: {
         await storage.set(SAVE_KEY, local);
       }
     }
-    await accounts?.use(mode === 'guest' ? 'local' : 'account');
-    const who = `${mode === 'guest' ? 'guest' : 'account'}:${username}`;
+    await accounts!.use('account');
+    const who = `account:${username}`;
     // Unlocking the running session keeps everything as it was; anyone else gets a fresh boot.
     if (booted !== who) await system.boot(username);
     setBooted(who);
-    const session = await system.session();
-    if (session.desktop !== desktop) await system.dispatch('session.setDesktop', { desktop });
+    await system.flush();
     // Set together with the screen change: the greeter is keyed on the account, so setting it earlier remounted
     // the login form as the password-only unlock screen for as long as the system took to boot.
-    if (mode !== 'guest') setAccount(username);
+    setAccount(username);
     setScreen('desktop');
-  }, [system, accounts, booted, desktop]);
+  }, [system, accounts, booted]);
 
   const verifySudo = accounts && booted?.startsWith('account:')
     ? (password: string) => accounts.client.verify(password)
     : null;
 
   const power = useCallback((action: PowerAction) => {
-    if (action === 'lock') {
-      setScreen('greeter');
-      return;
-    }
-    if (action === 'logout') {
-      // Save first, then end an account's session so the next person at this computer can't continue it.
-      void system.flush().catch(() => undefined).finally(async () => {
-        if (booted?.startsWith('account:')) await accounts?.client.logout().catch(() => undefined);
-        setBooted(null);
-        setAccount(undefined);
-        setSavedUser(undefined);
-        setScreen('greeter');
-      });
-      return;
-    }
-    // Write the save now rather than after the usual short delay, so nothing is lost.
-    void system.flush().catch(() => undefined).finally(() => {
-      setBooted(null);
-      setScreen(action === 'restart' ? 'grub' : 'off');
-    });
+    if (!booted) { setScreen(action === 'restart' ? 'grub' : 'off'); return; }
+    void (async () => {
+      await system.flush();
+      if (action === 'lock') { setScreen('greeter'); }
+      else if (action === 'logout') {
+        await accounts?.client.logout();
+        setAccount(undefined); setSavedUser(undefined); setBooted(null); setScreen('greeter');
+      } else { setBooted(null); setScreen(action === 'restart' ? 'grub' : 'off'); }
+      setPowerError('');
+    })().catch(cause => setPowerError(`Could not save and leave: ${String(cause)}. Try signing out again after reconnecting.`));
   }, [system, booted, accounts]);
 
   const onBoot = useCallback((mode: 'normal' | 'recovery') => {
@@ -141,17 +139,17 @@ export function App({ system, tutor, accounts, start = 'grub' }: {
     case 'grub': return <Grub onBoot={onBoot} />;
     case 'boot': return <BootLog recovery={recovery} onDone={toGreeter} />;
     case 'off': return <PowerOff onPowerOn={powerOn} />;
-    case 'desktop': return <Desktop system={system} tutor={tutor} onPower={power} verifySudo={verifySudo} />;
+    case 'desktop': return <>{powerError && <div className="journey-save-error" role="alert">{powerError}</div>}<JourneyScreen key={booted} system={system} tutor={tutor} onPower={power} verifySudo={verifySudo} /></>;
   }
   const greeter = desktopById(desktop).greeter;
   const Greeter = GREETERS[greeter];
-  const wallpaper = wallpaperById(lastAppearance().wallpaper ?? '').background;
   return <div
     className={`greeter-screen greeter-${greeter}`}
     style={{ '--greeter-wallpaper': wallpaper } as React.CSSProperties}
   >
-    {savedUser !== undefined && account !== undefined && <Greeter
-      // A different account or guest means a fresh form, in the right mode for them.
+    {accountError && <div className="journey-loading" role="alert"><p>{accountError}</p><button onClick={() => setRetry(n => n + 1)}>Retry connection</button></div>}
+    {!accountError && savedUser !== undefined && account !== undefined && <Greeter
+      // A different account or legacy save means a fresh form.
       key={`${account}|${savedUser}`}
       system={system}
       savedUser={savedUser}

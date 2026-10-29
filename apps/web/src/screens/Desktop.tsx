@@ -1,4 +1,4 @@
-import { wallpaperById } from '@tuxos/appearance';
+import { useWallpaper } from '../hooks/useWallpaper';
 import type { Window as SessionWindow } from '@tuxos/kernel';
 import type { SystemClient } from '@tuxos/system';
 import type { Transport } from '@tuxos/tutor';
@@ -6,6 +6,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { SessionSplash } from '../boot/PowerScreens';
 import { AppIcon, IconThemeContext, preloadIconTheme } from '../desktop/AppIcon';
 import { WindowFrame, type Geometry } from '../desktop/WindowFrame';
+import { DesktopWidgets, desktopThemeStyle } from '../desktop/DesktopWidgets';
+import { FullscreenControl } from '../desktop/FullscreenControl';
 import { environmentFor } from '../desktops/registry';
 import { PopupMenu } from '../desktops/shared/Menu';
 import { tileLayout } from '../desktops/shared/tiling';
@@ -22,17 +24,24 @@ const NARROW = 720;
  * Switching environment (from Settings, or by the tutor) shows that environment's splash, then its shell.
  * Workspaces are part of the desktop, not the saved session, as on a real Linux desktop.
  */
-export function Desktop({ system, tutor, onPower, verifySudo = null }: {
+export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, verifySudo = null, active = true }: {
   system: SystemClient;
+  /** Suspend desktop shortcuts while the learning view is in front. */
+  active?: boolean;
   tutor?: Transport;
   onPower?(action: PowerAction): void;
+  onAchievements?(): void;
+  /** Resume the account learning journey from any desktop launcher. */
+  onLearnLinux?(): void;
   /** Checks the account's password for Vasu's sudo request; null for guests, who have no password. */
   verifySudo?: ((password: string) => Promise<boolean>) | null;
 }) {
   const { apps, session, user, loaded } = useSession(system);
+  const wallpaper = useWallpaper(session.wallpaper);
   const environment = environmentFor(session.desktop);
   // The environment currently drawn; null until the first splash has played.
   const [shown, setShown] = useState<string | null>(null);
+  const [launchError, setLaunchError] = useState('');
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const [launcherRequest, setLauncherRequest] = useState(0);
   const [welcome, setWelcome] = useState<string | null>(null);
@@ -49,7 +58,10 @@ export function Desktop({ system, tutor, onPower, verifySudo = null }: {
   );
   const onWorkspace = (window: SessionWindow) => workspaceOf(window.id) === workspace;
 
-  const open = useCallback((appId: string) => void system.openApp(appId), [system]);
+  const open = useCallback((appId: string) => {
+    if (appId === 'learn-linux' && onLearnLinux) { onLearnLinux(); return; }
+    void system.openApp(appId).then(result => { setLaunchError(result.ok ? '' : result.error.message); });
+  }, [system, onLearnLinux]);
   const minimize = useCallback((id: string) => void system.dispatch('session.minimize', { id }), [system]);
   const power = useCallback((action: PowerAction) => onPower?.(action), [onPower]);
   const close = useCallback((id: string) => {
@@ -98,6 +110,7 @@ export function Desktop({ system, tutor, onPower, verifySudo = null }: {
   }, [shown, session.desktop, environment.welcome]);
 
   useEffect(() => {
+    if (!active) return;
     let superAlone = false;
     const down = (event: KeyboardEvent) => {
       superAlone = event.key === 'Meta' || event.key === 'OS';
@@ -117,14 +130,15 @@ export function Desktop({ system, tutor, onPower, verifySudo = null }: {
       window.removeEventListener('keydown', down);
       window.removeEventListener('keyup', up);
     };
-  }, [open]);
+  }, [open, active]);
 
   if (!loaded) return <main className="splash splash-gnome" />;
   if (shown !== session.desktop) {
     return <SessionSplash desktop={session.desktop} onDone={() => setShown(session.desktop)} />;
   }
 
-  const { Shell, insets } = environment;
+  const { Shell } = environment;
+  const insets = { ...environment.insets, top: environment.insets.top + 36 };
   const tiles = new Map<string, Geometry>();
   if (environment.tiling && viewport.width >= NARROW) {
     const visible = session.windows.filter((window) => !window.minimized && onWorkspace(window));
@@ -137,7 +151,8 @@ export function Desktop({ system, tutor, onPower, verifySudo = null }: {
     <main
       className={`desktop-screen de-${environment.id}`}
       style={{
-        background: wallpaperById(session.wallpaper).background,
+        ...desktopThemeStyle(session.theme),
+        background: wallpaper.background,
         '--area-top': `${insets.top}px`,
         '--area-bottom': `${insets.bottom}px`,
       } as React.CSSProperties}
@@ -147,6 +162,7 @@ export function Desktop({ system, tutor, onPower, verifySudo = null }: {
         setMenu({ x: event.clientX, y: event.clientY });
       }}
     >
+      <FullscreenControl top={environment.insets.top} />
       {environment.desktopIcons === 'apps' && <div className="icon-grid icons-apps" style={iconGridStyle(insets)}>
         {apps.map((app) => <button
           className="desktop-icon"
@@ -174,6 +190,7 @@ export function Desktop({ system, tutor, onPower, verifySudo = null }: {
           </button>;
         })}
       </div>}
+      <DesktopWidgets system={system} widgets={session.widgets ?? []} top={insets.top} bottom={insets.bottom} />
       {/* Minimized windows and other workspaces stay mounted (just hidden) so apps keep their state. */}
       {session.windows.map((window) => {
         const app = apps.find((each) => each.id === window.appId);
@@ -198,7 +215,7 @@ export function Desktop({ system, tutor, onPower, verifySudo = null }: {
           }))}
         />;
       })}
-      <Shell
+      {active && <Shell
         system={system}
         apps={apps}
         session={session}
@@ -208,18 +225,20 @@ export function Desktop({ system, tutor, onPower, verifySudo = null }: {
         minimize={minimize}
         close={close}
         power={power}
+        onAchievements={onAchievements}
         launcherRequest={launcherRequest}
         workspace={workspace}
         workspaceOf={workspaceOf}
         switchWorkspace={switchWorkspace}
         moveToWorkspace={moveToWorkspace}
-      />
-      {menu && <PopupMenu
+      />}
+      {active && menu && <PopupMenu
         x={menu.x}
         y={menu.y}
         items={environment.desktopMenu({ open, apps, power })}
         onClose={() => setMenu(null)}
       />}
+      {launchError && <div className="notification" role="alert" style={{ top: insets.top + 10 }}><strong>Keep learning</strong><p>{launchError}</p><button aria-label="Dismiss launch message" onClick={() => setLaunchError('')}>×</button></div>}
       {welcome && <div
         className={`notification notification-${environment.id}`}
         style={{ top: insets.top + 10 }}

@@ -22,9 +22,15 @@ export function preloadIconTheme(theme: string): void {
 }
 
 const ICONS: Record<string, () => React.JSX.Element> = {
+  software: () => <svg viewBox="0 0 48 48" aria-hidden="true">
+    <path d="M9 14h30l3 29H6z" fill="#3daee9" />
+    <path d="M16 17v-6a8 8 0 0 1 16 0v6" fill="none" stroke="#eff0f1" strokeWidth="3" />
+    <path d="M18 29h12m-6-6v12" fill="none" stroke="#fff" strokeWidth="3" />
+    <path d="M6 43h36l-1-7H7z" fill="#1d99d3" />
+  </svg>,
   plugins: () => <svg viewBox="0 0 48 48" aria-hidden="true">
-    <rect x="4" y="4" width="40" height="40" rx="11" fill="#6654c0" />
-    <path d="M13 16h7v-3a4 4 0 0 1 8 0v3h7v7h-3a4 4 0 0 0 0 8h3v6H13v-7h3a4 4 0 0 0 0-8h-3z" fill="#e2dcff" />
+    <rect x="4" y="4" width="40" height="40" rx="4" fill="#3daee9" />
+    <path d="M13 16h7v-3a4 4 0 0 1 8 0v3h7v7h-3a4 4 0 0 0 0 8h3v6H13v-7h3a4 4 0 0 0 0-8h-3z" fill="#eff0f1" />
   </svg>,
   terminal: () => <svg viewBox="0 0 48 48" aria-hidden="true">
     <rect x="4" y="7" width="40" height="34" rx="5" fill="#241f31" stroke="#5e5c64" strokeWidth="2" />
@@ -43,6 +49,7 @@ const ICONS: Record<string, () => React.JSX.Element> = {
     <path d="M30 5v9h9" fill="#c0bfbc" />
     <path d="M14 21h20M14 27h20M14 33h13" stroke="#77767b" strokeWidth="2.5" strokeLinecap="round" />
   </svg>,
+  'learn-filesystem': () => <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="5" width="38" height="38" rx="8" fill="#1d99d3"/><path d="M15 14v20m0-10h17m-17 10h17" stroke="#eff0f1" strokeWidth="3" fill="none"/><rect x="26" y="19" width="11" height="9" rx="2" fill="#f6d32d"/><rect x="26" y="30" width="11" height="9" rx="2" fill="#8ff0a4"/></svg>,
   'learn-linux': () => <svg viewBox="0 0 48 48" aria-hidden="true">
     <path d="M24 9 3 19l21 10 21-10z" fill="#33d17a" />
     <path d="M11 24v9c0 3 6 7 13 7s13-4 13-7v-9l-13 6z" fill="#26a269" />

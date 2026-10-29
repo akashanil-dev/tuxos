@@ -4,7 +4,7 @@ import type { SystemClient } from '@tuxos/system';
  * How someone logs in: back into the account this browser is still signed in to, into another account,
  * creating an account, or as a guest whose progress stays in this browser only.
  */
-export type LoginMode = 'account' | 'signin' | 'register' | 'guest';
+export type LoginMode = 'account' | 'signin' | 'register';
 
 export interface LoginRequest {
   mode: LoginMode;
@@ -18,7 +18,7 @@ export interface GreeterProps {
   account: string | null;
   /** The guest whose progress is saved in this browser, if any. */
   savedUser: string | null;
-  /** False when there is no account service (tests, offline builds): guests only. */
+  /** Whether the account service is configured. */
   accountsEnabled: boolean;
   /** The desktop session that will start, chosen on the login screen. */
   desktop: string;

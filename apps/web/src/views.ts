@@ -10,11 +10,13 @@ export const views: Record<string, () => Promise<ViewModule>> = {
   terminal: () => import('@tuxos/module-terminal/view'),
   files: () => import('@tuxos/module-files/view'),
   editor: () => import('@tuxos/module-editor/view'),
+  'learn-filesystem': () => import('@tuxos/module-learn-filesystem/view'),
   'learn-linux': () => import('@tuxos/module-learn-linux/view'),
   'learn-docker': () => import('@tuxos/module-learn-docker/view'),
   'chmod-arcade': () => import('@tuxos/module-chmod-arcade/view'),
   settings: () => import('@tuxos/module-settings/view'),
   plugins: () => import('./plugins/PluginManager'),
+  software: () => import('./software/SoftwareShop'),
 };
 
 const lazyViews = new Map<string, LazyExoticComponent<ComponentType<AppViewProps>>>();

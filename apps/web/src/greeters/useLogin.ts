@@ -5,7 +5,6 @@ const LABELS: Record<LoginMode, string> = {
   account: 'Continue',
   signin: 'Sign in',
   register: 'Create account',
-  guest: 'Try without an account',
 };
 
 /**
@@ -13,9 +12,9 @@ const LABELS: Record<LoginMode, string> = {
  * modes to switch to, and submitting. Each greeter only decides how it looks.
  */
 export function useLoginForm({ account, savedUser, accountsEnabled, login }: GreeterProps) {
-  const initial: LoginMode = account ? 'account' : !accountsEnabled || savedUser ? 'guest' : 'register';
+  const initial: LoginMode = account ? 'account' : 'register';
   const [mode, setModeState] = useState<LoginMode>(initial);
-  const [username, setUsername] = useState(initial === 'guest' ? savedUser ?? '' : '');
+  const [username, setUsername] = useState(initial === 'register' ? savedUser ?? '' : '');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -25,16 +24,17 @@ export function useLoginForm({ account, savedUser, accountsEnabled, login }: Gre
     setError('');
     setPassword('');
     // A guest signing up keeps their name, so their saved progress moves into the new account.
-    setUsername(next === 'guest' || next === 'register' ? savedUser ?? '' : '');
+    setUsername(next === 'register' ? savedUser ?? '' : '');
   };
 
   const needsUsername = mode !== 'account';
   // Unlocking or coming back after a restart still asks for the password, as a real login screen does.
-  const needsPassword = mode !== 'guest';
+  const needsPassword = true;
   const shownName = mode === 'account' ? account! : username;
 
   async function submit() {
     setError('');
+    if (!accountsEnabled) return setError('The account service is unavailable. Please try again later.');
     const name = mode === 'account' ? account! : username.trim();
     if (!name) return setError('Please enter a user name.');
     if (needsPassword && !password) return setError(mode === 'register' ? 'Choose a password.' : 'Please enter your password.');
@@ -51,7 +51,6 @@ export function useLoginForm({ account, savedUser, accountsEnabled, login }: Gre
     ...(account && mode !== 'account' ? [{ mode: 'account' as const, label: `Continue as ${account}` }] : []),
     ...(mode !== 'signin' ? [{ mode: 'signin' as const, label: mode === 'account' ? 'Use another account' : 'Sign in' }] : []),
     ...(mode !== 'register' ? [{ mode: 'register' as const, label: 'Create account' }] : []),
-    ...(mode !== 'guest' ? [{ mode: 'guest' as const, label: LABELS.guest }] : []),
   ]);
 
   const hint = error ? '' : {
@@ -59,8 +58,7 @@ export function useLoginForm({ account, savedUser, accountsEnabled, login }: Gre
     signin: 'Sign in to continue where you left off, on any device.',
     register: savedUser && username === savedUser
       ? `Your progress in this browser moves into the new account.`
-      : 'Pick a lowercase username and any password. Your progress is saved to your account.',
-    guest: savedUser ? 'Your progress is saved in this browser only.' : 'Pick any lowercase name. Progress stays in this browser only.',
+      : 'Choose a lowercase username and a password. Your progress is saved to your account.',
   }[mode];
 
   return {

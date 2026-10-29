@@ -21,6 +21,8 @@ export interface ShellProps {
   /** Close a window, letting its app ask about unsaved work first. */
   close(windowId: string): void;
   power(action: PowerAction): void;
+  /** Open the learner's shared achievement tracker. */
+  onAchievements?(): void;
   /** The desktop asks the shell to toggle its launcher (Super key). */
   launcherRequest: number;
   /** The current workspace, counting from 1. Desktops without workspaces stay on 1. */

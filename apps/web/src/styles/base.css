@@ -448,3 +448,44 @@ pre {
 @keyframes plasma-panel-in {
   from { transform: translateY(100%); }
 }
+
+/* A small corner control; the remaining top edge stays part of the wallpaper. */
+.desktop-display-controls {
+  position: absolute;
+  right: max(8px, env(safe-area-inset-right));
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  color: var(--window-fg);
+}
+.desktop-fullscreen-button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+  margin-left: auto;
+  padding: 3px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface-2);
+  color: var(--window-fg);
+  font: 500 12px var(--font-ui);
+}
+.desktop-fullscreen-button:hover { background: var(--hover); border-color: var(--accent); }
+.desktop-fullscreen-button[aria-pressed="true"] { color: var(--accent-strong); }
+.desktop-fullscreen-button:disabled { opacity: .6; }
+.desktop-fullscreen-error {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 8px;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--window-bg);
+  box-shadow: var(--shadow);
+  color: var(--window-fg);
+  font-size: 12px;
+  line-height: 1.5;
+}

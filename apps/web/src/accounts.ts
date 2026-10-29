@@ -25,7 +25,7 @@ async function call(method: string, path: string, body?: unknown): Promise<{ sta
       ...(body === undefined ? {} : { headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }),
     });
   } catch {
-    throw new Error('The account service is not reachable. Check your connection, or try without an account.');
+    throw new Error('The account service is not reachable. Check your connection and try again. Your account is required to save progress.');
   }
   const data = await response.json().catch(() => ({})) as Record<string, unknown>;
   return { status: response.status, data };
@@ -46,12 +46,10 @@ export function httpAccounts(): AccountsClient {
 
   return {
     async me() {
-      try {
-        const { status, data } = await call('GET', '/api/auth/me');
-        return status === 200 && typeof data.username === 'string' ? data.username : null;
-      } catch {
-        return null;
-      }
+      const { status, data } = await call('GET', '/api/auth/me');
+      if (status === 401) return null;
+      if (status !== 200) throw failure(data, status);
+      return typeof data.username === 'string' ? data.username : null;
     },
     register: (username, password) => signIn('/api/auth/register', username, password),
     login: (username, password) => signIn('/api/auth/login', username, password),

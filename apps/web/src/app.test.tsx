@@ -94,6 +94,8 @@ function fakeSystem(): TestSystem {
       return { ok: true as const, value: 'window-1' };
     }),
     createTerminal: vi.fn(),
+    restartLearning: vi.fn(async () => {}),
+    onRestart: () => () => undefined,
     reset: vi.fn(async () => {}),
     emit: () => emit('fs.read'),
   };
