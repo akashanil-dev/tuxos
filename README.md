@@ -10,16 +10,19 @@ Docker, games) is a module that shows up as a desktop icon.
 
 ## Features
 
-- **A desktop in the browser.** GRUB, a boot log, a login screen and four desktop environments you can switch
-  between at any time: KDE Plasma, GNOME, CDE and Hyprland. Each has its own panels, window decorations, login
-  screen and icon theme. Open windows are saved, so your desktop comes back as you left it.
+- **Earn your desktop.** Create an account and start with a single Linux question above a terminal. Free hints
+  and answers support each step; checked lessons earn XP and unlock KDE Plasma, GNOME, Hyprland, CDE,
+  wallpaper changes, themes and plugins. The existing 34-lesson syllabus is unchanged. See the [reward map](docs/learning-journey.md).
+- **A desktop in the browser.** Each earned environment has its own panels, window decorations and icon theme.
+  Open windows are saved, so your desktop comes back as you left it. Restart still plays GRUB and the boot log.
 - **Terminal.** A bash-like shell in each window, with pipes, redirection, variables, globs, `&&`/`||`, Tab
   completion, history and line editing. Ctrl+Alt+T opens one from anywhere.
 - **Installing software with apt.** `apt`, `apt-get` and `dpkg` behave like Ubuntu's: changing packages needs
   `sudo`, `apt update` fetches the package lists first, dependencies come along (and `apt autoremove` cleans
   them up), and installed programs land in `/usr/bin` with dpkg's database in `/var/lib/dpkg`. Packages to try:
-  `tree`, `hello`, `cowsay`, `sl`, `neofetch`, `fortune-mod` and `jq`. A missing program says how to get it
-  (`sudo apt install tree`), as on Ubuntu.
+  `cmatrix`, `tree`, `hello`, `cowsay`, `sl`, `neofetch`, `fortune-mod` and `jq`. A missing program says how to get it
+  (`sudo apt install tree`), as on Ubuntu. Answer Y/n prompts in the terminal, preview installs/removals with
+  `-s`, and stop the Matrix animation with Ctrl+C. Headless calls can pass `-y` or a piped answer.
 - **Files and Text Editor.** A point-and-click file manager and an editor over the same filesystem. Both show
   real permission errors.
 - **Plugins.** Discover and install Quick Notes, Focus Timer and Permission Explorer, or import your own
@@ -28,12 +31,14 @@ Docker, games) is a module that shows up as a desktop icon.
   Each plugin runs in a restricted iframe with access only to its approved private storage.
   See the [Plugin User Manual](docs/plugins.md) for step-by-step creation and installation, updates,
   permissions, troubleshooting and the package/SDK reference.
-- **Learn Linux.** Before the first lab, the learner rates their Linux experience in five star questions. An AI
-  trainer then designs a seven-day lab of real-world tasks at that level. Each task is explained first, then
-  practised in the terminal, with one command per task. The trainer only nudges: hints and corrections get
-  closer step by step, and the full answer is shown only after five wrong attempts, for the learner to type
-  themselves. **Retake survey** designs a new lab. Without an AI key, Learn Linux teaches its seven built-in
-  lessons instead, each command checked by the lesson's own rules.
+- **Learn Linux Filesystem.** A separate beginner guide with 27 short folder topics, file previews, quick checks and six configuration exercises. Open it from the desktop, Software or Files. The expanded virtual root tree includes system configuration, personal folders, logs and clearly labelled hardware/boot examples. Practice copies and backups live in `~/Documents/filesystem-lab`; progress is saved with the learner’s system. Existing saved files are preserved during the one-time layout upgrade. See [the filesystem guide](docs/filesystem-guide.md).
+- **Learn Linux.** A complete, reviewed path with **34 lessons and 150 checked tasks in seven stages**:
+  foundations, shell fluency, accounts and security, services, networking and storage, automation and recovery,
+  and administrator assessments. Search or filter the syllabus, read explanations before exercises, pause and
+  resume, and redo completed lessons. The curriculum works without AI and remains the default when AI is on.
+  An optional personalized AI practice lab is available separately. Administration commands operate on a
+  bounded training machine; workbooks for SSH, LVM, boot recovery and Bash scripting include companion VM
+  exercises. Browser completion is not a professional certification. See [the curriculum guide](docs/linux-curriculum.md).
 - **Learn Docker.** A simulated `docker` CLI (`run`, `ps`, `images`, `logs`, `exec`, published ports with
   `curl`...) with an AI-designed lab, or five built-in lessons when no AI is available.
 - **chmod Arcade.** A 60-second game for reading and writing file permissions.
@@ -41,16 +46,22 @@ Docker, games) is a module that shows up as a desktop icon.
   the screen and your recent commands. He can also use the computer: he moves his own pointer, clicks, types
   into his own terminal and opens apps. He runs as a normal user and has to ask for sudo, with your password,
   before he can act as root. Every action shows in the chat, and **Stop** (or Esc) takes control back.
-- **Accounts.** Sign up to save your system and continue on any device, or try it without an account and keep
-  everything in the browser.
+- **Accounts required.** Sign up or sign in to save your system and learning progress to the API's database.
+  There is no anonymous browser-only session. Existing local saves can migrate when creating an account with the same username.
 - **Any AI provider, your own key, with an off switch.** Vasu and the AI trainers use a provider the learner
   chooses in **Settings → AI** (Groq, NVIDIA, OpenRouter, Google Gemini, Cerebras, Mistral, OpenAI, DeepSeek or
   Together; several have free plans), with the learner's own key and a model picked from the provider's list.
   The server has no key. A signed-in learner's settings are encrypted with a key only their password unlocks, so
-  not even the people running TuxOS can read them; a guest's stay in their browser. The **AI features** switch is
+  the API stores encrypted settings. The **AI features** switch is
   off until the learner turns it on. With AI off, nothing is sent to an AI: the courses teach their built-in
   lessons and Vasu answers from his offline guide. *AI is currently switched off on the live site while it is
   rebuilt (`AI_FEATURES`).*
+
+### Software shop and desktop extensions
+
+After earning the KDE desktop, open **Software** for a Discover-inspired collection of eight terminal programs, with previews, categories, search, install/remove controls, package details and optional command explanations. **Try it** opens a terminal and runs the example once. The shop calls the same simulated `apt` commands as the terminal, including dependency resolution and package locks, and reads the same dpkg database. Changes from either interface update the shop live and use the normal TuxOS save.
+
+After lesson 26, **Plugins** includes visual previews, release notes, catalog updates, four pinnable widgets and Theme Studio’s three desktop palettes. Widget position and size persist, and widgets keep the existing sandbox and private-storage model. Themes can be reset in Settings. See the [plugin manual](docs/plugins.md#desktop-widgets-and-appearance-presets) for usage and the optional authoring fields. This is a browser-based practice repository, not access to the full Ubuntu or native Omarchy catalogs.
 
 ## Architecture
 
@@ -184,13 +195,13 @@ Production runs on an Ubuntu 24.04 server behind Cloudflare and Caddy. The files
 
 ## Known limitations
 
-- It is a simulation: there are no real processes, background jobs or long-running interactive programs, and
-  the shell implements a teaching subset of bash.
+- It is a simulation: there are no real OS processes or background jobs. The shell implements a teaching
+  subset of bash, with interactive package confirmations and a cancellable browser-rendered `cmatrix`.
 - Group permissions are not modelled, and `ls -l` shows times in UTC.
 - apt only knows the packages in its catalogue, each written for TuxOS; there are no real `.deb` packages or
-  downloads. It can't answer its own "Do you want to continue?" question, so installs that pull in extra
-  packages, and all removals, need `-y`. `docker.io` and the base system are listed as installed but can't be
-  removed.
+  downloads. `apt update` loads this catalog; unsupported packages are identified with a hint to run `apt list`.
+  `docker.io` and the base system are listed as installed but can't be removed. Upgrade currently reports
+  no available upgrades; it does not fetch newer package versions from the internet.
 - The Docker simulation covers the commands and images listed above. Interactive container shells
   (`-it ... sh`) are not available.
 - Vasu's agent flow was tested with a scripted model and in a real browser. The quality of his answers against
