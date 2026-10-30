@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createLocalSystem, type SystemClient } from '@tuxos/system';
 import PluginManagerView from './PluginManager';
-import { STARTER_PLUGIN } from './catalog';
+import { DESKTOP_THEMES, PLUGIN_CATALOG, STARTER_PLUGIN } from './catalog';
 import { useSession } from '../hooks/useSession';
 
 let system: SystemClient;
@@ -30,7 +30,7 @@ describe('graphical plugin management', () => {
   it('shows the available catalog, searches and filters without installing anything', async () => {
     render(<Harness />);
     expect(await screen.findByRole('heading', { name: 'Available plugins' })).toBeDefined();
-    expect(screen.getAllByRole('button', { name: /Install plugin/ })).toHaveLength(3);
+    expect(screen.getAllByRole('button', { name: /Install plugin/ })).toHaveLength(PLUGIN_CATALOG.length);
     fireEvent.change(screen.getByRole('searchbox', { name: 'Search plugins' }), { target: { value: 'timer' } });
     expect(screen.getByRole('heading', { name: 'Focus Timer' })).toBeDefined();
     expect(screen.queryByRole('heading', { name: 'Quick Notes' })).toBeNull();
@@ -104,5 +104,51 @@ describe('graphical plugin management', () => {
     fireEvent.click(screen.getByRole('button', { name: /Review package/ }));
     expect(await screen.findByText('No storage permissions. This plugin works entirely inside its window.')).toBeDefined();
     expect(window).not.toHaveProperty('packageExecuted');
+  });
+});
+
+
+describe('desktop plugin extensions', () => {
+  it('pins widgets, keeps their layout when disabled, and unpins on removal', async () => {
+    const manager = system.plugins!();
+    const notes = PLUGIN_CATALOG[0]!.package;
+    await manager.install(notes, { approvedCapabilities: notes.manifest.capabilities });
+    render(<Harness />);
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Pin to desktop' }) as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(screen.getByRole('button', { name: 'Pin to desktop' }));
+    await waitFor(async () => expect((await system.session()).widgets?.[0]?.appId).toBe('quick-notes'));
+    await manager.setEnabled(notes.manifest.id, false);
+    expect((await system.session()).widgets).toHaveLength(1);
+    await manager.setEnabled(notes.manifest.id, true, { approvedCapabilities: notes.manifest.capabilities });
+    await manager.uninstall(notes.manifest.id);
+    expect((await system.session()).widgets).toEqual([]);
+  });
+
+  it('shows catalog updates, reviews the new version and preserves private data', async () => {
+    const latest = PLUGIN_CATALOG[0]!.package;
+    await system.plugins!().install({ ...latest, manifest: { ...latest.manifest, version: '1.0.0' } }, { approvedCapabilities: latest.manifest.capabilities });
+    await system.openApp('quick-notes');
+    await system.plugins!().dispatch(latest.manifest.id, 'fs.write', { path: 'notes.txt', content: 'Keep my ideas' });
+    render(<Harness />);
+    fireEvent.click(screen.getByRole('button', { name: /Updates/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Review update/ }));
+    await approve('Update plugin');
+    expect((await system.plugins!().export(latest.manifest.id)).manifest.version).toBe('1.1.0');
+    await system.openApp('quick-notes');
+    expect(await system.plugins!().dispatch(latest.manifest.id, 'fs.read', { path: 'notes.txt' })).toMatchObject({ ok: true, value: 'Keep my ideas' });
+    await screen.findByText('You’re up to date.');
+  });
+
+  it('applies and resets declarative themes without changing wallpaper', async () => {
+    const themes = PLUGIN_CATALOG.find(item => item.category === 'Appearance')!.package;
+    await system.plugins!().install(themes, { approvedCapabilities: [] });
+    const wallpaper = (await system.session()).wallpaper;
+    render(<Harness />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Violet Dusk' }));
+    await waitFor(async () => expect((await system.session()).theme).toEqual(DESKTOP_THEMES[1]));
+    expect((await system.session()).wallpaper).toBe(wallpaper);
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Reset desktop colours' }) as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(screen.getByRole('button', { name: 'Reset desktop colours' }));
+    await waitFor(async () => expect((await system.session()).theme).toBeUndefined());
   });
 });

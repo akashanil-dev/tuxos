@@ -25,6 +25,7 @@ const paths: Record<string, React.JSX.Element> = {
   a11y: <><circle cx="8" cy="3" r="1.3" fill="currentColor" stroke="none" /><path d="M3 5.6h10M8 5.6v4M8 9.6l-2.4 4.4
     M8 9.6l2.4 4.4" /></>,
   desktop: <><rect x="2" y="3" width="12" height="8" rx="1" /><path d="M6 14h4M8 11v3" /></>,
+  trophy: <><path d="M4.5 2h7v4a3.5 3.5 0 0 1-7 0zM4.5 3H2v2a3 3 0 0 0 3 3M11.5 3H14v2a3 3 0 0 1-3 3M8 9.5V13M5 14h6M6 13h4" /></>,
 };
 
 export function Icon({ name, label }: { name: keyof typeof paths | string; label?: string }) {

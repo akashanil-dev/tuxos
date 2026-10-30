@@ -401,3 +401,15 @@
 .ai-key-help a {
   color: var(--accent);
 }
+
+.settings button:disabled { opacity:.55; cursor:not-allowed; }
+.journey-palette-grid { display:flex; flex-wrap:wrap; gap:10px; margin:12px 0; }
+.journey-palette-grid button { display:flex; align-items:center; gap:8px; }
+.journey-palette-grid i { display:block; width:18px; height:18px; border-radius:50%; }
+
+.settings-reset { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--line); }
+.settings-reset p { max-width: 65ch; line-height: 1.5; color: var(--muted); }
+.settings-reset-confirm { margin-top: 12px; padding: 16px; border: 1px solid #d46a6a; border-radius: var(--radius-small); background: var(--surface); }
+.settings-reset-confirm h4 { margin: 0; }
+.settings-reset-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.settings-reset .settings-reset-delete { background: #973c3c; color: white; border-color: #bf6262; }

@@ -80,7 +80,7 @@ describe('accounts', () => {
     expect(await screen.findByText('Create account', { selector: '.sddm-name' })).toBeTruthy();
     fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'ada' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
     await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
     await system.flush();
     expect(service.users.get('ada')).toBe('secret');
@@ -96,10 +96,10 @@ describe('accounts', () => {
 
     const service = fakeService();
     const { system } = setup(service, local);
-    fireEvent.click(await screen.findByRole('button', { name: 'Create account' }));
+    await screen.findByRole('button', { name: 'Create account' });
     expect((screen.getByLabelText('Username') as HTMLInputElement).value).toBe('ada');
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
     await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
     expect(await system.dispatch('fs.read', { path: '/home/ada/notes.txt' })).toMatchObject({ ok: true, value: 'mine' });
   });
@@ -151,13 +151,21 @@ describe('accounts', () => {
     expect(await screen.findByText('Create account', { selector: '.sddm-name' }, SLOW)).toBeTruthy();
   }, 15_000);
 
-  it('still lets anyone try TuxOS as a guest', async () => {
+  it('requires an account and offers no guest route or pre-login desktop selector', async () => {
     setup(fakeService());
-    fireEvent.click(await screen.findByRole('button', { name: 'Try without an account' }));
-    expect(screen.queryByLabelText('Password')).toBeNull();
-    fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'tux' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
-    await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
+    await screen.findByRole('button', { name: 'Create account' });
+    expect(screen.queryByText('Try without an account')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Desktop Session/ })).toBeNull();
+    expect(screen.getByLabelText('Password')).toBeTruthy();
+  });
+  it('keeps users at sign-in when the account service is unavailable, with a retry', async () => {
+    const service = fakeService();
+    service.client.me = vi.fn().mockRejectedValueOnce(new Error('Account service unavailable')).mockResolvedValue(null);
+    setup(service);
+    expect((await screen.findByRole('alert')).textContent).toContain('Account service unavailable');
+    expect(screen.queryByLabelText('Username')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry connection' }));
+    await screen.findByRole('button', { name: 'Create account' });
   });
 });
 

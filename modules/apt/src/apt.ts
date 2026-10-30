@@ -1,3 +1,4 @@
+import { DESKTOP_PACKAGES, desktopReward, REWARDS, unlocked } from '@tuxos/sdk';
 // apt, apt-get, dpkg and which, printing what Ubuntu 24.04 prints. Changing packages needs root, so learners
 // meet apt's real "are you root?" errors and learn to use sudo.
 
@@ -10,6 +11,8 @@ import {
 
 const READING = 'Reading package lists... Done\nBuilding dependency tree... Done\nReading state information... Done\n';
 const MIRROR = 'http://archive.ubuntu.com/ubuntu';
+const PRACTICE_MIRROR = 'tuxos://practice-repository';
+const mirrorFor = (pkg: Package) => pkg.practice ? PRACTICE_MIRROR : MIRROR;
 const TRIGGERS = 'Processing triggers for man-db (2.12.0-4build2) ...\n';
 /** Shell builtins have no file in /usr/bin, so `which` finds nothing for them, as in bash. */
 const SHELL_BUILTINS = new Set(['cd', 'export', 'help']);
@@ -64,11 +67,24 @@ function needsRoot(ctx: CommandContext, lock: 'frontend' | 'lists'): number | un
   return 100;
 }
 
-/** apt can't wait for an answer here, so without -y it stops where it would ask, as with no keyboard attached. */
-function abortWithoutYes(ctx: CommandContext, tool: string, operation: string, names: string[]): number {
+/** Human terminals can answer; headless calls must supply stdin or explicitly opt in with -y. */
+async function confirm(ctx: CommandContext, tool: string, operation: string, names: string[]): Promise<boolean> {
+  if (ctx.readLine) {
+    const answer = await ctx.readLine('Do you want to continue? [Y/n] ');
+    if (answer !== null && /^(y|yes)?$/i.test(answer.trim()) && !ctx.signal?.aborted) return true;
+    ctx.stdout('Abort.\n');
+    return false;
+  }
+  if (ctx.stdin) {
+    const answer = ctx.stdin.split(/\r?\n/)[0]!.trim();
+    ctx.stdout(`Do you want to continue? [Y/n] ${answer}\n`);
+    if (/^(y|yes)?$/i.test(answer)) return true;
+    ctx.stdout('Abort.\n');
+    return false;
+  }
   ctx.stdout('Do you want to continue? [Y/n] Abort.\n');
-  ctx.stderr(`TuxOS can't answer apt's question for you. Add -y to say yes in advance: sudo ${tool} ${operation} -y ${names.join(' ')}\n`);
-  return 1;
+  ctx.stderr(`No interactive input. To approve in advance: sudo ${tool} ${operation} -y ${names.join(' ')}\n`);
+  return false;
 }
 
 function databaseCount(have: Set<string>): number {
@@ -92,16 +108,27 @@ function upgrade(ctx: CommandContext): number {
   return 0;
 }
 
-function install(ctx: CommandContext, files: Files, tool: string, args: string[]): number {
-  const { words, yes } = parse(args);
-  const denied = needsRoot(ctx, 'frontend');
+async function install(ctx: CommandContext, files: Files, tool: string, args: string[]): Promise<number> {
+  const { words, yes, flags } = parse(args);
+  const simulate = flags.has('-s') || flags.has('--simulate') || flags.has('--dry-run');
+  const denied = simulate ? undefined : needsRoot(ctx, 'frontend');
   if (denied !== undefined) return denied;
   ctx.stdout(READING);
   // Before `apt update` the lists are empty, so apt knows no package to install: the classic first lesson.
   const unknown = words.filter((name) => !findPackage(name) || (!listsFetched(files) && !installed(files).has(name)));
   if (unknown.length) {
     ctx.stderr(unknown.map((name) => `E: Unable to locate package ${name}\n`).join(''));
+    if (!listsFetched(files)) ctx.stderr('Hint: run sudo apt update to load the package catalog, then try again.\n');
+    else ctx.stderr('TuxOS has a small practice repository, not the full Ubuntu archive. Use apt list to see supported packages.\n');
     return 100;
+  }
+  const journey = ctx.kernel.getState().session.journey;
+  for (const desktop of DESKTOP_PACKAGES.filter(item => words.includes(item.package))) {
+    if (!unlocked(journey, desktopReward(desktop.id))) {
+      const milestone = REWARDS.find(item => item.id === desktopReward(desktop.id))!;
+      ctx.stderr(`E: ${desktop.name} unlocks after lesson ${milestone.at}. Finish that milestone, then install it.\n`);
+      return 100;
+    }
   }
   const have = installed(files);
   const plan: Package[] = [];
@@ -123,19 +150,45 @@ function install(ctx: CommandContext, files: Files, tool: string, args: string[]
     + `0 upgraded, ${plan.length} newly installed, 0 to remove and 0 not upgraded.\n`
     + `Need to get ${kb(plan.reduce((sum, pkg) => sum + pkg.downloadSize, 0))} of archives.\n`
     + `After this operation, ${kb(plan.reduce((sum, pkg) => sum + pkg.installedSize, 0))} of additional disk space will be used.\n`);
+  const desktopInstall = plan.some(pkg => DESKTOP_PACKAGES.some(desktop => desktop.package === pkg.name));
   // Like apt, ask only when it installs more than was asked for.
-  if (extras.length && !yes) return abortWithoutYes(ctx, tool, 'install', words);
-  plan.forEach((pkg, index) => ctx.stdout(`Get:${index + 1} ${MIRROR} noble/${pkg.component} amd64 ${pkg.name} amd64 ${pkg.version} [${kb(pkg.downloadSize)}]\n`));
+  if (simulate) {
+    for (const pkg of plan) ctx.stdout(`Inst ${pkg.name} (${pkg.version})\nConf ${pkg.name} (${pkg.version})\n`);
+    return 0;
+  }
+  if (flags.has('--assume-no')) { ctx.stdout('Abort.\n'); return 1; }
+  if (extras.length && !yes && !await confirm(ctx, tool, 'install', words)) return ctx.signal?.aborted ? 130 : 1;
+  if (desktopInstall) ctx.stdout('TuxOS desktop installation · simulated downloads and packages\n');
+  const total = plan.length * 3;
+  let phase = 0;
+  const progress = async (label: string) => {
+    if (ctx.signal?.aborted) return false;
+    if (desktopInstall && ctx.terminal) {
+      const percent = Math.floor(++phase / total * 100);
+      ctx.stdout(`Progress: [${'#'.repeat(Math.floor(percent / 5)).padEnd(20, '.')} ] ${percent}% ${label}\n`);
+      return installationPause(ctx.signal);
+    }
+    return true;
+  };
+  const interrupted = () => { ctx.stdout('\nInstallation cancelled. Run the install command again to retry.\n'); return 130; };
+  for (const [index, pkg] of plan.entries()) {
+    ctx.stdout(`Get:${index + 1} ${mirrorFor(pkg)} noble/${pkg.component} amd64 ${pkg.name} amd64 ${pkg.version} [${kb(pkg.downloadSize)}]\n`);
+    if (!await progress('Downloading packages')) return interrupted();
+  }
   const fetched = plan.reduce((sum, pkg) => sum + pkg.downloadSize, 0);
-  ctx.stdout(`Fetched ${kb(fetched)} in 0s (${kb(fetched * 4)}/s)\n`);
+  ctx.stdout(`Fetched ${kb(fetched)}${desktopInstall ? ' (simulated)' : ` in 0s (${kb(fetched * 4)}/s)`}\n`);
   for (const pkg of plan) {
     ctx.stdout(`Selecting previously unselected package ${pkg.name}.\n(Reading database ... ${databaseCount(installed(files))} files and directories currently installed.)\n`
       + `Preparing to unpack .../${debName(pkg)} ...\nUnpacking ${pkg.name} (${pkg.version}) ...\n`);
+    if (!await progress(`Unpacking ${pkg.name}`)) return interrupted();
   }
   for (const pkg of plan) {
-    unpack(files, pkg, !words.includes(pkg.name));
     ctx.stdout(`Setting up ${pkg.name} (${pkg.version}) ...\n`);
+    if (!await progress(`Configuring ${pkg.name}`)) return interrupted();
   }
+  // Commit only after all staged phases succeed, so Ctrl+C leaves a retryable installation.
+  for (const pkg of plan) unpack(files, pkg, !words.includes(pkg.name));
+  if (desktopInstall) ctx.stdout('Desktop session registered. Installation complete. Launch it from the learning screen or Settings.\n');
   ctx.stdout(TRIGGERS);
   return 0;
 }
@@ -156,9 +209,10 @@ function dependents(name: string, have: Set<string>): Package[] {
   return ALL.filter((pkg) => found.has(pkg.name));
 }
 
-function remove(ctx: CommandContext, files: Files, tool: string, args: string[], purge: boolean, auto = false): number {
-  const { words, yes } = parse(args);
-  const denied = needsRoot(ctx, 'frontend');
+async function remove(ctx: CommandContext, files: Files, tool: string, args: string[], purge: boolean, auto = false): Promise<number> {
+  const { words, yes, flags } = parse(args);
+  const simulate = flags.has('-s') || flags.has('--simulate') || flags.has('--dry-run');
+  const denied = simulate ? undefined : needsRoot(ctx, 'frontend');
   if (denied !== undefined) return denied;
   ctx.stdout(READING);
   const have = installed(files);
@@ -174,6 +228,11 @@ function remove(ctx: CommandContext, files: Files, tool: string, args: string[],
       continue;
     }
     for (const pkg of dependents(name, have)) if (!targets.includes(pkg)) targets.push(pkg);
+  }
+  const currentDesktop = DESKTOP_PACKAGES.find(desktop => desktop.id === ctx.kernel.getState().session.desktop);
+  if (!simulate && currentDesktop && have.has(currentDesktop.package) && targets.some(pkg => [currentDesktop.package, ...currentDesktop.dependencies].some(name => name === pkg.name))) {
+    ctx.stderr('E: This desktop is in use. Switch to another installed desktop before removing it.\n');
+    return 100;
   }
   const essential = targets.filter((pkg) => pkg.essential);
   if (essential.length) {
@@ -198,7 +257,12 @@ function remove(ctx: CommandContext, files: Files, tool: string, args: string[],
     + `0 upgraded, 0 newly installed, ${targets.length} to remove and 0 not upgraded.\n`
     + `After this operation, ${kb(targets.reduce((sum, pkg) => sum + pkg.installedSize, 0))} disk space will be freed.\n`);
   // apt always asks before removing anything.
-  if (!yes) return abortWithoutYes(ctx, tool, auto ? 'autoremove' : purge ? 'purge' : 'remove', words);
+  if (simulate) {
+    for (const pkg of targets) ctx.stdout(`Remv ${pkg.name} [${pkg.version}]\n`);
+    return 0;
+  }
+  if (flags.has('--assume-no')) { ctx.stdout('Abort.\n'); return 1; }
+  if (!yes && !await confirm(ctx, tool, auto ? 'autoremove' : purge ? 'purge' : 'remove', words)) return ctx.signal?.aborted ? 130 : 1;
   ctx.stdout(`(Reading database ... ${databaseCount(have)} files and directories currently installed.)\n`);
   for (const pkg of targets) {
     removePackage(files, pkg, purge);
@@ -246,10 +310,10 @@ function show(ctx: CommandContext, files: Files, args: string[]): number {
     const pkg = findPackage(name)!;
     ctx.stdout([
       `Package: ${pkg.name}`, `Version: ${pkg.version}`, `Priority: ${pkg.essential ? 'required' : 'optional'}`,
-      `Section: ${pkg.section}`, `Origin: Ubuntu`, `Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>`,
+      `Section: ${pkg.section}`, `Origin: ${pkg.practice ? 'TuxOS practice repository' : 'Ubuntu'}`, `Maintainer: ${pkg.practice ? 'TuxOS teaching repository' : 'Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>'}`,
       `Installed-Size: ${kb(pkg.installedSize)}`, ...(pkg.depends.length ? [`Depends: ${pkg.depends.join(', ')}`] : []),
       ...(pkg.homepage ? [`Homepage: ${pkg.homepage}`] : []), `Download-Size: ${kb(pkg.downloadSize)}`,
-      `APT-Sources: ${MIRROR} noble/${pkg.component} amd64 Packages`, `Description: ${pkg.summary}`, ` ${pkg.description}`,
+      `APT-Sources: ${mirrorFor(pkg)} noble/${pkg.component} amd64 Packages`, `Description: ${pkg.summary}`, ` ${pkg.description}`,
     ].join('\n') + '\n\n');
   }
   return 0;
@@ -289,15 +353,38 @@ apt is a commandline package manager. Most used commands:
   purge - remove packages and their configuration files
 
 Changing packages needs root: use sudo, e.g. sudo apt install tree
+Start with sudo apt update. Try: sudo apt install cmatrix, then cmatrix.
+Options: -y (answer yes), -s (preview install/remove), --assume-no (cancel).
+TuxOS uses a small simulated repository. apt list shows the supported packages.
 `;
 
+const packageLocks = new WeakSet<CommandContext['kernel']>();
+
 export function aptCommand(tool: 'apt' | 'apt-get') {
-  return (ctx: CommandContext): number => {
+  return async (ctx: CommandContext): Promise<number> => {
     // Options may come before the operation too: apt -y install tree.
     const at = ctx.args.findIndex((arg) => !arg.startsWith('-'));
     const operation = at < 0 ? undefined : ctx.args[at];
     const rest = ctx.args.filter((_, index) => index !== at);
     const files = filesFor(ctx);
+    if (ctx.args.includes('-h') || ctx.args.includes('--help')) { ctx.stdout(APT_USAGE); return 0; }
+    const supported = new Set(['-y', '--yes', '--assume-yes', '-qy', '-yq', '-q', '--installed', '--upgradable', '--assume-no', '-s', '--simulate', '--dry-run']);
+    const unsupported = rest.find((arg) => arg.startsWith('-') && !supported.has(arg));
+    if (unsupported) {
+      ctx.stderr(`E: Option ${unsupported} is not supported by TuxOS. Try ${tool} --help.\n`);
+      return 100;
+    }
+    if (rest.some((arg) => ['-s', '--simulate', '--dry-run'].includes(arg))
+      && !['install', 'remove', 'purge', 'autoremove'].includes(operation ?? '')) {
+      ctx.stderr('E: TuxOS supports previews for install, remove, purge and autoremove.\n');
+      return 100;
+    }
+    const changes = ['update', 'upgrade', 'full-upgrade', 'dist-upgrade', 'install', 'remove', 'purge', 'autoremove'].includes(operation ?? '');
+    if (changes && packageLocks.has(ctx.kernel)) {
+      ctx.stderr('E: Another package operation is running. Answer its prompt or cancel it with Ctrl+C, then try again.\n');
+      return 100;
+    }
+    if (changes) packageLocks.add(ctx.kernel);
     try {
       switch (operation) {
         case undefined:
@@ -305,10 +392,10 @@ export function aptCommand(tool: 'apt' | 'apt-get') {
           return tool === 'apt' ? 0 : 1;
         case 'update': return update(ctx, files);
         case 'upgrade': case 'full-upgrade': case 'dist-upgrade': return upgrade(ctx);
-        case 'install': return install(ctx, files, tool, rest);
-        case 'remove': return remove(ctx, files, tool, rest, false);
-        case 'purge': return remove(ctx, files, tool, rest, true);
-        case 'autoremove': return remove(ctx, files, tool, rest, false, true);
+        case 'install': return await install(ctx, files, tool, rest);
+        case 'remove': return await remove(ctx, files, tool, rest, false);
+        case 'purge': return await remove(ctx, files, tool, rest, true);
+        case 'autoremove': return await remove(ctx, files, tool, rest, false, true);
         case 'search': if (tool === 'apt') return search(ctx, files, rest); break;
         case 'show': if (tool === 'apt') return show(ctx, files, rest); break;
         case 'list': if (tool === 'apt') return list(ctx, files, rest); break;
@@ -318,6 +405,11 @@ export function aptCommand(tool: 'apt' | 'apt-get') {
     } catch (error) {
       ctx.stderr(`E: ${error instanceof Error ? error.message : String(error)}\n`);
       return 100;
+    } finally {
+      if (changes) {
+        packageLocks.delete(ctx.kernel);
+        if (ctx.kernel.getState().session.journey) ctx.dispatch('journey.reconcile', {});
+      }
     }
   };
 }
@@ -385,4 +477,15 @@ export function whichCommand(ctx: CommandContext): number {
     else code = 1;
   }
   return code;
+}
+
+/** Brief, abortable animation only for interactive desktop installs. */
+function installationPause(signal?: AbortSignal): Promise<boolean> {
+  return new Promise(resolve => {
+    if (signal?.aborted) { resolve(false); return; }
+    const finish = (ok: boolean) => { clearTimeout(timer); signal?.removeEventListener('abort', abort); resolve(ok); };
+    const abort = () => finish(false);
+    const timer = setTimeout(() => finish(true), 160);
+    signal?.addEventListener('abort', abort, { once: true });
+  });
 }

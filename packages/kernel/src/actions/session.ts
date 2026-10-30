@@ -1,3 +1,5 @@
+import { validatePluginTheme, validPluginId } from '@tuxos/sdk';
+import { demandReward, demandDesktop } from './journey';
 import { KernelError } from '../errors';
 import type { ActionDefinition } from '../kernel';
 import type { SessionState, Window } from '../state';
@@ -57,12 +59,49 @@ function focus(session: SessionState, window: Window): void {
 
 export const sessionActions: ActionDefinition[] = [
   {
+    type: 'session.setTheme', capability: 'session:control', description: 'Apply or reset desktop theme colours.', mutates: true,
+    run: ({ state }, payload) => {
+      demandReward(state.session, 'themes');
+      const theme = (payload as { theme?: unknown } | null)?.theme;
+      if (theme === null) { delete state.session.theme; return; }
+      try { state.session.theme = validatePluginTheme(theme); }
+      catch (error) { throw new KernelError('EINVAL', error instanceof Error ? error.message : 'Invalid theme.'); }
+    },
+  },
+  {
+    type: 'session.setWidget', capability: 'session:control', description: 'Pin, move, resize or unpin a desktop widget.', mutates: true,
+    run: ({ state }, payload) => {
+      demandReward(state.session, 'plugins');
+      const appId = field(payload, 'appId', 'string') as string;
+      if (!validPluginId(appId)) throw new KernelError('EINVAL', 'Invalid widget app ID.');
+      const widgets = state.session.widgets ?? [];
+      if ((payload as { remove?: boolean }).remove === true) { state.session.widgets = widgets.filter(widget => widget.appId !== appId); return; }
+      const old = widgets.find(widget => widget.appId === appId);
+      if (!old && widgets.length >= 8) throw new KernelError('ENOSPC', 'You can pin up to 8 widgets.');
+      const number = (key: string, fallback: number, min: number, max: number) => Math.max(min, Math.min(max, field(payload, key, 'number', true) as number | undefined ?? fallback));
+      const widget = { appId, x: number('x', old?.x ?? 160, 0, 10000), y: number('y', old?.y ?? 64, 0, 10000), width: number('width', old?.width ?? 340, 240, 800), height: number('height', old?.height ?? 360, 200, 800) };
+      state.session.widgets = [...widgets.filter(item => item.appId !== appId), widget];
+    },
+  },
+  {
+    type: 'session.consumeLaunch', capability: 'session:control', description: 'Consume a terminal launch command once.', mutates: true,
+    run: ({ state }, payload) => {
+      const window = find(state.session, id(payload));
+      if (window.appId !== 'terminal') throw new KernelError('EINVAL', 'Only terminal windows accept launch commands.');
+      const command = window.args?.run;
+      if (window.args) delete window.args.run;
+      return command;
+    },
+  },
+  {
     type: 'session.open',
     capability: 'session:control',
     description: 'Open and focus an application window.',
     mutates: true,
     run: ({ state }, payload) => {
       const appId = field(payload, 'appId', 'string') as string;
+      if (!['terminal', 'learn-linux'].includes(appId)) demandDesktop(state.session, state.session.desktop);
+      if (appId === 'plugins') demandReward(state.session, 'plugins');
       const title = field(payload, 'title', 'string') as string;
       const width = Math.max(MIN_WIDTH, field(payload, 'width', 'number', true) as number | undefined ?? 720);
       const height = Math.max(MIN_HEIGHT, field(payload, 'height', 'number', true) as number | undefined ?? 480);
@@ -96,13 +135,13 @@ export const sessionActions: ActionDefinition[] = [
     type: 'session.setDesktop', capability: 'session:control', mutates: true,
     description: 'Switch the desktop environment: "plasma" (KDE Plasma), "gnome", "cde" or "hyprland".',
     params: { type: 'object', properties: { desktop: { type: 'string' } }, required: ['desktop'] },
-    run: ({ state }, payload) => { state.session.desktop = settingId(payload, 'desktop'); },
+    run: ({ state }, payload) => { const desktop = settingId(payload, 'desktop'); demandDesktop(state.session, desktop); state.session.desktop = desktop; },
   },
   {
     type: 'session.setWallpaper', capability: 'session:control', mutates: true,
     description: 'Change the desktop wallpaper by name.',
     params: { type: 'object', properties: { wallpaper: { type: 'string' } }, required: ['wallpaper'] },
-    run: ({ state }, payload) => { state.session.wallpaper = settingId(payload, 'wallpaper'); },
+    run: ({ state }, payload) => { const wallpaper = settingId(payload, 'wallpaper'); demandReward(state.session, 'wallpaper'); if (wallpaper === 'kde-30th') demandReward(state.session, 'anniversary'); state.session.wallpaper = wallpaper; },
   },
   {
     type: 'session.setTitle', capability: 'session:control', description: 'Change a window title.', mutates: true,

@@ -121,3 +121,45 @@ describe('local system client', () => {
     expect(seen).toEqual(['fs.write']);
   });
 });
+
+
+describe('restart learning', () => {
+  it('replaces the saved simulation, keeps the username, and remains reset after another boot', async () => {
+    const saved = storage();
+    const client = createLocalSystem({ storage: saved, modules: [], journey: true });
+    await client.boot('ada');
+    const shell = await client.createTerminal();
+    await shell.run('echo old-practice > old-note.txt');
+    await client.flush();
+    const restarted = vi.fn();
+    client.onRestart(restarted);
+    await client.restartLearning();
+    expect(restarted).toHaveBeenCalledOnce();
+    expect(await client.user()).toBe('ada');
+    expect((await client.session()).journey).toMatchObject({ lessons: [], steps: [], acknowledged: [], installedDesktops: [] });
+    expect((await client.dispatch('fs.read', { path: '/home/ada/old-note.txt' })).ok).toBe(false);
+    await client.flush();
+    await client.boot('ada');
+    expect((await client.session()).journey!.steps).toEqual([]);
+    expect((await client.dispatch('fs.read', { path: '/home/ada/old-note.txt' })).ok).toBe(false);
+    await client.reset();
+  });
+
+  it('keeps the running session and saved history when the account rejects the reset', async () => {
+    const saved = storage();
+    const client = createLocalSystem({ storage: saved, modules: [], journey: true });
+    await client.boot('ada');
+    await (await client.createTerminal()).run('echo keep > note.txt');
+    await client.flush();
+    const previousSave = saved.value;
+    const write = vi.spyOn(saved, 'set').mockRejectedValueOnce(new Error('Account offline'));
+    const restarted = vi.fn();
+    client.onRestart(restarted);
+    await expect(client.restartLearning()).rejects.toThrow('Account offline');
+    expect(restarted).not.toHaveBeenCalled();
+    expect(saved.value).toBe(previousSave);
+    expect(await client.dispatch('fs.read', { path: '/home/ada/note.txt' })).toMatchObject({ ok: true, value: 'keep\n' });
+    write.mockRestore();
+    await client.reset();
+  });
+});

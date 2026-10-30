@@ -5,8 +5,9 @@ import type { CommandContext } from '@tuxos/shell';
 import { packageForCommand } from './catalog';
 import { installed, type Files } from './dpkg';
 import { filesFor } from './apt';
+import { cmatrix } from './cmatrix';
 
-type Program = (ctx: CommandContext, files: Files) => number;
+type Program = (ctx: CommandContext, files: Files) => number | Promise<number>;
 
 /** Whether the command's package has put it in /usr/bin. */
 export function isInstalled(files: Files, command: string): boolean {
@@ -14,7 +15,7 @@ export function isInstalled(files: Files, command: string): boolean {
 }
 
 export function program(command: string, run: Program) {
-  return (ctx: CommandContext): number => {
+  return (ctx: CommandContext): number | Promise<number> => {
     const files = filesFor(ctx);
     if (!isInstalled(files, command)) {
       ctx.stderr(`Command '${command}' not found, but can be installed with:\nsudo apt install ${packageForCommand(command)!.name}\n`);
@@ -290,4 +291,4 @@ export const jq: Program = (ctx) => {
   }
 };
 
-export const PROGRAMS: Record<string, Program> = { tree, hello, cowsay, sl, neofetch, fortune, jq };
+export const PROGRAMS: Record<string, Program> = { tree, hello, cowsay, sl, neofetch, fortune, jq, cmatrix };

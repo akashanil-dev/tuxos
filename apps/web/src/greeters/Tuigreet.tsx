@@ -35,7 +35,7 @@ export function Tuigreet(props: GreeterProps) {
   });
 
   const greeting = { account: `Welcome back, ${form.shownName}`, signin: 'Sign in to TuxOS',
-    register: 'Create a TuxOS account', guest: 'Welcome to TuxOS' }[form.mode];
+    register: 'Create a TuxOS account' }[form.mode];
 
   return <main className="greeter tuigreet">
     <div className="tui-time">

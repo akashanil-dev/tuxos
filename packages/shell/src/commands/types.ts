@@ -8,10 +8,19 @@ export interface RunResult {
   code: number;
 }
 
+/** Optional live terminal I/O. Headless callers still receive a complete buffered result. */
+export interface ShellIO {
+  stdout?(text: string): void;
+  stderr?(text: string): void;
+  readLine?(prompt: string): Promise<string | null>;
+  signal?: AbortSignal;
+  terminal?: { columns: number; rows: number };
+}
+
 export interface Shell {
   cwd: string;
   env: Record<string, string>;
-  run(line: string): Promise<RunResult>;
+  run(line: string, io?: ShellIO): Promise<RunResult>;
   register(command: CommandDefinition): void;
   unregister(name: string): void;
   readonly plugins?: PluginManager;
@@ -39,10 +48,13 @@ export interface CommandContext {
   kernel: Kernel;
   dispatch<R>(type: string, payload: unknown): DispatchResult<R>;
   resolve(path: string): string;
+  readLine?: ShellIO['readLine'];
+  signal?: AbortSignal;
+  terminal?: ShellIO['terminal'];
 }
 
 export interface ShellInternals extends Shell {
-  runAsCommand(args: string[], stdin: string, user: string): Promise<RunResult>;
+  runAsCommand(args: string[], stdin: string, user: string, io?: ShellIO): Promise<RunResult>;
 }
 
 export type ShellOptions = { actor?: Actor; registry?: CommandRegistry; plugins?: PluginManager };

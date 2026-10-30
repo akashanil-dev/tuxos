@@ -35,7 +35,8 @@ Open **Plugins** from the desktop or app launcher, or select **Settings → Open
 | Area | Purpose |
 | --- | --- |
 | **Discover** | Browse available bundled plugins, search and filter by category. |
-| **Installed** | Open, enable, disable, export or remove plugins. |
+| **Installed** | Open, pin widgets, apply themes, enable, disable, export or remove plugins. |
+| **Updates** | Review newer versions from the bundled catalog, with private data preserved. |
 | **Add your own** | Import a package, paste JSON or start from a template. |
 
 No programming tools are required to install plugins. Template editing requires basic HTML and JSON knowledge. The source-file workflow in section 4 additionally requires Node.js on your computer; this project supports **Node.js 22.18 or later**.
@@ -47,7 +48,7 @@ Plugins work for guests and signed-in users. Packages and private data use the n
 ## 2. Install an available plugin
 
 1. Open **Plugins → Discover**.
-2. Find a plugin using **Search plugins** or the **All**, **Productivity** and **Learning** filters.
+2. Find a plugin using **Search plugins** or the category filters, including **Widgets** and **Appearance**.
 3. Select **Install plugin**.
 4. Review its name, version, author, apps and requested permissions.
 5. Select **I trust this plugin and approve these permissions.**
@@ -537,3 +538,29 @@ npm run build
 ```
 
 Coverage includes validation, approval, installation/update, conflicts, disable/enable, removal/reinstall, restoration, corrupted/legacy saves, session revocation, storage escapes/quotas, RPC binding/cleanup and graphical import/catalog workflows. Browser verification should also check actual iframe execution, handshake, persistence, immediate launcher changes and narrow-window layout.
+
+
+## Desktop widgets and appearance presets
+
+Four bundled apps can also live directly on the desktop: **Quick Notes**, **Focus Timer**, **World Clock** and **Konqi’s Linux Tips**. Install one, then choose **Pin to desktop** from its card or the Installed page. Drag its header to move it, or focus the move handle and press arrow keys. The **⤢** button switches between compact and large sizes; **×** unpins it. Up to eight widgets can be pinned. Placement and size are saved with the TuxOS session. Timers restart and clock timezone selections reset when their view reloads; saved notes stay in private plugin storage.
+
+Disabling a plugin hides its widgets, with placement retained for re-enabling. Updates reload widgets. Removing a plugin unpins them. Windows and pinned widgets keep the same iframe restrictions and private-storage permissions.
+
+**Theme Studio** includes Breeze Night, Violet Dusk and Northern Lights. Its gallery card shows static previews. After installation, choose a palette on the card or Installed page. Desktop window, menu and accent colours change; the wallpaper does not. Reset using **Reset desktop colours** in Plugins or Settings. Apps with their own fixed palettes, such as the terminal, retain those palettes.
+
+The Updates page compares installed versions with the bundled catalog. Custom updates use the existing JSON import flow; TuxOS does not fetch updates from arbitrary URLs. These are TuxOS plugins, inspired by customizable Linux desktop workflows. Native Omarchy plugins, shell scripts and themes are not directly compatible.
+
+Authors can opt an app into widgets using `"widget": true` inside its app contribution. Keep the layout responsive down to 240 pixels wide. A package can declare up to eight themes in `manifest.contributes.themes`, each with this shape:
+
+```json
+{
+  "id": "my-night",
+  "name": "My Night",
+  "accent": "#88c0d0",
+  "background": "#202630",
+  "surface": "#303640",
+  "foreground": "#eeeeee"
+}
+```
+
+All four colours must be six-digit hexadecimal values. The host validates and renders these values. Themes are applied only by an explicit user action in Plugins; plugin JavaScript gains no desktop-control permission. Gallery previews never execute imported HTML. The existing format version remains 1; both contributions are optional.

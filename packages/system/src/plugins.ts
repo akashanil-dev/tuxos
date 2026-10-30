@@ -1,10 +1,10 @@
 import { KernelError, resolvePath, type Kernel, type ActionContext, type Stat, type VNode } from '@tuxos/kernel';
-import { approvePlugin, comparePluginVersions, pluginBytes, PLUGIN_LIMITS, validatePluginManifest, validatePluginPackage,
+import { unlocked, approvePlugin, comparePluginVersions, pluginBytes, PLUGIN_LIMITS, validatePluginManifest, validatePluginPackage,
   validPluginId, type InstalledPlugin, type ModuleManifest, type PluginApproval, type PluginManager, type PluginPackage } from '@tuxos/sdk';
 import type { ModuleHost } from '@tuxos/module-host';
 import type { PluginLoaderHooks } from './plugin-loader';
 
-const RESERVED = new Set(['plugins', 'plugin-manager', 'terminal', 'files', 'editor', 'settings', 'about', 'apt', 'learn-linux', 'learn-docker', 'chmod-arcade']);
+const RESERVED = new Set(['plugins', 'plugin-manager', 'terminal', 'files', 'editor', 'settings', 'about', 'software', 'apt', 'learn-linux', 'learn-filesystem', 'learn-docker', 'chmod-arcade']);
 interface Entry { info: InstalledPlugin; package?: PluginPackage; approved: string[]; }
 
 /** Owns both persistent packages and their runtime registrations, scoped to one boot. */
@@ -53,6 +53,10 @@ export class ManagedPlugins implements PluginManager {
   onChange(listener: () => void): () => void { this.listeners.add(listener); return () => this.listeners.delete(listener); }
   isEnabled(id: string): boolean { return !this.disposed && this.entries.get(id)?.info.status === 'enabled' && this.registered.has(id); }
   generation(id: string): number | undefined { return this.isEnabled(id) ? this.generations.get(id) : undefined; }
+  private requireUnlocked(): void {
+    if (!unlocked(this.kernel.getState().session.journey, 'plugins')) throw new Error('Plugins unlock after lesson 26: Open-source maker.');
+  }
+
   async list(): Promise<InstalledPlugin[]> { return structuredClone([...this.entries.values()].map((entry) => entry.info)); }
   async export(id: string): Promise<PluginPackage> {
     this.id(id);
@@ -61,6 +65,7 @@ export class ManagedPlugins implements PluginManager {
     return structuredClone(pkg);
   }
   async app(appId: string): Promise<{ pluginId: string; package: PluginPackage; generation: number }> {
+    this.requireUnlocked();
     for (const [pluginId, pkg] of this.registered) {
       if (this.isEnabled(pluginId) && pkg.manifest.contributes.apps?.some((app) => app.id === appId)) {
         await this.host.activate(pluginId);
@@ -76,6 +81,7 @@ export class ManagedPlugins implements PluginManager {
     try { pkg = validatePluginPackage(value); approvePlugin(pkg.manifest, approval); } catch (err) { return Promise.reject(err); }
     const accepted = { ...approval, approvedCapabilities: [...approval.approvedCapabilities] };
     return this.serialize(async () => {
+      this.requireUnlocked();
       const id = pkg.manifest.id;
       this.id(id);
       const old = this.entries.get(id);
@@ -98,7 +104,9 @@ export class ManagedPlugins implements PluginManager {
     return this.serialize(async () => {
       this.removableId(id);
       if (!this.entries.has(id)) throw new Error('Plugin is not installed.');
+      const removedApps = this.entries.get(id)?.info.manifest?.contributes.apps ?? [];
       this.run('plugins.remove', { id, deleteData: options.deleteData === true });
+      for (const app of removedApps) this.run('session.setWidget', { appId: app.id, remove: true });
       await this.unregister(id);
       this.entries.delete(id);
       this.emit();
@@ -113,6 +121,7 @@ export class ManagedPlugins implements PluginManager {
       if (!entry?.package || entry.info.status === 'invalid') throw new Error('This package is invalid. Import a valid replacement or remove it.');
       if (enabled === (entry.info.status === 'enabled')) return;
       if (enabled) {
+        this.requireUnlocked();
         approvePlugin(entry.package.manifest, approval);
         this.host.validate(this.moduleManifest(entry.package));
       }

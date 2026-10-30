@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createLocalSystem, type AiKeyStore, type AiStatus, type KeyValueStorage, type SystemClient } from '@tuxos/system';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import SettingsView from './view';
@@ -52,4 +52,23 @@ describe('Settings → AI', () => {
     fireEvent.click(toggle);
     expect(ai.setOn).toHaveBeenCalledWith(true);
   });
+});
+
+
+it('confirms clearing history, supports cancellation, and reports account save failures', async () => {
+  const system = createLocalSystem({ storage: memory(), modules: [], journey: true });
+  await system.boot('ada');
+  const restart = vi.spyOn(system, 'restartLearning').mockRejectedValueOnce(new Error('Account offline')).mockResolvedValueOnce();
+  render(<SettingsView system={system} windowId="w" />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Clear history' }));
+  expect(screen.getByRole('alertdialog').textContent).toContain('practice files');
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+  expect(screen.queryByRole('alertdialog')).toBeNull();
+  expect(restart).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Clear history' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Clear history and restart' }));
+  await screen.findByText('Could not clear history: Account offline');
+  fireEvent.click(screen.getByRole('button', { name: 'Clear history and restart' }));
+  await waitFor(() => expect(restart).toHaveBeenCalledTimes(2));
+  await system.reset();
 });

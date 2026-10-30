@@ -1,5 +1,5 @@
 import { KernelError } from '@tuxos/kernel';
-import type { KernelEvent, ModuleContext } from '@tuxos/sdk';
+import type { JourneyProgress, KernelEvent, ModuleContext } from '@tuxos/sdk';
 import type { Course, Lesson, SolutionStep } from './types';
 import { expand, satisfied } from './conditions';
 import type { LessonHost, LessonStatus, SurveyQuestion } from './runner';
@@ -13,6 +13,8 @@ export interface TrainerProfile {
 }
 
 export interface AICourseOptions {
+  /** Offer the complete reviewed curriculum first; an AI lab remains an explicit learner choice. */
+  curriculumByDefault?: boolean;
   /**
    * When true and AI is available, the learner gets an AI-designed lab or a clear error, never the reviewed JSON
    * course. Without an AI key the reviewed course is used either way, so the module still teaches.
@@ -76,6 +78,7 @@ export interface LearningMemory {
 }
 
 interface ShellRun {
+  learningModule?: string;
   line: string;
   code: number;
   stdout: string;
@@ -123,6 +126,7 @@ export class AICourseRunner {
   private readonly survey: SurveyQuestion[];
   private surveyAnswers: Record<string, number> | undefined;
   private retaking = false;
+  private curriculumMode = false;
   /** In the built-in course: the learner's events since the current step began, for its checks. */
   private stepEvents: KernelEvent[] = [];
 
@@ -135,11 +139,17 @@ export class AICourseRunner {
   ) {
     this.requireAI = options.requireAI === true;
     this.survey = options.survey ?? [];
+    this.curriculumMode = options.curriculumByDefault === true
+      && this.host.read(`${expand(STATE_DIR, this.host.home)}/${ctx.id}-mode`)?.content !== 'personalized';
     this.surveyAnswers = this.loadSurvey();
     const lab = this.loadAiLab();
     const builtIn = lab ? undefined : this.loadBuiltIn();
     this.state = lab ?? builtIn;
     this.fallbackMode = !lab && !!builtIn;
+    if (this.curriculumMode) {
+      this.state = this.loadBuiltIn() ?? fallbackProgress(course, profile, ctx.id);
+      this.fallbackMode = true;
+    }
     this.memory = this.loadMemory();
     this.syncMode();
     if (this.state?.active) learningRuntime.activate(this.ctx.id);
@@ -157,6 +167,7 @@ export class AICourseRunner {
    * the lab resumes where it was left.
    */
   private syncMode(): void {
+    if (this.curriculumMode) return;
     if (this.planning || this.evaluating) return;
     if (!this.aiReady()) {
       if (this.state && !this.fallbackMode) {
@@ -248,6 +259,7 @@ export class AICourseRunner {
    */
   private awaitingSurvey(): boolean {
     if (!this.survey.length || !this.aiReady()) return false;
+    if (this.curriculumMode) return this.retaking;
     return this.retaking || (!this.state && !this.surveyAnswers) || (this.requireAI && this.fallbackMode);
   }
 
@@ -258,6 +270,28 @@ export class AICourseRunner {
   }
 
   cancelSurvey(): void { this.retaking = false; }
+
+  curriculum(): void {
+    this.curriculumMode = true;
+    this.retaking = false;
+    this.host.mkdir(expand(STATE_DIR, this.host.home));
+    this.host.write(`${expand(STATE_DIR, this.host.home)}/${this.ctx.id}-mode`, 'curriculum');
+    this.useBuiltInCourse();
+  }
+
+  personalize(): void {
+    if (!this.aiReady()) throw new Error('Turn on AI and add a provider key in Settings to use the optional practice lab.');
+    const lab = this.loadAiLab();
+    if (!lab) { this.retakeSurvey(); return; }
+    this.curriculumMode = false;
+    this.retaking = false;
+    this.fallbackMode = false;
+    this.state = lab;
+    this.stepEvents = [];
+    this.host.mkdir(expand(STATE_DIR, this.host.home));
+    this.host.write(`${expand(STATE_DIR, this.host.home)}/${this.ctx.id}-mode`, 'personalized');
+    learningRuntime.activate(this.ctx.id);
+  }
 
   /** Saves the learner's star ratings, then designs their syllabus in the background. */
   submitSurvey(answers: unknown): void {
@@ -271,6 +305,8 @@ export class AICourseRunner {
     }
     this.surveyAnswers = Object.fromEntries(this.survey.map((question) => [question.id, ratings[question.id] as number]));
     this.host.mkdir(expand(STATE_DIR, this.host.home));
+    this.curriculumMode = false;
+    this.host.write(`${expand(STATE_DIR, this.host.home)}/${this.ctx.id}-mode`, 'personalized');
     this.host.write(surveyPath(this.ctx.id, this.host.home), `${JSON.stringify(this.surveyAnswers, null, 2)}\n`);
     if (this.state) {
       // New answers mean a new lab at the new level: drop the old one (or the built-in course), including its file.
@@ -312,7 +348,11 @@ export class AICourseRunner {
     const activeTask = this.currentTask();
     const days = state.syllabus.days.map((day) => ({
       id: this.fallbackMode ? this.course.lessons[day.day - 1]?.id ?? `day-${day.day}` : `day-${day.day}`,
-      title: `Day ${day.day}: ${day.title}`,
+      title: this.fallbackMode ? day.title : `Day ${day.day}: ${day.title}`,
+      ...(this.fallbackMode ? (() => {
+        const lesson = this.course.lessons[day.day - 1]!;
+        return { stage: lesson.stage, story: lesson.story, outcomes: lesson.outcomes, duration: lesson.duration, labKind: lesson.labKind, realLab: lesson.realLab, references: lesson.references };
+      })() : {}),
       steps: day.tasks.length,
       completed: day.tasks.filter((task) => state.completed.includes(task.id)).length,
     }));
@@ -353,7 +393,21 @@ export class AICourseRunner {
       }
     }
     if (!selected) throw new Error(`no such lesson: ${dayId}`);
-    if (this.fallbackMode) this.setUpLesson(day);
+    if (this.fallbackMode && this.ctx.id === 'learn-linux') {
+      const journey = this.ctx.dispatch<JourneyProgress | null>('journey.status', {});
+      if (journey.ok && journey.value) {
+        const first = this.course.lessons.findIndex(lesson => !journey.value!.lessons.includes(lesson.id));
+        if (first >= 0 && day > first + 1 && !journey.value.lessons.includes(this.course.lessons[day - 1]!.id)) {
+          throw new KernelError('EACCES', `Complete ${this.course.lessons[first]!.title} first. Each lesson unlocks the next.`);
+        }
+      }
+    }
+    // Continuing a paused lesson must not overwrite the learner's working files.
+    const hasProgress = selected.tasks.some((item) => state.completed.includes(item.id));
+    const finished = selected.tasks.every((item) => state.completed.includes(item.id));
+    if (this.fallbackMode && (!hasProgress || finished)) this.setUpLesson(day);
+    if (finished) state.completed = state.completed.filter((id) => !selected!.tasks.some((task) => task.id === id));
+    this.stepEvents = [];
     const task = selected.tasks.findIndex((item) => !state.completed.includes(item.id));
     state.active = { day, task: Math.max(task, 0) };
     state.lastFeedback = null;
@@ -368,6 +422,12 @@ export class AICourseRunner {
     const current = this.currentTask();
     if (!current) return 'All generated tasks are complete. Ask for a new syllabus day when ready.';
     return `${current.title}\n${current.scenario}\nYour task: ${current.task}`;
+  }
+
+  answerPreview(): string {
+    this.syncMode();
+    if (!this.fallbackMode) throw new KernelError('EINVAL', 'Use the terminal for optional AI practice help.');
+    return this.currentTask()?.answer ?? 'Start a lesson first.';
   }
 
   async hint(): Promise<string> { return this.askFor('hint'); }
@@ -405,7 +465,7 @@ export class AICourseRunner {
     if (!task) return 'There is no active task. Start a day with the course action first.';
     const failures = this.failuresOn(task.id);
     // The learner should find the answer themselves: until they have really tried, an answer request gets a nudge.
-    if (kind === 'answer' && failures < REVEAL_AFTER_FAILURES) {
+    if (kind === 'answer' && !this.fallbackMode && failures < REVEAL_AFTER_FAILURES) {
       const left = REVEAL_AFTER_FAILURES - failures;
       const hint = await this.askFor('hint');
       return `You can work this one out. A nudge instead: ${hint}\nKeep trying: after ${left} more ${left === 1 ? 'try' : 'tries'} I'll start showing you the answer.`;
@@ -414,7 +474,7 @@ export class AICourseRunner {
     const localHint = task.hints[Math.min(this.hintsGiven(task.id), task.hints.length - 1)] ?? 'Re-read the lesson above and try one small command.';
     const localAnswer = this.ctx.id === 'learn-linux' ? conciseLinuxAnswer(task.answer, task) : task.answer;
     let text: string;
-    if (!this.ctx.learning || !this.aiReady()) text = kind === 'hint' ? localHint : localAnswer;
+    if (this.fallbackMode || !this.ctx.learning || !this.aiReady()) text = kind === 'hint' ? localHint : localAnswer;
     else {
       try {
         const result = await this.ctx.learning.request(`/${kind}`, {
@@ -435,6 +495,7 @@ export class AICourseRunner {
     if (!event.ok || event.actor.kind !== 'user') return;
     if (event.action.type !== 'shell.ran' && event.action.type !== 'session.open') return;
     const run = event.action.type === 'shell.ran' ? event.action.payload as ShellRun : { line: '', code: 0, stdout: '', stderr: '', commands: [] };
+    if (run.learningModule && run.learningModule !== this.ctx.id) return;
     if (/^\s*\/(hint|answer|task|next)(?:\s|$)/.test(run.line)) return;
     this.syncMode();
     const task = this.currentTask();
@@ -520,13 +581,13 @@ export class AICourseRunner {
   private load(path: string): AIProgress | undefined {
     const saved = this.host.read(path);
     if (!saved?.content) return undefined;
-    try { const value = JSON.parse(saved.content) as AIProgress; validateSyllabus(value.syllabus, this.ctx.id); return value; } catch { return undefined; }
+    try { const value = JSON.parse(saved.content) as AIProgress; validateSyllabus(value.syllabus, this.ctx.id, value.generatedByAI === false); return value; } catch { return undefined; }
   }
 
   /** The built-in course's own progress (older versions kept it in the AI lab's file). */
   private isBuiltIn(progress: AIProgress): boolean {
-    return progress.generatedByAI !== true && progress.syllabus.days.length === this.course.lessons.length
-      && progress.syllabus.days.every((day, index) => day.tasks[0]?.id === this.course.lessons[index]?.steps[0]?.id);
+    return progress.generatedByAI === false || (progress.generatedByAI !== true
+      && progress.syllabus.days.every((day) => this.course.lessons.some((lesson) => day.tasks[0]?.id === lesson.steps[0]?.id)));
   }
 
   private loadAiLab(): AIProgress | undefined {
@@ -536,9 +597,24 @@ export class AICourseRunner {
 
   private loadBuiltIn(): AIProgress | undefined {
     const saved = this.load(builtInPath(this.ctx.id, this.host.home));
-    if (saved && this.isBuiltIn(saved)) return saved;
+    if (saved && saved.generatedByAI !== true) return this.refreshBuiltIn(saved);
     const legacy = this.load(progressPath(this.ctx.id, this.host.home));
-    return legacy && this.isBuiltIn(legacy) ? legacy : undefined;
+    return legacy && this.isBuiltIn(legacy) ? this.refreshBuiltIn(legacy) : undefined;
+  }
+
+  /** Refresh lesson content without dropping progress when new lessons are added or reordered. */
+  private refreshBuiltIn(saved: AIProgress): AIProgress {
+    const fresh = fallbackProgress(this.course, this.profile, this.ctx.id);
+    const ids = new Set(fresh.syllabus.days.flatMap((day) => day.tasks.map((task) => task.id)));
+    fresh.completed = saved.completed.filter((id) => ids.has(id));
+    fresh.failures = saved.failures;
+    fresh.lastFeedback = saved.lastFeedback;
+    if (saved.active) {
+      const taskId = saved.syllabus.days.find((day) => day.day === saved.active!.day)?.tasks[saved.active.task]?.id;
+      const day = fresh.syllabus.days.find((day) => day.tasks.some((task) => task.id === taskId));
+      if (day) fresh.active = { day: day.day, task: day.tasks.findIndex((task) => task.id === taskId) };
+    }
+    return fresh;
   }
 
   private loadMemory(): LearningMemory {
@@ -568,6 +644,21 @@ export class AICourseRunner {
     };
   }
 
+  /** Only reviewed, checked tasks award journey progress; optional AI practice never does. */
+  reportJourney(): void {
+    if (this.ctx.id !== 'learn-linux') return;
+    const journey = this.ctx.dispatch<JourneyProgress | null>('journey.status', {});
+    if (!journey.ok || !journey.value) return;
+    const state = this.fallbackMode ? this.state : this.loadBuiltIn();
+    if (!state) return;
+    const steps = this.course.lessons.flatMap(lesson => lesson.steps.filter(step => state.completed.includes(step.id)).map(step => `${lesson.id}:${step.id}`));
+    const lessons = this.course.lessons.filter(lesson => lesson.steps.every(step => state.completed.includes(step.id))).map(lesson => lesson.id);
+    if (steps.some(id => !journey.value!.steps.includes(id)) || lessons.some(id => !journey.value!.lessons.includes(id))) {
+      const result = this.ctx.dispatch('journey.record', { lessons, steps });
+      if (!result.ok) throw new KernelError(result.error.code, result.error.message);
+    }
+  }
+
   private save(): void {
     const state = this.requireState();
     this.host.mkdir(expand(STATE_DIR, this.host.home));
@@ -582,6 +673,7 @@ export class AICourseRunner {
         ? { lesson: this.course.lessons[state.active.day - 1]!.id, step: state.active.task }
         : null;
       this.host.write(`${this.host.home}/.local/share/tuxos/${this.ctx.id}.json`, `${JSON.stringify({ completed, active }, null, 2)}\n`);
+      this.reportJourney();
     }
   }
 }
@@ -632,10 +724,18 @@ export async function activateAICourse(ctx: ModuleContext, course: Course, profi
   // rejects; failures become the unavailable state or the local fallback.
   void runner.bootstrap();
   registerAIActions(ctx, runner);
+  runner.reportJourney();
   return () => { learningRuntime.unregister(ctx.id, runner); runner.dispose(); };
 }
 
 function registerAIActions(ctx: ModuleContext, runner: AICourseRunner): void {
+  ctx.registerAction({ type: `${ctx.id}.solution`, capability: 'lessons:read', mutates: false,
+    description: 'Show the reviewed answer without completing the question.', run: () => runner.answerPreview() });
+  ctx.registerAction({ type: `${ctx.id}.personalize`, capability: 'lessons:write', mutates: false, description: 'Resume the optional AI lab, or offer a survey for a new one.', run: () => {
+    try { runner.personalize(); } catch (error) { throw new KernelError('EINVAL', error instanceof Error ? error.message : String(error)); }
+    return runner.status();
+  } });
+  ctx.registerAction({ type: `${ctx.id}.curriculum`, capability: 'lessons:write', mutates: false, description: 'Open the full reviewed curriculum, preserving AI lab progress.', run: () => { runner.curriculum(); return runner.status(); } });
   ctx.registerAction({ type: `${ctx.id}.status`, capability: 'lessons:read', mutates: false, description: 'Show the AI-designed syllabus and current terminal task.', run: () => runner.status() });
   ctx.registerAction({
     type: `${ctx.id}.start`, capability: 'lessons:write', mutates: false, description: 'Start an AI-designed learning day.',
@@ -680,7 +780,7 @@ function fallbackProgress(course: Course, trainer: TrainerProfile, courseId: str
     day: lessonIndex + 1, title: lesson.title, recap: lessonIndex > 0,
     tasks: lesson.steps.map((step, index) => ({
       id: step.id, title: `Task ${index + 1}`, scenario: lesson.story, task: step.task,
-      objective: step.explain ?? lesson.title, hints: step.hints, answer: solutionText(lesson, index), explain: step.explain ?? '', recap: lessonIndex > 0 && index === 0,
+      objective: step.explain ?? lesson.title, teach: step.teach, hints: step.hints, answer: solutionText(lesson, index), explain: step.explain ?? '', recap: lessonIndex > 0 && index === 0,
     })),
   }));
   return { syllabus: { courseId, title: course.title, summary: course.summary, trainer, days: tasks }, generatedByAI: false, completed: [], active: null, lastFeedback: null, lastResult: null };
@@ -691,13 +791,13 @@ function solutionText(lesson: Lesson, index: number): string {
   return typeof solution === 'string' ? solution : solution ? `Open ${solution.open}` : 'Review the task and try again.';
 }
 
-function validateSyllabus(value: AISyllabus, courseId: string): void {
+function validateSyllabus(value: AISyllabus, courseId: string, reviewed = false): void {
   if (!value || value.courseId !== courseId || !Array.isArray(value.days) || value.days.length < 1) throw new Error('invalid AI syllabus');
   for (const [index, day] of value.days.entries()) {
     if (day.day !== index + 1 || !day.title || !Array.isArray(day.tasks) || !day.tasks.length || day.recap !== (index > 0)) throw new Error('invalid AI syllabus day');
     for (const [taskIndex, task] of day.tasks.entries()) {
       if (!task.id || !task.task || !task.scenario || !Array.isArray(task.hints) || !task.answer || task.recap !== (index > 0 && taskIndex === 0)) throw new Error('invalid AI task or missing recap marker');
-      if (courseId === 'learn-linux' && /[\r\n;]|&&|\|\|/.test(task.answer)) throw new Error('AI Linux tasks must have exactly one command per question.');
+      if (!reviewed && courseId === 'learn-linux' && /[\r\n;]|&&|\|\|/.test(task.answer)) throw new Error('AI Linux tasks must have exactly one command per question.');
     }
   }
 }

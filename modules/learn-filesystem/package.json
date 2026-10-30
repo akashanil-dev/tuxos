@@ -1,0 +1,8 @@
+{
+  "name": "@tuxos/module-learn-filesystem",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts", "./manifest": "./src/manifest.ts", "./view": "./src/view.tsx" },
+  "dependencies": { "@tuxos/sdk": "*", "@tuxos/system": "*", "react": "^19.1.0" }
+}

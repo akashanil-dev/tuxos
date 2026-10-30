@@ -90,6 +90,25 @@
   padding: 0 4px;
 }
 
+.plasma-achievements {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  height: 36px;
+  margin: 0 5px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: #f4cd72;
+  cursor: pointer;
+  font: 12px var(--font-ui);
+}
+.plasma-achievements .sym-icon { width: 22px; height: 22px; }
+.plasma-achievements:hover { background: rgb(244 205 114 / 12%); border-color: rgb(244 205 114 / 30%); }
+.plasma-achievements:focus-visible { outline: 2px solid #3daee9; outline-offset: -2px; }
+
 .plasma-clock {
   display: flex;
   flex-direction: column;

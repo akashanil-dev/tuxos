@@ -1,0 +1,107 @@
+/* Use the desktop's Breeze roles, including user-selected colour schemes. */
+.software-shop {
+  height: 100%; display: flex; overflow: hidden; container-type: inline-size;
+  background: var(--window-bg); color: var(--window-fg); font: 13px var(--font-ui);
+}
+.software-shop button, .software-shop input { font: inherit; }
+.software-shop button {
+  cursor: pointer; border: 1px solid var(--line); border-radius: var(--radius-small);
+  background: var(--surface-2); color: var(--window-fg); padding: 7px 12px;
+}
+.software-shop button:disabled { opacity: .5; cursor: wait; }
+.software-shop button:hover:not(:disabled) { border-color: var(--accent); background: var(--hover); }
+.software-shop :is(button,input,summary):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.shop-sidebar {
+  width: 190px; flex-shrink: 0; display: flex; flex-direction: column; gap: 20px;
+  background: var(--window-sidebar); border-right: 1px solid var(--line); padding: 18px 10px; overflow: auto;
+}
+.shop-brand { display: flex; gap: 10px; align-items: center; padding: 0 6px; }
+.shop-brand .app-icon { width: 32px; height: 32px; }
+.shop-brand strong { font-size: 18px; font-weight: 600; }
+.shop-brand small { display: block; font-size: 11px; font-weight: 400; color: var(--muted); margin-top: 4px; }
+.shop-sidebar nav { display: grid; gap: 3px; }
+.shop-sidebar nav button { text-align: left; background: transparent; border: 1px solid transparent; display: flex; justify-content: space-between; }
+.shop-sidebar nav button[aria-current] { background: var(--accent-soft); color: var(--window-fg); border-color: var(--accent); }
+.shop-sidebar nav small { color: var(--muted); }
+.shop-plugins { margin-top: auto; padding: 16px 6px 0; border-top: 1px solid var(--line); }
+.shop-plugins > .app-icon { display: block; width: 30px; height: 30px; margin-bottom: 10px; }
+.shop-plugins p, .shop-footnote { font-size: 11px; line-height: 1.6; color: var(--muted); }
+.shop-plugins button { font-size: 11px; width: 100%; }
+.shop-footnote { padding: 0 6px; }
+.shop-main { flex: 1; min-width: 0; overflow: auto; padding: 0 20px 20px; }
+.shop-toolbar {
+  display: flex; justify-content: space-between; align-items: center; gap: 14px;
+  min-height: 56px; padding: 10px 0; margin-bottom: 18px; border-bottom: 1px solid var(--line);
+}
+.shop-toolbar strong { font-weight: 500; }
+.shop-toolbar input {
+  border: 1px solid var(--line); background: var(--surface); color: var(--window-fg);
+  border-radius: var(--radius-small); padding: 7px 10px; width: 240px; max-width: 55%;
+}
+.shop-toolbar input::placeholder { color: var(--muted); }
+.shop-hero {
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 20px;
+  background: var(--surface); overflow: hidden;
+}
+.shop-eyebrow { color: var(--accent-strong); font-size: 11px; font-weight: 500; }
+.shop-hero h1 { font-size: 24px; font-weight: 500; line-height: 1.2; margin: 8px 0; }
+.shop-hero p { color: var(--muted); line-height: 1.6; font-size: 13px; margin: 8px 0; }
+.shop-hero-tag { font-size: 11px; color: var(--muted); }
+.shop-hero > .app-icon { width: 72px; height: 72px; flex-shrink: 0; margin: 0 14px; }
+.shop-heading { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 14px; }
+.shop-heading h2 { font-size: 18px; font-weight: 500; margin: 0; }
+.shop-heading p, .shop-heading > span { color: var(--muted); font-size: 11px; }
+.shop-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,240px),1fr)); gap: 14px; }
+.shop-card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; --preview-color: #8bcfff; }
+.tone-green { --preview-color: #76dc9d; }
+.tone-amber { --preview-color: #f0d295; }
+.tone-purple { --preview-color: #cbb5f1; }
+.tone-peach { --preview-color: #f5b29d; }
+/* Terminal examples retain terminal colours, like screenshots in Discover. */
+.shop-preview { height: 196px; position: relative; background: #1b1e20; padding: 12px 16px; color: var(--preview-color); overflow: hidden; border-bottom: 1px solid var(--line); }
+.shop-preview > span { font: 11px var(--font-mono); color: #a1a9b1; }
+.shop-preview pre { font: 12px/1.25 var(--font-mono); margin: 10px 0; white-space: pre; }
+.shop-preview > small { position: absolute; bottom: 7px; right: 10px; font-size: 9px; color: #a1a9b1; }
+.shop-card-body { padding: 16px; }
+.shop-badges { display: flex; justify-content: space-between; gap: 6px; color: var(--muted); font-size: 10px; }
+.shop-installed { color: var(--ok); }
+.shop-card h3 { font-size: 16px; font-weight: 600; margin: 12px 0 8px; }
+.shop-card-body > p { font-size: 12px; line-height: 1.6; color: var(--muted); min-height: 58px; margin: 0 0 14px; }
+.shop-card-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.shop-card-actions small { font-size: 10px; color: var(--muted); margin-left: auto; }
+.software-shop .shop-primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 500; }
+.software-shop .shop-primary:hover:not(:disabled) { background: color-mix(in srgb,var(--accent) 85%,var(--window-fg)); }
+.shop-card details { margin-top: 14px; font-size: 11px; color: var(--muted); }
+.shop-card summary { cursor: pointer; color: var(--accent-strong); }
+.shop-card code { display: block; color: var(--window-fg); white-space: pre-wrap; overflow-wrap: anywhere; background: var(--window-bg); padding: 10px; border: 1px solid var(--line); border-radius: var(--radius-small); font: 11px var(--font-mono); }
+.shop-card details p { line-height: 1.6; }
+.shop-card dl { display: grid; grid-template-columns: 90px 1fr; gap: 8px; }
+.shop-card dd { margin: 0; overflow-wrap: anywhere; }
+.shop-notices p { padding: 10px; border: 1px solid var(--ok); border-radius: var(--radius-small); background: color-mix(in srgb,var(--ok) 8%,var(--window-bg)); }
+.shop-notices [role=alert] { border-color: var(--danger); background: color-mix(in srgb,var(--danger) 8%,var(--window-bg)); }
+.shop-empty { text-align: center; padding: 40px; color: var(--muted); }
+.shop-log { margin-top: 24px; color: var(--muted); font-size: 12px; }
+.shop-log pre { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--surface); padding: 14px; }
+.shop-log summary { cursor: pointer; }
+@container(max-width:760px) {
+  .shop-sidebar { width: 160px; padding: 16px 8px; }
+  .shop-main { padding: 0 16px 20px; }
+  .shop-hero > .app-icon { width: 48px; height: 48px; margin: 0; }
+  .shop-hero { padding: 16px; }
+}
+@container(max-width:520px) {
+  .shop-sidebar { width: 115px; padding: 14px 6px; }
+  .shop-brand { justify-content: center; padding: 0; }
+  .shop-brand .app-icon, .shop-brand small, .shop-footnote, .shop-plugins > .app-icon { display: none; }
+  .shop-brand strong { font-size: 16px; }
+  .shop-sidebar nav button { font-size: 12px; padding: 8px 6px; }
+  .shop-plugins { padding: 12px 4px; }
+  .shop-plugins p, .shop-plugins button { font-size: 11px; }
+  .shop-toolbar { flex-direction: column; align-items: stretch; }
+  .shop-toolbar input { max-width: 100%; width: 100%; }
+  .shop-hero > .app-icon { display: none; }
+  .shop-hero h1 { font-size: 20px; }
+  .shop-grid { grid-template-columns: minmax(0,1fr); }
+  .shop-heading > span { display: none; }
+}

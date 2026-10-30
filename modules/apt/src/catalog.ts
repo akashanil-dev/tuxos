@@ -1,8 +1,11 @@
+import { DESKTOP_PACKAGES } from '@tuxos/sdk';
 // The packages this pretend Ubuntu 24.04 ("noble") knows about. Each has the details `apt show` prints; its
 // commands are written in TypeScript (programs.ts), since there are no real binaries to unpack.
 
 export interface Package {
   name: string;
+  /** Abbreviated packages from the TuxOS teaching repository. */
+  practice?: boolean;
   version: string;
   section: string;
   /** main for Canonical-supported packages, universe for community ones; shows in apt's output. */
@@ -34,7 +37,27 @@ const FORTUNES = [
   'There is no place like 127.0.0.1',
 ];
 
+const desktopPackages: Package[] = DESKTOP_PACKAGES.flatMap(desktop => [
+  ...desktop.dependencies.map((name, i): Package => ({
+    name, practice: true, version: '1.0-tuxos1', section: 'x11', component: 'universe',
+    summary: `${name} — ${desktop.name} component`, description: 'Simulated desktop component from the TuxOS teaching repository.',
+    depends: [], installedSize: 12000 + i * 1400, downloadSize: 3200 + i * 400, commands: [],
+    files: { [`/usr/share/tuxos/desktop-components/${name}`]: `Simulated ${desktop.name} component: ${name}\n` },
+  })),
+  { name: desktop.package, practice: true, version: '1.0-tuxos1', section: 'metapackages', component: 'universe',
+    summary: `${desktop.name} desktop environment`, description: `Installs the ${desktop.name} experience inside TuxOS. The package list and sizes are simplified for practice.`,
+    depends: [...desktop.dependencies], installedSize: 450, downloadSize: 35, commands: [],
+    files: { [`/usr/share/${desktop.id === 'hyprland' ? 'wayland-sessions' : 'xsessions'}/tuxos-${desktop.id}.desktop`]: `[Desktop Entry]\nName=${desktop.name} (TuxOS)\nType=Application\nComment=Browser simulation; not a native session executable\n` },
+  },
+]);
 export const CATALOG: Package[] = [
+  ...desktopPackages,
+  {
+    name: 'cmatrix', version: '2.0-6', section: 'misc', component: 'universe',
+    summary: 'simulates the display from The Matrix',
+    description: 'Animated falling characters in your terminal. TuxOS implements a browser version; press Ctrl+C to return to the shell.',
+    depends: [], installedSize: 67, downloadSize: 19, commands: ['cmatrix'],
+  },
   {
     name: 'tree', version: '2.1.1-2', section: 'utils', component: 'universe',
     summary: 'displays an indented directory tree, in color',

@@ -1,63 +1,106 @@
-import { DESKTOPS, WALLPAPERS, desktopById } from '@tuxos/appearance';
+import { REWARDS, JOURNEY_THEMES, DESKTOP_PACKAGES, desktopReady, unlocked, desktopReward, type JourneyProgress, type RewardId } from '@tuxos/sdk';
+import { DESKTOPS, WALLPAPERS, desktopById, wallpaperById } from '@tuxos/appearance';
 import type { AiKeyStore, AiModelInfo, AiStatus, AppViewProps } from '@tuxos/system';
 import { useEffect, useState, type FormEvent } from 'react';
 import './settings.css';
 
 /** Settings: pick any desktop environment or wallpaper at any time, and see what this system is. */
 export default function SettingsView({ system }: AppViewProps) {
-  const [current, setCurrent] = useState({ desktop: '', wallpaper: '' });
+  const [current, setCurrent] = useState({ desktop: '', wallpaper: '', themeName: '' });
+  const [journey, setJourney] = useState<JourneyProgress>();
+  const [error, setError] = useState('');
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const clearHistory = async () => {
+    setResetting(true); setError('');
+    try { await system.restartLearning(); }
+    catch (cause) { setError(`Could not clear history: ${cause instanceof Error ? cause.message : String(cause)}`); setResetting(false); }
+  };
+  const lockText = (id: RewardId) => { const reward = REWARDS.find(r => r.id === id)!; return `Unlock after lesson ${reward.at} · ${reward.title}`; };
+  const apply = async (type: string, payload: unknown) => { const result = await system.dispatch(type, payload); if (!result.ok) setError(result.error.message); else { try { await system.flush(); setError(''); } catch (cause) { setError(String(cause)); } } };
   const [about, setAbout] = useState({ user: '', hostname: '' });
 
   useEffect(() => {
-    const load = () => void system.session().then(({ desktop, wallpaper }) => setCurrent({ desktop, wallpaper }));
+    const load = () => void system.session().then(({ desktop, wallpaper, theme, journey }) => { setCurrent({ desktop, wallpaper, themeName: theme?.name ?? '' }); setJourney(journey); });
     load();
     void Promise.all([system.user(), system.hostname()]).then(([user, hostname]) => setAbout({ user, hostname }));
-    return system.onChange((event) => { if (event.action.type.startsWith('session.set')) load(); });
+    return system.onChange((event) => { if (event.action.type.startsWith('session.set') || event.action.type.startsWith('journey.')) load(); });
   }, [system]);
 
   return <div className="settings">
+    {error && <p role="alert">{error}</p>}
+    {journey && <p className="settings-intro">Keep learning to unlock more ways to make TuxOS yours. Every earned reward stays yours.</p>}
     <h3>Desktop environment</h3>
     <p className="settings-intro">
       On Linux the desktop itself is a program you can swap. Each one arranges windows, panels and menus its own
-      way, while your files and apps stay the same. Try them all, any time.
+      way, while your files and apps stay the same. Earn each environment along your learning path.
     </p>
     <div className="theme-grid">
       {DESKTOPS.map((desktop) => {
-        const inUse = desktop.id === current.desktop;
+        const installed = desktopReady(journey, desktop.id);
+        const inUse = desktop.id === current.desktop && installed;
+        const pkg = DESKTOP_PACKAGES.find(item => item.id === desktop.id)!;
         return <button
           key={desktop.id}
+          disabled={!unlocked(journey, desktopReward(desktop.id))}
+          title={!unlocked(journey, desktopReward(desktop.id)) ? lockText(desktopReward(desktop.id)) : undefined}
           className={`theme-card ${inUse ? 'active' : ''}`}
           aria-pressed={inUse}
-          aria-label={inUse ? `${desktop.name}, in use` : `Switch to ${desktop.name}`}
-          onClick={() => { if (!inUse) void system.dispatch('session.setDesktop', { desktop: desktop.id }); }}
+          aria-label={inUse ? `${desktop.name}, in use` : `${installed ? 'Switch to' : 'Install'} ${desktop.name}`}
+          onClick={() => { if (!installed) void system.openApp('terminal', { installDesktop: desktop.id }); else if (!inUse) void apply('session.setDesktop', { desktop: desktop.id }); }}
         >
           <span className={`theme-preview tp-${desktop.id}`} aria-hidden="true"><i /><i /><i /><i /></span>
           <strong>{desktop.name}</strong>
-          <small>{desktop.version}{inUse ? ' · in use' : ''}</small>
+          <small>{desktop.version}{inUse ? ' · in use' : installed ? ' · installed' : ' · installation required'}</small>
           <small>{desktop.summary}</small>
-          <small className="theme-used">Used by: {desktop.usedBy}</small>
+          <small className="theme-used">{unlocked(journey, desktopReward(desktop.id)) ? installed ? `Used by: ${desktop.usedBy}` : `sudo apt install ${pkg.package}` : `🔒 ${lockText(desktopReward(desktop.id))}`}</small>
         </button>;
       })}
     </div>
 
+    <h3>Desktop colours</h3>
+    <p className="settings-intro">{current.themeName ? `Using ${current.themeName}.` : 'Using your desktop’s default colours.'} Choose a palette below. Community palettes become available with Plugins.</p>
+    <div className="journey-palette-grid">{JOURNEY_THEMES.map(theme => <button key={theme.id} disabled={!unlocked(journey, 'themes')} onClick={() => void apply('session.setTheme', { theme })}><i style={{ background: theme.accent }} />{theme.name}</button>)}</div>
+    {!unlocked(journey, 'themes') && <p className="settings-intro">🔒 {lockText('themes')}</p>}
+    {current.themeName && <button onClick={() => void apply('session.setTheme', { theme: null })}>Reset desktop colours</button>}
+
     <h3>Wallpaper</h3>
     <div className="wall-grid" role="radiogroup" aria-label="Wallpaper">
-      {WALLPAPERS.map((wallpaper) => <button
+      {[{ ...wallpaperById('default'), id: 'default', name: 'System default · KDE Minimal' }, ...WALLPAPERS].map((wallpaper) => <button
         key={wallpaper.id}
+        disabled={!unlocked(journey, 'wallpaper') || (wallpaper.id === 'kde-30th' && !unlocked(journey, 'anniversary'))}
+        title={wallpaper.id === 'kde-30th' && !unlocked(journey, 'anniversary') ? lockText('anniversary') : !unlocked(journey, 'wallpaper') ? lockText('wallpaper') : wallpaper.name}
         role="radio"
         aria-checked={wallpaper.id === current.wallpaper}
         aria-label={`Wallpaper: ${wallpaper.name}`}
         className={`wall ${wallpaper.id === current.wallpaper ? 'active' : ''}`}
         style={{ background: wallpaper.thumbnail }}
-        onClick={() => void system.dispatch('session.setWallpaper', { wallpaper: wallpaper.id })}
-      >{wallpaper.name}</button>)}
+        onClick={() => void apply('session.setWallpaper', { wallpaper: wallpaper.id })}
+      >{wallpaper.name}{(!unlocked(journey, 'wallpaper') || (wallpaper.id === 'kde-30th' && !unlocked(journey, 'anniversary'))) && ' 🔒'}</button>)}
     </div>
 
+    {!unlocked(journey, 'wallpaper') && <p className="settings-intro">🔒 {lockText('wallpaper')}</p>}
+    {!unlocked(journey, 'anniversary') && <p className="settings-intro">KDE 30th Anniversary: {lockText('anniversary')}</p>}
     {system.ai() && <AiKeySection store={system.ai()!} />}
 
     <h3>Plugins</h3>
     <p className="settings-intro">Add useful tools to your desktop and manage their permissions.</p>
-    <button onClick={() => void system.openApp('plugins')}>Open Plugins</button>
+    <button disabled={!unlocked(journey, 'plugins')} onClick={() => void system.openApp('plugins')}>Open Plugins</button>
+    {!unlocked(journey, 'plugins') && <p className="settings-intro">🔒 {lockText('plugins')}</p>}
+
+    {journey && <section className="settings-reset" aria-label="Learning history">
+      <h3>Learning history</h3>
+      <p>Start again from the first terminal lesson with 0 XP and all rewards locked.</p>
+      <button onClick={() => setConfirmReset(true)}>Clear history</button>
+      {confirmReset && <div className="settings-reset-confirm" role="alertdialog" aria-labelledby="reset-history-title" aria-describedby="reset-history-details">
+        <h4 id="reset-history-title">Clear history and start over?</h4>
+        <p id="reset-history-details">This deletes your saved TuxOS lessons, XP, achievements, installed software, plugins and practice files. Your account stays signed in. This cannot be undone.</p>
+        <div className="settings-reset-actions">
+          <button autoFocus disabled={resetting} onClick={() => setConfirmReset(false)}>Cancel</button>
+          <button className="settings-reset-delete" disabled={resetting} onClick={() => void clearHistory()}>{resetting ? 'Clearing history…' : 'Clear history and restart'}</button>
+        </div>
+      </div>}
+    </section>}
 
     <h3>About this system</h3>
     <div className="about-system">

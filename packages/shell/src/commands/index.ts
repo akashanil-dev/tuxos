@@ -14,6 +14,7 @@ export function builtinCommands(): CommandDefinition[] {
 }
 
 export type {
+  ShellIO,
   CommandContext,
   CommandDefinition,
   Completion,

@@ -194,8 +194,6 @@ function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId
   const [retrying, setRetrying] = useState(false);
   const active = status?.active;
   const task = active?.step;
-  const teaching = useTaught(courseId, task?.id);
-  const lessonRead = teaching.taught;
   if (!status) return <div className="linux-terminal-loading">{error || 'Connecting to Linux trainer…'}</div>;
   if (status.survey) return <ExperienceSurvey
     questions={status.survey.questions}
@@ -211,105 +209,135 @@ function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId
       <pre>{`# Starting the AI trainer…\n# ${status.lastExplain}`}<span className="linux-terminal-cursor" /></pre>
     </div>;
   }
-  if (status.builtIn && !task) return <BuiltInLessons system={system} status={status} onStart={(lesson) => void call('start', { lesson })} />;
+  if (status.builtIn && !task) return <BuiltInLessons system={system} status={status} error={error} onStart={(lesson) => void call('start', { lesson })} onPersonalize={() => void call('personalize')} />;
   if (!status.lessons.length || !task) return <div className="linux-terminal-unavailable">
     <div className="linux-terminal-unavailable-bar">linux-trainer.service</div>
     <pre>{`# AI trainer unavailable\n# No local question is loaded.\n# ${status.lastExplain ?? error ?? 'Check the learning API and retry.'}`}</pre>
+    <button onClick={() => void call('curriculum')}>Open full syllabus</button>
     <button disabled={retrying} onClick={() => {
       setRetrying(true);
       void call('retry').finally(() => setRetrying(false));
     }}>{retrying ? 'Waiting for AI trainer…' : 'Retry AI trainer'}</button>
   </div>;
-  const lesson = status.lessons.find((each) => each.id === active!.lesson.id);
   const terminalId = `${courseId}-lab`;
-  // The hint and answer buttons type the same slash commands a learner can type themselves.
   const type = (command: string) => window.dispatchEvent(new CustomEvent('tuxos:terminal-type', {
     detail: { windowId: terminalId, data: `${command}\r`, accepted: false },
   }));
   return <div className="linux-terminal-lab">
     <header className="linux-mission" aria-label="Current Linux mission">
       <div className="linux-mission-top">
+        <button type="button" className="linux-mission-retake" onClick={() => void call(status.builtIn ? 'quit' : 'curriculum')}>← Learning path</button>
         <span className="linux-mission-day">{active!.lesson.title}</span>
-        <span className={`linux-mission-kind ${task.recap ? 'is-recap' : 'is-new'}`}>{task.recap ? 'Recap' : 'New skill'}</span>
-        <span className="linux-mission-count">Task {active!.stepIndex + 1} of {active!.steps.length}</span>
-        <span className="linux-mission-dots" aria-hidden="true">
-          {active!.steps.map((step, index) => <i
-            key={step.id}
-            className={step.done ? 'done' : index === active!.stepIndex ? 'current' : ''}
-          />)}
-        </span>
-        {lesson && <span className="linux-mission-course" title="Tasks completed in this day">
-          {lesson.completed}/{lesson.steps} done
-        </span>}
-        {status.builtIn
-          ? system.ai()?.status().available === false
-            ? <span className="linux-mission-course" title="An AI-designed lab is being rebuilt and will be back soon">Built-in course</span>
-            : <button type="button" className="linux-mission-retake" onClick={() => void system.openApp('settings')}
-              title="Turn on AI with your own provider and key for an AI-designed lab at your level">Built-in course · Set up AI</button>
-          : <button type="button" className="linux-mission-retake" onClick={() => void call('retakeSurvey')}
-            title="Rate your experience again to get a lab at a different level">Retake survey</button>}
+        <span className="linux-mission-count">Step {active!.stepIndex + 1} of {active!.steps.length}</span>
       </div>
-      {active!.lesson.story && <p className="linux-mission-scenario">{active!.lesson.story}</p>}
-      {!lessonRead && task.teach
-        ? <>
-          <div className="linux-mission-learn">
-            <span className="linux-mission-label">Learn first</span>
-            <p><LessonText text={task.teach} /></p>
-          </div>
-          <div className="linux-mission-actions">
-            <span className="linux-mission-help">Read this, then try it yourself in the terminal below.</span>
-            <button type="button" className="primary" onClick={teaching.ready}>I&apos;m ready — let me try</button>
-          </div>
-        </>
-        : <>
-          <div className="linux-mission-task">
-            <span className="linux-mission-label">Your task</span>
-            <p>{task.task}</p>
-          </div>
-          <div className="linux-mission-actions">
-            <span className="linux-mission-help">Type one command in the terminal below and press <kbd>Enter</kbd> to check it.</span>
-            {task.teach && <button type="button" className="quiet" onClick={teaching.review}>Review the lesson</button>}
-            <button type="button" onClick={() => type('/hint')}>Hint</button>
-            <button type="button" onClick={() => type('/answer')}>Show answer</button>
-          </div>
-        </>}
+      {error && <p className="learn-error" role="alert">{error}</p>}
+      <div className="linux-mission-task" aria-live="polite" aria-atomic="true">
+        <span className="linux-mission-label">Try this</span>
+        <p><LessonText text={task.task} /></p>
+      </div>
+      <span className="linux-mission-help">Use the terminal below. Your progress saves automatically.</span>
+      <details className="linux-task-help" key={`${active!.lesson.id}.${task.id}`}>
+        <summary>Need help?</summary>
+        {task.teach && <div className="linux-help-explanation"><LessonText text={task.teach} /></div>}
+        <div className="linux-mission-actions">
+          <button type="button" onClick={() => type('/hint')}>Give me a hint</button>
+          <button type="button" className="quiet" onClick={() => type('/answer')}>Show answer</button>
+        </div>
+        {active!.lesson.story && <details className="linux-lesson-context">
+          <summary>About this lesson</summary>
+          <p><LessonText text={active!.lesson.story} /></p>
+        </details>}
+        {!status.builtIn && <button type="button" className="linux-mission-retake" onClick={() => void call('retakeSurvey')}>Adjust my practice level</button>}
+      </details>
     </header>
     <TerminalSurface system={system} learningModule={courseId} inputId={terminalId} />
   </div>;
 }
 
-/** The reviewed built-in lessons, used when there is no AI key: the learner picks one to start. */
-function BuiltInLessons({ system, status, onStart }: { system: SystemClient; status: LessonStatus; onStart(lesson: string): void }) {
-  const next = status.lessons.find((lesson) => lesson.completed < lesson.steps);
-  return <div className="linux-builtin">
-    <header>
-      <h3>{status.course.title}</h3>
-      <p>{status.course.summary}</p>
-      {status.builtIn?.aiOff && (system.ai()?.status().available === false
-        ? <p className="linux-builtin-ai">
-          These are the built-in lessons. An AI trainer that designs a lab for your level and gives personal hints is
-          being rebuilt for a better experience, and will be back soon.
-        </p>
-        : <p className="linux-builtin-ai">
-          These are the built-in lessons. Turn on AI in Settings, with your own provider and key, to get an AI trainer
-          that designs a lab for your level and gives personal hints.
-          <button type="button" className="quiet" onClick={() => void system.openApp('settings')}>Open Settings</button>
-        </p>)}
+/** A single next step, with the complete syllabus available a stage at a time. */
+function BuiltInLessons({ system, status, error, onStart, onPersonalize }: {
+  system: SystemClient; status: LessonStatus; error: string;
+  onStart(lesson: string): void; onPersonalize(): void;
+}) {
+  const [query, setQuery] = useState('');
+  const stages = [...new Set(status.lessons.map((lesson) => lesson.stage ?? 'Lessons'))];
+  const next = status.lessons.find((lesson) => lesson.completed > 0 && lesson.completed < lesson.steps)
+    ?? status.lessons.find((lesson) => lesson.completed < lesson.steps);
+  const finished = status.lessons.filter((lesson) => lesson.completed >= lesson.steps).length;
+  const search = query.trim().toLowerCase();
+  const visible = status.lessons.filter((lesson) =>
+    `${lesson.title} ${lesson.stage ?? ''} ${lesson.story ?? ''} ${lesson.outcomes?.join(' ') ?? ''}`.toLowerCase().includes(search));
+  const aiAvailable = system.ai()?.status().available !== false;
+  return <div className="linux-builtin linux-curriculum">
+    <header className="curriculum-welcome">
+      <h3>Learn Linux, one step at a time.</h3>
+      <p>From your first command to managing a Linux system.</p>
+      <div className="curriculum-progress">
+        <span>{finished} of {status.lessons.length} lessons complete</span>
+        <progress value={finished} max={status.lessons.length || 1} aria-label="Lessons completed" />
+      </div>
     </header>
-    {status.lastExplain && <p className="linux-builtin-done" role="status">✓ {status.lastExplain}</p>}
-    <ol>
-      {status.lessons.map((lesson) => {
-        const done = lesson.completed >= lesson.steps;
-        return <li key={lesson.id} className={done ? 'done' : lesson === next ? 'next' : ''}>
-          <span>{lesson.title}</span>
-          <small>{lesson.completed}/{lesson.steps}</small>
-          <button type="button" className={lesson === next ? 'primary' : 'quiet'} onClick={() => onStart(lesson.id)}>
-            {done ? 'Redo' : lesson.completed ? 'Continue' : 'Start'}
-          </button>
-        </li>;
-      })}
-    </ol>
-    {!next && <p className="linux-builtin-done">You have finished every built-in lesson. Well done!</p>}
+    {error && <p className="learn-error" role="alert">{error}</p>}
+    {next ? <section className="curriculum-next" aria-label="Your next lesson">
+      <div>
+        <span className="linux-mission-label">{next.completed ? 'Pick up where you left off' : finished ? 'Up next' : 'Start here'}</span>
+        <h4>{next.title}</h4>
+        <p>{next.duration ?? 20} min · {next.steps} small steps</p>
+      </div>
+      <button className="primary" onClick={() => onStart(next.id)}>{next.completed ? 'Continue lesson' : 'Let’s begin'} <span aria-hidden="true">→</span></button>
+    </section> : <section className="curriculum-next" role="status">
+      <div><h4>Learning path complete!</h4><p>Try the companion VM labs, or revisit any lesson below.</p></div>
+    </section>}
+    {status.lastExplain && <details className="curriculum-note">
+      <summary>Last lesson feedback</summary><p>{status.lastExplain}</p>
+    </details>}
+    <section className="curriculum-browse" aria-label="Full syllabus">
+      <div className="curriculum-browse-heading"><h4>Your learning path</h4><span>{stages.length} stages · explore at your pace</span></div>
+      <label className="curriculum-search">Find a lesson
+        <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search a topic…" />
+      </label>
+      {search && <p className="curriculum-search-count" role="status">{visible.length} {visible.length === 1 ? 'lesson' : 'lessons'} found</p>}
+      <div className="curriculum-stages">
+        {stages.filter((name) => visible.some((lesson) => (lesson.stage ?? 'Lessons') === name)).map((name) => {
+          const all = status.lessons.filter((lesson) => (lesson.stage ?? 'Lessons') === name);
+          const done = all.filter((lesson) => lesson.completed >= lesson.steps).length;
+          return <details className="curriculum-stage" key={`${name}.${search}`} open={search ? true : undefined}>
+            <summary className="curriculum-stage-heading"><span>{name}</span><small>{done}/{all.length}</small></summary>
+            <ol>
+              {visible.filter((lesson) => (lesson.stage ?? 'Lessons') === name).map((lesson) => {
+                const done = lesson.completed >= lesson.steps;
+                return <li key={lesson.id} className={`${done ? 'done' : lesson === next ? 'next' : ''} curriculum-lesson`}>
+                  <details>
+                    <summary><span className="curriculum-number">{done ? '✓' : String(status.lessons.indexOf(lesson) + 1).padStart(2, '0')}</span>
+                      <span className="curriculum-title">{lesson.title}<small>{lesson.duration ?? 20} min{done ? ' · Complete' : lesson.completed ? ' · In progress' : ''}</small></span>
+                    </summary>
+                    <div className="curriculum-details">
+                      <p>{lesson.story}</p>
+                      <p className="curriculum-lab-kind">{lesson.labKind === 'workbook' ? 'Guided workbook' : lesson.labKind === 'sandbox' ? 'Simulated server lab' : 'Terminal practice'} · {lesson.steps} steps</p>
+                      {lesson.outcomes && <ul>{lesson.outcomes.map((outcome) => <li key={outcome}>{outcome}</li>)}</ul>}
+                      {lesson.realLab && <div className="curriculum-vm"><strong>Try it on a real Linux VM</strong><p>{lesson.realLab}</p></div>}
+                      {lesson.references && <div className="curriculum-references">Read more: {lesson.references.map((ref) => <a key={ref.url} href={ref.url} target="_blank" rel="noreferrer">{ref.title}</a>)}</div>}
+                    </div>
+                  </details>
+                  <button type="button" aria-label={`${done ? 'Redo' : lesson.completed ? 'Continue' : 'Start'} ${lesson.title}`} className="quiet" onClick={() => onStart(lesson.id)}>
+                    {done ? 'Redo' : lesson.completed ? 'Continue' : 'Start'}
+                  </button>
+                </li>;
+              })}
+            </ol>
+          </details>;
+        })}
+      </div>
+      {!visible.length && <div className="curriculum-empty"><p>No lessons found. Try “files” or “networking”.</p><button onClick={() => setQuery('')}>Clear search</button></div>}
+    </section>
+    <details className="curriculum-note">
+      <summary>About this course &amp; extra practice</summary>
+      <p>{status.course.summary}</p>
+      <p>Practice here in TuxOS. Server labs are simulated; companion VM exercises let you try the same skills on real Linux. Course progress records practice, not a professional certification.</p>
+      {aiAvailable && <button onClick={() => system.ai()?.status().enabled === false ? void system.openApp('settings') : onPersonalize()}>
+        {system.ai()?.status().enabled === false ? 'Set up optional AI practice' : 'Optional AI practice lab'}
+      </button>}
+    </details>
   </div>;
 }
 
@@ -490,8 +518,8 @@ export function useLessonStatus(system: SystemClient, courseId: string) {
 
   const call = useCallback(async (action: string, payload: unknown = {}) => {
     const result = await system.dispatch(`${courseId}.${action}`, payload);
-    if (!result.ok) setError(result.error.message);
     await refresh();
+    if (!result.ok) setError(result.error.message);
   }, [system, courseId, refresh]);
 
   useEffect(() => {

@@ -12,6 +12,7 @@ export interface ShellRan {
   stderr: string;
   /** Every command name that ran, in order, e.g. ['ls', 'grep'] for `ls | grep x`. */
   commands: string[];
+  learningModule?: string;
 }
 
 function valid(payload: unknown): payload is ShellRan {

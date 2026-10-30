@@ -241,7 +241,7 @@ describe('session actions', () => {
     void ignored;
     const restored = createKernel({ snapshot: { version: 1, state: legacyState as KernelState } });
     expect(restored.getState().session).toEqual({
-      windows: [], focusedId: null, nextId: 1, desktop: 'plasma', wallpaper: 'freedom',
+      windows: [], focusedId: null, nextId: 1, desktop: 'plasma', wallpaper: 'default',
     });
   });
 

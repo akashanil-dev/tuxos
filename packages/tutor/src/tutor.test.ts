@@ -82,6 +82,7 @@ async function setup(transport: Transport, sudoAnswer = false) {
   });
   await system.boot('ada');
   // The learner has rated their experience, so the syllabus is designed.
+  await system.dispatch('learn-linux.retakeSurvey', {});
   await system.dispatch('learn-linux.survey', { answers: Object.fromEntries(survey.map((question) => [question.id, 3])) });
   await new Promise((resolve) => setTimeout(resolve, 0));
   const screen = fakeScreen(system, sudoAnswer);

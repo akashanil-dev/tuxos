@@ -18,7 +18,7 @@ export interface LessonHost {
 
 export interface LessonStatus {
   course: { id: string; title: string; summary: string };
-  lessons: { id: string; title: string; steps: number; completed: number }[];
+  lessons: { id: string; title: string; steps: number; completed: number; stage?: string; story?: string; outcomes?: string[]; duration?: number; labKind?: 'terminal' | 'sandbox' | 'workbook'; realLab?: string; references?: { title: string; url: string }[] }[];
   active: {
     lesson: { id: string; title: string; story: string };
     stepIndex: number;

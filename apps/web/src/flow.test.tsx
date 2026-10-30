@@ -3,7 +3,13 @@ import { createLocalSystem, type KeyValueStorage, type SystemClient } from '@tux
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { settings } from '../../../modules/settings/src/index';
 import { about } from '../../../modules/about/src/index';
-import { App } from './app';
+import { App, type AccountsWiring } from './app';
+let signedIn: string | null = null;
+const flowAccounts: AccountsWiring = {
+  client: { me: async () => signedIn, register: async name => { signedIn = name; }, login: async name => { signedIn = name; }, logout: async () => { signedIn = null; }, verify: async () => true, storage: () => memory() },
+  use: () => {}, localSave: async () => null,
+};
+const FlowApp = (props: React.ComponentProps<typeof App>) => <App {...props} accounts={flowAccounts} />;
 
 const SLOW = { timeout: 4000 };
 
@@ -27,12 +33,16 @@ function system(): SystemClient {
 }
 
 async function logIn(name = 'ada') {
-  fireEvent.change(await screen.findByLabelText('Username'), { target: { value: name } });
-  fireEvent.click(screen.getByRole('button', { name: /Log in|Next/ }));
+  await screen.findByLabelText('Password');
+  const username = screen.queryByLabelText('Username');
+  if (username) fireEvent.change(username, { target: { value: name } });
+  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'test-password' } });
+  fireEvent.submit(screen.getByLabelText('Password').closest('form')!);
 }
 
 afterEach(() => {
   cleanup();
+  signedIn = null;
   localStorage.clear();
   vi.useRealTimers();
 });
@@ -40,7 +50,7 @@ afterEach(() => {
 describe('starting TuxOS', () => {
   it('goes from GRUB through the boot log to the login screen', async () => {
     vi.useFakeTimers();
-    render(<App system={system()} />);
+    render(<FlowApp system={system()} start="grub" />);
     expect(screen.getByText(/GNU GRUB\s+version 2\.12/)).toBeTruthy();
     expect(screen.getByRole('option', { name: /^\*TuxOS GNU\/Linux$/ }).getAttribute('aria-selected')).toBe('true');
     fireEvent.keyDown(window, { key: 'Enter' });
@@ -51,7 +61,7 @@ describe('starting TuxOS', () => {
   });
 
   it('opens GRUB\'s advanced options and comes back', () => {
-    render(<App system={system()} />);
+    render(<FlowApp system={system()} start="grub" />);
     fireEvent.keyDown(window, { key: 'ArrowDown' });
     fireEvent.keyDown(window, { key: 'Enter' });
     expect(screen.getByRole('option', { name: /recovery mode/ })).toBeTruthy();
@@ -60,7 +70,7 @@ describe('starting TuxOS', () => {
   });
 
   it('shows the kernel\'s reason when a username is not allowed', async () => {
-    render(<App system={system()} start="greeter" />);
+    render(<FlowApp system={system()} start="greeter" />);
     // The field lowercases names and drops spaces as you type, so use a character the kernel refuses.
     await logIn('bad!user');
     expect((await screen.findByRole('alert')).textContent).toContain('invalid username');
@@ -69,7 +79,7 @@ describe('starting TuxOS', () => {
 
 describe('KDE Plasma', () => {
   it('logs in to Plasma with its panel, launcher and KRunner', async () => {
-    render(<App system={system()} start="greeter" />);
+    render(<FlowApp system={system()} start="greeter" />);
     await logIn();
     fireEvent.click(await screen.findByRole('button', { name: 'Application Launcher' }, SLOW));
     expect(screen.getByRole('button', { name: 'Favorites' })).toBeTruthy();
@@ -89,7 +99,7 @@ describe('KDE Plasma', () => {
 
   it('switches to GNOME from Settings without logging out', async () => {
     const client = system();
-    render(<App system={client} start="greeter" />);
+    render(<FlowApp system={client} start="greeter" />);
     await logIn();
     await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
     await act(async () => { await client.openApp('settings'); });
@@ -100,7 +110,7 @@ describe('KDE Plasma', () => {
   });
 
   it('shuts down from the Leave menu, and the power button starts it again', async () => {
-    render(<App system={system()} start="greeter" />);
+    render(<FlowApp system={system()} start="greeter" />);
     await logIn();
     fireEvent.click(await screen.findByRole('button', { name: 'Leave' }, SLOW));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Shut Down' }));
@@ -110,12 +120,12 @@ describe('KDE Plasma', () => {
 });
 
 describe('GNOME', () => {
-  it('logs in through GDM to GNOME, with the Activities overview', async () => {
+  it('restores GNOME after account sign-in, with the Activities overview', async () => {
     const client = system();
-    render(<App system={client} start="greeter" />);
-    fireEvent.click(await screen.findByRole('button', { name: /Desktop Session/ }));
-    fireEvent.click(screen.getByRole('menuitem', { name: /GNOME/ }));
-    expect(await screen.findByText('Try without an account')).toBeTruthy();
+    await client.boot('ada');
+    await client.dispatch('session.setDesktop', { desktop: 'gnome' });
+    await client.flush(); signedIn = 'ada';
+    render(<FlowApp system={client} start="greeter" />);
     await logIn();
     fireEvent.click(await screen.findByRole('button', { name: 'Activities' }, SLOW));
     expect(screen.getByText(/No open windows/)).toBeTruthy();
@@ -127,31 +137,30 @@ describe('GNOME', () => {
     expect((await client.session()).desktop).toBe('gnome');
   });
 
-  it('locks to GDM and unlocks the same session', async () => {
+  it('locks to account sign-in and keeps the same session', async () => {
     const client = system();
     await client.boot('ada');
     await client.dispatch('session.setDesktop', { desktop: 'gnome' });
     await client.flush();
     localStorage.setItem('tuxos.last-desktop', 'gnome');
-    render(<App system={client} start="greeter" />);
-    // The guest saved in this browser is filled in already.
-    expect((await screen.findByLabelText('Username') as HTMLInputElement).value).toBe('ada');
-    fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    render(<FlowApp system={client} start="greeter" />);
+    await logIn();
     await screen.findByRole('button', { name: 'Activities' }, SLOW);
     fireEvent.click(screen.getByRole('button', { name: 'System menu' }));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Lock' }));
-    await waitFor(() => expect((screen.getByLabelText('Username') as HTMLInputElement).value).toBe('ada'));
+    await screen.findByLabelText('Password');
+    expect(screen.queryByLabelText('Username')).toBeNull();
   });
 });
 
 describe('CDE', () => {
-  it('logs in through dtlogin to the Front Panel, with four workspaces', async () => {
+  it('restores the Front Panel after account sign-in, with four workspaces', async () => {
     const client = system();
-    render(<App system={client} start="greeter" />);
-    fireEvent.click(await screen.findByRole('button', { name: /Desktop Session/ }));
-    fireEvent.click(screen.getByRole('menuitem', { name: /CDE/ }));
-    fireEvent.change(await screen.findByLabelText('Username'), { target: { value: 'ada' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    await client.boot('ada');
+    await client.dispatch('session.setDesktop', { desktop: 'cde' });
+    await client.flush(); signedIn = 'ada';
+    render(<FlowApp system={client} start="greeter" />);
+    await logIn();
     const workspaces = await screen.findByRole('group', { name: 'Workspaces' }, SLOW);
     expect(within(workspaces).getAllByRole('button')).toHaveLength(4);
     expect((await client.session()).desktop).toBe('cde');
@@ -168,15 +177,14 @@ describe('CDE', () => {
 });
 
 describe('Hyprland', () => {
-  it('logs in through tuigreet to Waybar, and Alt+R opens the launcher', async () => {
+  it('restores Waybar after account sign-in, and Alt+R opens the launcher', async () => {
     const client = system();
     await client.boot('ada');
     await client.dispatch('session.setDesktop', { desktop: 'hyprland' });
     await client.flush();
     localStorage.setItem('tuxos.last-desktop', 'hyprland');
-    render(<App system={client} start="greeter" />);
-    expect(await screen.findByText(/Authenticate into tuxos/)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    render(<FlowApp system={client} start="greeter" />);
+    await logIn();
     await screen.findByRole('button', { name: 'Apps' }, SLOW);
     fireEvent.keyDown(window, { key: 'r', code: 'KeyR', altKey: true });
     const launcher = await screen.findByRole('dialog', { name: 'Launcher' }, SLOW);
@@ -188,13 +196,14 @@ describe('Hyprland', () => {
     await waitFor(() => expect(document.querySelector('.app-window')).toBeNull());
   });
 
-  it('lets the learner switch to any desktop from Settings, with nothing locked', async () => {
+  it('keeps all environments available in the standalone desktop harness', async () => {
     const client = system();
     await client.boot('ada');
+    await client.dispatch('session.setDesktop', { desktop: 'hyprland' });
     await client.flush();
     localStorage.setItem('tuxos.last-desktop', 'hyprland');
-    render(<App system={client} start="greeter" />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Log in' }, SLOW));
+    render(<FlowApp system={client} start="greeter" />);
+    await logIn();
     await screen.findByRole('button', { name: 'Apps' }, SLOW);
     await client.openApp('settings');
     for (const name of ['CDE', 'GNOME', 'KDE Plasma', 'Hyprland']) {

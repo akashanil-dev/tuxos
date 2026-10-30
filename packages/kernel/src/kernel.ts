@@ -6,6 +6,7 @@ import type {
   Action, ActionDefinition as SdkActionDefinition, ActionError, Actor, Capability, DispatchResult, KernelEvent,
 } from '@tuxos/sdk';
 import { KernelError } from './errors';
+import { expandFilesystem } from './filesystem-layout';
 import { createInitialState, emptySession, type KernelState } from './state';
 import * as vfs from './vfs';
 
@@ -35,6 +36,8 @@ export interface KernelSnapshot {
 }
 
 export interface KernelOptions {
+  /** Enable the account learning journey for this product session. */
+  journey?: boolean;
   /** A fresh system for this learner. Ignored when restoring from a snapshot. */
   username?: string;
   snapshot?: KernelSnapshot;
@@ -78,6 +81,8 @@ export class Kernel {
     }
     const user = Object.keys(this.state.users).find((name) => name !== 'root');
     if (!user) throw new KernelError('EINVAL', 'the system has no regular user');
+    if ((this.state.filesystemVersion ?? 0) < 1) expandFilesystem(this.state, user, this.now());
+    if (options.journey && !this.state.session.journey) this.state.session.journey = { lessons: [], steps: [], acknowledged: [] };
     this.sessionUser = user;
     this.logLimit = options.logLimit ?? 1000;
     // The learner and the system itself can do anything the system allows; others need grants.

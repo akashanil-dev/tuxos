@@ -6,6 +6,7 @@ import { manifest as arcadeManifest } from '@tuxos/module-chmod-arcade/manifest'
 import { manifest as editorManifest } from '@tuxos/module-editor/manifest';
 import { manifest as filesManifest } from '@tuxos/module-files/manifest';
 import { manifest as learnDockerManifest } from '@tuxos/module-learn-docker/manifest';
+import { manifest as filesystemManifest } from '@tuxos/module-learn-filesystem/manifest';
 import { manifest as learnLinuxManifest } from '@tuxos/module-learn-linux/manifest';
 import { manifest as settingsManifest } from '@tuxos/module-settings/manifest';
 import { manifest as terminalManifest } from '@tuxos/module-terminal/manifest';
@@ -40,17 +41,17 @@ const browserStorage: KeyValueStorage = {
   },
 };
 
-// Guests save in this browser; signed-in learners save to their account (apps/api accounts).
+// All learners save to their account. Browser storage is read only for legacy save migration.
 const accountsClient = httpAccounts();
 const accountStorage = accountsClient.storage();
-const { storage, use } = switchableStorage(browserStorage);
-// AI runs on the learner's own provider and key: saved in their account, or in this browser for guests.
+const { storage, use } = switchableStorage(accountStorage);
+// AI uses the learner's own provider and key, saved in their account.
 const ai = webAiKeys();
 const accounts: AccountsWiring = {
   client: accountsClient,
-  use: (target) => {
-    use(target === 'account' ? accountStorage : browserStorage);
-    return ai.load(target === 'account');
+  use: () => {
+    use(accountStorage);
+    return ai.load(true);
   },
   localSave: () => browserStorage.get('tuxos.save'),
 };
@@ -58,6 +59,7 @@ const accounts: AccountsWiring = {
 // Only manifests load up front; each module's code is fetched the first time it is used.
 const system = createLocalSystem({
   storage,
+  journey: true,
   ai,
   modules: [
     // Apps appear on the desktop in this order: the Terminal first, then Plugins.
@@ -69,6 +71,7 @@ const system = createLocalSystem({
       manifest: learnLinuxManifest,
       load: () => import('@tuxos/module-learn-linux').then((module) => module.learnLinux),
     },
+    { manifest: filesystemManifest, load: () => import('@tuxos/module-learn-filesystem').then(module => module.learnFilesystem) },
     {
       manifest: learnDockerManifest,
       load: () => import('@tuxos/module-learn-docker').then((module) => module.learnDocker),

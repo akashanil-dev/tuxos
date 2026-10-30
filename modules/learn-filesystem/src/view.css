@@ -1,0 +1,50 @@
+.filesystem-school { height:100%; display:flex; flex-direction:column; background:var(--window-bg); color:var(--window-fg); font-size:14px; container-type:inline-size; }
+.filesystem-school * { box-sizing:border-box; }
+.fs-school-header { display:flex; align-items:center; gap:14px; padding:16px 22px; border-bottom:1px solid var(--line); }
+.fs-school-header strong { font-size:17px; }
+.fs-school-header p { margin:5px 0 0; color:var(--muted); font-size:12px; }
+.fs-school-header>span:last-child { margin-left:auto; white-space:nowrap; font-size:12px; color:var(--muted); }
+.fs-school-icon { display:grid; place-items:center; background:var(--accent); color:var(--accent-fg); border-radius:10px; width:42px; height:42px; font:700 25px monospace; }
+.fs-school-tabs { display:flex; gap:8px; padding:10px 22px; border-bottom:1px solid var(--line); }
+.filesystem-school button { padding:8px 12px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:inherit; cursor:pointer; text-align:left; font:inherit; }
+.filesystem-school button:hover:not(:disabled) { background:var(--surface-2); border-color:var(--accent); }
+.filesystem-school button:focus-visible, .filesystem-school input:focus-visible, .filesystem-school textarea:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.filesystem-school button:disabled { opacity:.5; cursor:default; }
+.fs-school-tabs button[aria-pressed=true], .filesystem-school .fs-school-primary { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); }
+.fs-school-layout { display:grid; grid-template-columns:215px minmax(0,1fr); flex:1; min-height:0; }
+.fs-school-layout>aside { padding:16px 12px; overflow:auto; border-right:1px solid var(--line); background:var(--surface); }
+.fs-school-layout aside nav button { display:flex; align-items:center; flex-wrap:wrap; gap:5px 10px; width:100%; margin-bottom:5px; background:transparent; border-color:transparent; }
+.fs-school-layout aside nav button code { width:100%; color:var(--accent); font-size:13px; }
+.fs-school-layout aside nav button span { flex:1; font-size:12px; }
+.fs-school-layout aside nav button[aria-current=page] { background:var(--window-bg); border-color:var(--accent); }
+.fs-school-layout aside h2 { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin:20px 8px 10px; }
+.fs-school-layout aside p { color:var(--muted); font-size:12px; line-height:1.6; }
+.fs-school-search { display:block; font-size:12px; color:var(--muted); }
+.fs-school-search input { width:100%; margin-top:8px; padding:9px; border:1px solid var(--line); border-radius:6px; background:var(--window-bg); color:var(--window-fg); }
+.fs-school-lesson { padding:25px clamp(16px,4cqw,40px); overflow:auto; min-width:0; line-height:1.6; }
+.fs-school-lesson h1 { margin:6px 0 12px; font-size:25px; line-height:1.3; letter-spacing:-.025em; }
+.fs-school-lesson h1 code { display:block; color:var(--accent); font-size:16px; margin-bottom:8px; }
+.fs-school-eyebrow { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+.fs-school-purpose { max-width:64ch; font-size:16px; margin-bottom:20px; }
+.fs-school-actions { display:flex; gap:8px; flex-wrap:wrap; margin:16px 0; }
+.fs-school-card { padding:18px; margin:20px 0; background:var(--surface); border:1px solid var(--line); border-radius:9px; }
+.fs-school-card h2 { font-size:15px; margin:0 0 8px; }
+.fs-school-card>p { margin:0 0 12px; }
+.fs-school-items { list-style:none; padding:0; margin:0; }
+.fs-school-items li+li { border-top:1px solid var(--line); }
+.fs-school-items button { width:100%; display:flex; flex-direction:column; gap:3px; background:transparent; border-color:transparent; padding:10px 0; }
+.fs-school-items code { color:var(--accent); overflow-wrap:anywhere; }
+.fs-school-items span { color:var(--muted); font-size:13px; }
+.fs-school-question>div { display:flex; flex-wrap:wrap; gap:8px; }
+.fs-school-question [role=status] { margin:12px 0 0; color:var(--accent); }
+.fs-school-note { margin:16px 0; color:var(--muted); font-size:13px; }
+.fs-school-note summary, .fs-school-card summary { cursor:pointer; }
+.fs-school-note a { color:var(--accent); }
+.fs-school-next { display:flex; justify-content:space-between; gap:12px; margin:24px 0; }
+.fs-school-editor { display:block; font-weight:600; }
+.fs-school-editor textarea { display:block; margin-top:10px; width:100%; min-height:180px; resize:vertical; padding:16px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--window-fg); font:14px/1.7 var(--font-mono,monospace); }
+.fs-school-path { color:var(--muted); font-size:12px; overflow-wrap:anywhere; }
+.fs-school-error { color:var(--danger); padding:8px 20px; margin:0; }
+.fs-school-card pre { white-space:pre-wrap; overflow-wrap:anywhere; font-size:12px; }
+@container (max-width:600px) { .fs-school-layout { grid-template-columns:150px minmax(0,1fr); } .fs-school-lesson { padding:18px 12px; } .fs-school-header { padding:12px; gap:8px; } .fs-school-header strong { font-size:14px; } .fs-school-header p { display:none; } .fs-school-icon { width:30px; height:30px; } .fs-school-lesson h1 { font-size:21px; } .fs-school-card { padding:12px; } }
+@container (max-width:400px) { .fs-school-layout { grid-template-columns:minmax(0,1fr); overflow:auto; } .fs-school-layout>aside { max-height:180px; border-bottom:1px solid var(--line); } .fs-school-lesson { overflow:visible; } .fs-school-header>span:last-child { display:none; } }

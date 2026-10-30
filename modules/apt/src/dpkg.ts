@@ -29,7 +29,7 @@ export function stanza(pkg: Package): string {
     `Priority: ${pkg.essential ? 'required' : 'optional'}`,
     `Section: ${pkg.section}`,
     `Installed-Size: ${pkg.installedSize}`,
-    `Maintainer: ${MAINTAINER}`,
+    `Maintainer: ${pkg.practice ? 'TuxOS teaching repository' : MAINTAINER}`,
     'Architecture: amd64',
     `Version: ${pkg.version}`,
     ...(pkg.depends.length ? [`Depends: ${pkg.depends.join(', ')}`] : []),
@@ -49,7 +49,10 @@ export function ensureDatabase(files: Files): void {
 
 /** Installed packages, by name. */
 export function installed(files: Files): Set<string> {
-  const text = files.read(STATUS);
+  return installedNames(files.read(STATUS));
+}
+
+export function installedNames(text: string | undefined): Set<string> {
   if (text === undefined) return new Set(BASE.map((pkg) => pkg.name));
   const names = new Set<string>();
   for (const block of text.split(/\n\s*\n/)) {
@@ -111,7 +114,7 @@ export function unpack(files: Files, pkg: Package, auto: boolean): void {
     files.write(path, content);
   }
   files.mkdir(`/usr/share/doc/${pkg.name}`);
-  files.write(`/usr/share/doc/${pkg.name}/copyright`, `${pkg.name} is free software, packaged for Ubuntu by ${MAINTAINER}.\n`);
+  files.write(`/usr/share/doc/${pkg.name}/copyright`, pkg.practice ? `${pkg.name}: simulated package from the TuxOS teaching repository. No native binary is included.\n` : `${pkg.name} is free software, packaged for Ubuntu by ${MAINTAINER}.\n`);
   files.mkdir(INFO);
   files.write(`${INFO}/${pkg.name}.list`, `${filesOf(pkg).join('\n')}\n`);
   const names = installed(files);
