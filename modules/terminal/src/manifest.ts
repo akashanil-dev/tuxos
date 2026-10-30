@@ -16,10 +16,10 @@ export const manifest: ModuleManifest = {
     }],
     commands: [
       { name: 'clear', summary: 'Clear the terminal screen' },
-      { name: 'hint', summary: 'Ask the active trainer for a hint (/hint)' },
-      { name: 'answer', summary: 'Show the answer for the active task after five tries; a nudge before that (/answer)' },
-      { name: 'task', summary: 'Show the current industry task (/task)' },
-      { name: 'next', summary: 'Show the next task (/next)' },
+      { name: 'hint', learningOnly: true, summary: 'Ask the active trainer for a hint (/hint)' },
+      { name: 'answer', learningOnly: true, summary: 'Show the answer for the active task after five tries; a nudge before that (/answer)' },
+      { name: 'task', learningOnly: true, summary: 'Show the current industry task (/task)' },
+      { name: 'next', learningOnly: true, summary: 'Show the next task (/next)' },
     ],
   },
 };

@@ -156,7 +156,8 @@ describe('Learn Docker in the system', () => {
   });
 
   it.each(course.lessons.map((lesson) => [lesson.id]))('lesson %s is completed by its own solution', async (id) => {
-    const { system, terminal } = await boot();
+    const { system } = await boot();
+    const terminal = await system.createTerminal({ learningModule: 'learn-docker' });
     const lesson = course.lessons.find((each) => each.id === id)!;
     expect(await system.dispatch('learn-docker.start', { lesson: id })).toMatchObject({ ok: true });
     for (const step of lesson.solution) if (typeof step === 'string') await terminal.run(step);

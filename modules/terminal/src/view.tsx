@@ -122,7 +122,7 @@ export function TerminalSurface({ system, windowId, args, learningModule, inputI
         ? await system.tutor().createTerminal()
         : await system.createTerminal(learningModule ? { learningModule } : undefined);
       if (disposed) return;
-      const motd = await system.dispatch<string>('fs.read', { path: '/etc/motd' });
+      const motd = learningModule ? await system.dispatch<string>('fs.read', { path: '/etc/motd' }) : { ok: true as const, value: '' };
       if (disposed) return;
       // The controller separates lesson feedback and hints from command output and the next prompt.
       controller = new TerminalController(screen, session, windowActions, { colourOutput });

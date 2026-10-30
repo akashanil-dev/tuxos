@@ -19,6 +19,7 @@ const OUTPUT_LIMIT = 4000;
 
 export class ShellImpl implements ShellInternals {
   readonly plugins;
+  readonly learningModule?: string;
   cwd: string;
   env: Record<string, string>;
   private readonly actor?: Actor;
@@ -30,6 +31,7 @@ export class ShellImpl implements ShellInternals {
 
   constructor(readonly kernel: Kernel, options: ShellOptions = {}) {
     this.actor = options.actor;
+    this.learningModule = options.learningModule;
     this.plugins = options.plugins;
     this.registry = options.registry ?? createCommandRegistry();
     this.cwd = `/home/${kernel.user}`;
@@ -43,7 +45,7 @@ export class ShellImpl implements ShellInternals {
   unregister(name: string): void { this.registry.unregister(name); }
 
   commands(): CommandDefinition[] {
-    return this.registry.list();
+    return this.registry.list().filter(command => !command.learningOnly || Boolean(this.learningModule));
   }
 
   async run(line: string, io: ShellIO = {}): Promise<RunResult> {
@@ -51,7 +53,7 @@ export class ShellImpl implements ShellInternals {
     this.ran = [];
     // Slash commands are terminal-native learning controls. Ordinary absolute paths such as /etc/passwd
     // remain untouched; only the explicitly supported learning commands lose their leading slash.
-    const executableLine = line.replace(/^(\s*)\/(hint|answer|task|next)(?=\s|$)/, '$1$2');
+    const executableLine = this.learningModule ? line.replace(/^(\s*)\/(hint|answer|task|next)(?=\s|$)/, '$1$2') : line;
     const result = await this.runInternal(executableLine, this.kernel.user, io);
     if (line.trim()) this.record(line, result);
     return result;
@@ -65,7 +67,7 @@ export class ShellImpl implements ShellInternals {
     return complete({
       cwd: this.cwd,
       home: this.env.HOME ?? this.cwd,
-      commandNames: () => this.registry.list().filter((command) => command.available?.() !== false).map((command) => command.name),
+      commandNames: () => this.commands().filter((command) => command.available?.() !== false).map((command) => command.name),
       list: (path) => {
         const result = this.dispatch<Stat[]>('fs.list', { path }, this.kernel.user);
         return result.ok ? result.value : undefined;
@@ -76,7 +78,7 @@ export class ShellImpl implements ShellInternals {
   async runAsCommand(args: string[], stdin: string, user: string, io: ShellIO = {}): Promise<RunResult> {
     this.ran.push(args[0]!);
     const definition = this.registry.get(args[0]!);
-    if (!definition) {
+    if (!definition || (definition.learningOnly && !this.learningModule)) {
       const stderr = `${args[0]}: command not found\n`;
       io.stderr?.(stderr);
       return { stdout: '', stderr, code: 127 };
@@ -132,7 +134,7 @@ export class ShellImpl implements ShellInternals {
       }
       this.ran.push(name);
       const definition = this.registry.get(name);
-      if (!definition) {
+      if (!definition || (definition.learningOnly && !this.learningModule)) {
         const error = `${name}: command not found\n`;
         io.stderr?.(error);
         return { stdout: '', stderr: stderr + error, code: 127 };
@@ -228,7 +230,7 @@ export class ShellImpl implements ShellInternals {
       stdout: cap(result.stdout),
       stderr: cap(result.stderr),
       commands: this.ran,
-      learningModule: this.env.TUXOS_LEARNING_MODULE,
+      learningModule: this.learningModule,
     }, this.kernel.user);
   }
 

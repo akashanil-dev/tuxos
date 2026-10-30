@@ -313,7 +313,7 @@ export function createLocalSystem(options: {
     },
     async createTerminal(options = {}) {
       const { kernel, registry } = current();
-      const shell = createShell(kernel, { registry, plugins: current().plugins });
+      const shell = createShell(kernel, { registry, plugins: current().plugins, learningModule: options.learningModule });
       if (options.learningModule === 'learn-linux') {
         const saved = kernel.getState().session.journey?.terminal;
         const active = learningRuntime.get('learn-linux')?.status().active?.lesson.id;
@@ -444,7 +444,7 @@ function terminalSession(kernel: Kernel, shell: Shell, learningModule?: string):
       const previousLesson = learningModule === 'learn-linux' ? learningRuntime.get(learningModule)?.status().active?.lesson.id : undefined;
       const result = await shell.run(line, io);
       if (previousLesson && kernel.getState().session.journey) kernel.dispatch({ type: 'journey.terminal', payload: { lesson: previousLesson, cwd: shell.cwd, env: shell.env } });
-      const runner = learningModule ? learningRuntime.get(learningModule) : learningRuntime.get();
+      const runner = learningModule ? learningRuntime.get(learningModule) : undefined;
       const assessment = await runner?.waitForAssessment();
       return assessment ? { ...result, feedback: assessment } : result;
     },

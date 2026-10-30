@@ -212,7 +212,7 @@ describe('Learn Linux course', () => {
     const first = make();
     await first.boot('ada');
     await rate(first);
-    await (await first.createTerminal()).run('whoami');
+    await (await first.createTerminal({ learningModule: 'learn-linux' })).run('whoami');
     const progressFile = '/home/ada/.local/share/tuxos/ai-learning/learn-linux-v2.json';
     const saved = await first.dispatch<string>('fs.read', { path: progressFile });
     expect(saved.ok && JSON.parse(saved.value)).toMatchObject({ completed: ['whoami'] });

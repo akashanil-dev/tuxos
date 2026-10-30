@@ -33,7 +33,7 @@ describe('executor', () => {
   });
 
   it('routes learning slash commands while preserving ordinary absolute paths', async () => {
-    const shell = make();
+    const shell = createShell(createKernel({ username: 'ada' }), { learningModule: 'learn-linux' });
     shell.register({
       name: 'hint', summary: 'hint', usage: '/hint',
       run: (ctx) => { ctx.stdout('try pwd\n'); return 0; },

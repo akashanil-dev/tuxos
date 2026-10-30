@@ -46,3 +46,6 @@ The pre-desktop screen omits its tagline and redundant terminal labels. Question
 
 
 Settings → Learning history → Clear history asks for confirmation, then replaces the account’s saved TuxOS simulation with a fresh one and opens lesson 1. It clears lessons, XP, rewards, software, plugins and practice files, while keeping the account signed in. Older pending saves finish before replacement, and a failed reset save leaves the running session available for retry.
+
+
+The desktop Terminal is independent of lesson assessment: it opens at a plain shell prompt, never advances lessons or awards XP, and omits course-only hint/answer/task/next commands from help and completion. Learn Linux and Learn Docker explicitly attach their embedded terminals to their own courses. Files and installed software are shared, while each shell keeps its own working directory and command history.

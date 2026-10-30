@@ -24,8 +24,9 @@ export const terminal: ModuleDefinition = {
         name,
         summary: manifest.contributes.commands!.find((command) => command.name === name)!.summary,
         usage: `/${name}`,
-        async run(command: { stdout(text: string): void; stderr(text: string): void; shell: { env: Record<string, string> } }) {
-          const runner = learningRuntime.get(command.shell.env.TUXOS_LEARNING_MODULE);
+        learningOnly: true,
+        async run(command: { stdout(text: string): void; stderr(text: string): void; shell: { learningModule?: string } }) {
+          const runner = command.shell.learningModule ? learningRuntime.get(command.shell.learningModule) : undefined;
           if (!runner) {
             command.stderr('No active AI learning task. Open Learn Linux or Learn Docker and start a day first.\n');
             return 1;

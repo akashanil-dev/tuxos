@@ -251,6 +251,10 @@ function commandStub(
   host: ModuleHost, records: Map<string, Record>, name: string, moduleId: string,
 ): ShellCommandDefinition {
   return {
+    get learningOnly() {
+      const record = records.get(moduleId);
+      return record?.commands.get(name)?.learningOnly ?? record?.manifest.contributes.commands?.find(command => command.name === name)?.learningOnly;
+    },
     // Until the module is active, a command counts as there; then the module's own definition decides.
     // If the module was uninstalled, it is no longer available.
     available: () => {
@@ -272,6 +276,10 @@ function commandStub(
       if (!recordCommand || records.get(moduleId)?.retiring) {
         ctx.stderr(`${name}: module '${moduleId}' did not provide this command\n`);
         return 1;
+      }
+      if (recordCommand.learningOnly && !ctx.shell.learningModule) {
+        ctx.stderr(`${name}: command not found\n`);
+        return 127;
       }
       return recordCommand.run(ctx);
     },

@@ -56,6 +56,7 @@ export interface AppContribution {
 
 /** A program a module installs into the shell, e.g. "docker". */
 export interface CommandContribution {
+  learningOnly?: boolean;
   name: string;
   summary: string;
 }
@@ -79,6 +80,8 @@ export interface CommandDefinition<C = any> {
   run(ctx: C): Promise<number> | number;
   /** False while the command isn't installed (e.g. its package is missing): help and completion leave it out. */
   available?(): boolean;
+  /** Only available inside a terminal explicitly attached to a learning course. */
+  learningOnly?: boolean;
 }
 
 export type ActivationEvent = 'onStartup' | `onCommand:${string}` | `onApp:${string}`;

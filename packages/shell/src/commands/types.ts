@@ -18,6 +18,7 @@ export interface ShellIO {
 }
 
 export interface Shell {
+  readonly learningModule?: string;
   cwd: string;
   env: Record<string, string>;
   run(line: string, io?: ShellIO): Promise<RunResult>;
@@ -57,4 +58,4 @@ export interface ShellInternals extends Shell {
   runAsCommand(args: string[], stdin: string, user: string, io?: ShellIO): Promise<RunResult>;
 }
 
-export type ShellOptions = { actor?: Actor; registry?: CommandRegistry; plugins?: PluginManager };
+export type ShellOptions = { learningModule?: string; actor?: Actor; registry?: CommandRegistry; plugins?: PluginManager };

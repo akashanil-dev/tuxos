@@ -495,7 +495,7 @@ export class AICourseRunner {
     if (!event.ok || event.actor.kind !== 'user') return;
     if (event.action.type !== 'shell.ran' && event.action.type !== 'session.open') return;
     const run = event.action.type === 'shell.ran' ? event.action.payload as ShellRun : { line: '', code: 0, stdout: '', stderr: '', commands: [] };
-    if (run.learningModule && run.learningModule !== this.ctx.id) return;
+    if (event.action.type === 'shell.ran' && run.learningModule !== this.ctx.id) return;
     if (/^\s*\/(hint|answer|task|next)(?:\s|$)/.test(run.line)) return;
     this.syncMode();
     const task = this.currentTask();

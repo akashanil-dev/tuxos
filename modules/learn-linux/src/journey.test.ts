@@ -127,3 +127,35 @@ it('requires earned, confirmed desktop installs; cancellation, previews and retr
   expect(desktopReady((await system.session()).journey)).toBe(true);
   expect((await system.openApp('files')).ok).toBe(true);
 }, 10_000);
+
+it('keeps ordinary terminals independent while the learning terminal checks answers', async () => {
+  await boot();
+  expect((await system.dispatch('learn-linux.start', { lesson: 'first-words' })).ok).toBe(true);
+  const practice = await system.createTerminal({ learningModule: 'learn-linux' });
+  const ordinary = await system.createTerminal();
+  const before = await system.dispatch('learn-linux.status', {});
+  expect(await ordinary.run('whoami')).toMatchObject({ stdout: 'ada\n', code: 0 });
+  expect((await ordinary.run('ls')).feedback).toBeUndefined();
+  expect((await ordinary.run('cat /no-such-file')).stderr).toContain('No such file');
+  for (const command of ['hint', '/hint', 'answer', '/answer', 'task', '/task', 'next', '/next', 'sudo hint']) {
+    expect(await ordinary.run(command)).toMatchObject({ code: 127, stderr: expect.stringContaining('command not found') });
+  }
+  const help = (await ordinary.run('help')).stdout;
+  expect(help).not.toMatch(/^(hint|answer|task|next)\t/m);
+  expect((await ordinary.complete('hin', 3)).candidates).not.toContain('hint');
+  // Exporting the old routing variable must not attach a normal terminal to a course.
+  await ordinary.run('export TUXOS_LEARNING_MODULE=learn-linux');
+  expect((await ordinary.run('whoami')).feedback).toBeUndefined();
+  expect(await system.dispatch('learn-linux.status', {})).toEqual(before);
+  expect((await system.session()).journey!.steps).toEqual([]);
+  await ordinary.run('mkdir normal-terminal; cd normal-terminal; echo shared > note.txt');
+  expect(await practice.cwd()).toBe('/home/ada');
+  expect(await ordinary.cwd()).toBe('/home/ada/normal-terminal');
+  expect(await system.dispatch('fs.read', { path: '/home/ada/normal-terminal/note.txt' })).toMatchObject({ ok: true, value: 'shared\n' });
+  expect((await practice.run('/hint')).stdout).toContain('whoami');
+  expect((await practice.run('whoami')).feedback).toMatchObject({ correct: true });
+  expect((await system.session()).journey!.steps).toHaveLength(1);
+  expect(await practice.history()).toEqual(['/hint', 'whoami']);
+  expect((await ordinary.run('pwd')).feedback).toBeUndefined();
+  expect((await practice.run('pwd')).feedback).toMatchObject({ correct: true });
+});
