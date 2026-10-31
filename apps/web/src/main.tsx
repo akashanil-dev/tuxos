@@ -1,3 +1,4 @@
+import { isPhone } from './boot/PhoneScreen';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { manifest as aboutManifest } from '@tuxos/module-about/manifest';
@@ -99,4 +100,4 @@ const tutor = httpTransport('/api/tutor', async (url, init) => {
   if (!ai.status().enabled) throw new Error('AI is turned off. Turn it on in Settings → AI.');
   return fetch(url, { ...init, headers: { ...init?.headers as Record<string, string>, ...ai.headers() } });
 });
-createRoot(document.getElementById('root')!).render(<StrictMode><App system={system} tutor={tutor} accounts={accounts} /></StrictMode>);
+createRoot(document.getElementById('root')!).render(<StrictMode><App start={isPhone() ? 'phone' : 'grub'} system={system} tutor={tutor} accounts={accounts} /></StrictMode>);

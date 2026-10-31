@@ -4,9 +4,9 @@ import { useWallpaper } from './useWallpaper';
 afterEach(cleanup);
 it('updates only when the learner changes the wallpaper', () => {
   const { result, rerender } = renderHook(({ id }) => useWallpaper(id), { initialProps: { id: 'default' } });
-  expect(result.current.id).toBe('kde-minimal');
+  expect(result.current.id).toBe('kde-30th');
   rerender({ id: 'kde-30th' });
   expect(result.current.id).toBe('kde-30th');
   rerender({ id: 'default' });
-  expect(result.current.id).toBe('kde-minimal');
+  expect(result.current.id).toBe('kde-30th');
 });

@@ -88,4 +88,4 @@ export const WALLPAPERS: WallpaperInfo[] = WALLPAPER_NAMES.map(([id, name]) => (
 export const desktopById = (id: string): DesktopInfo => DESKTOPS.find((each) => each.id === id) ?? DESKTOPS[0]!;
 // KDE Minimal is the baseline. Anniversary artwork is an earned, explicit choice.
 export const wallpaperById = (id: string, _now = Date.now()): WallpaperInfo =>
-  WALLPAPERS.find(each => each.id === id) ?? WALLPAPERS.find(each => each.id === 'kde-minimal')!;
+  WALLPAPERS.find(each => each.id === id) ?? WALLPAPERS.find(each => each.id === 'kde-30th')!;

@@ -224,3 +224,39 @@
   font: 700 44px "JetBrains Mono", monospace;
 }
 
+
+/* Phone rescue screen ported from Tuxplore. */
+.phone { padding: max(18px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom)); color: #c0c0c0; font-size: 14px; }
+.phone-log { margin: 0; font-size: 11px; line-height: 1.6; color: #8a8a8a; white-space: pre-wrap; word-break: break-word; }
+.phone-line { display: block; padding-left: 11ch; text-indent: -11ch; }
+.phone-time { color: #555; }
+.phone-line.panic { color: #f87171; }
+.phone-rescue { max-width: 480px; margin: 26px auto 0; animation: splash-in 0.4s ease; }
+.phone-prompt { margin: 0 0 14px; font-size: 13px; }
+.phone-motd { display: flex; gap: 14px; align-items: flex-start; }
+.phone-tux svg { width: 52px; height: 60px; display: block; flex: none; animation: tux-hop 0.8s ease 0.3s; }
+.phone-motd h1 { margin: 2px 0 6px; color: #fff; font-size: 19px; line-height: 1.25; }
+.phone-motd p { margin: 0; font-size: 13.5px; line-height: 1.6; }
+.phone-fix { margin: 16px 0 26px; padding-left: 10px; border-left: 2px solid #4ade80; font-size: 13.5px; line-height: 1.6; }
+.phone-fix strong { color: #4ade80; font-weight: 600; word-break: break-all; }
+.phone-menu { position: relative; display: flex; flex-direction: column; padding: 18px 6px 6px; border: 1px solid #c0c0c0; }
+.phone-menu-title { position: absolute; top: -0.75em; left: 12px; padding: 0 4px; background: #000; color: #fff; line-height: 1.5; }
+.phone-item { display: flex; flex-direction: column; gap: 2px; min-height: 48px; padding: 8px 10px 8px 26px; border: 0; background: transparent; color: #c0c0c0; font: inherit; text-align: left; text-decoration: none; position: relative; -webkit-tap-highlight-color: transparent; }
+.phone-item::before { content: ' '; position: absolute; left: 10px; top: 8px; }
+.phone-item.sel, .phone-item:active, .phone-item:focus-visible { background: #c0c0c0; color: #000; outline: 0; }
+.phone-item.sel::before, .phone-item:active::before, .phone-item:focus-visible::before { content: '*'; }
+.phone-item-label { font-weight: 700; }
+.phone-item-note { font-size: 12px; opacity: 0.7; }
+.phone-item.done { background: #4ade80; color: #000; }
+.phone-menu:has(.phone-item:active, .phone-item:focus-visible) .phone-item.sel:not(:active, :focus-visible, .done) { background: transparent; color: #c0c0c0; }
+.phone-menu:has(.phone-item:active, .phone-item:focus-visible) .phone-item.sel:not(:active, :focus-visible)::before { content: ' '; }
+.phone-foot { margin: 14px 0 0; font-size: 12px; text-align: center; }
+.phone { height: 100%; overflow-y: auto; background: #000; font-family: var(--font-mono); }
+.phone .c-green { color: #4ade80; }
+.phone .c-blue { color: #60a5fa; }
+.phone .c-dim { color: #666; }
+.phone-item-label { overflow-wrap: anywhere; }
+@keyframes tux-hop { 50% { transform: translateY(-8px); } }
+@media (prefers-reduced-motion: reduce) { .phone-rescue, .phone-tux svg { animation: none; } }
+
+.bootlog-warn { color: #facc15; }

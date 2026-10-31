@@ -6,6 +6,7 @@ import type { SystemClient } from '@tuxos/system';
 import type { Transport } from '@tuxos/tutor';
 import { useCallback, useEffect, useState } from 'react';
 import { BootLog } from './boot/BootLog';
+import { PhoneScreen } from './boot/PhoneScreen';
 import { Grub } from './boot/Grub';
 import { PowerOff } from './boot/PowerScreens';
 import type { AccountsClient } from './accounts';
@@ -20,7 +21,7 @@ import { lastAppearance } from './screens/appearance-memory';
 
 export { Desktop } from './screens/Desktop';
 
-type Screen = 'grub' | 'boot' | 'greeter' | 'desktop' | 'off';
+type Screen = 'phone' | 'grub' | 'boot' | 'greeter' | 'desktop' | 'off';
 
 /** Required account service and persistent account storage. */
 export interface AccountsWiring {
@@ -136,6 +137,7 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
   const powerOn = useCallback(() => setScreen('grub'), []);
 
   switch (screen) {
+    case 'phone': return <PhoneScreen onBoot={powerOn} />;
     case 'grub': return <Grub onBoot={onBoot} />;
     case 'boot': return <BootLog recovery={recovery} onDone={toGreeter} />;
     case 'off': return <PowerOff onPowerOn={powerOn} />;
