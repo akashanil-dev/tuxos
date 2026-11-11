@@ -28,7 +28,8 @@
     "@tuxos/course-view": "*",
     "@tuxos/lessons": "*",
     "@tuxos/module-exploration": "*",
-    "@tuxos/module-pipe-dream": "*"
+    "@tuxos/module-pipe-dream": "*",
+    "@tuxos/module-learn-adventure": "*"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.0",

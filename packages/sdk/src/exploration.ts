@@ -3,7 +3,7 @@ export interface ExplorationProgress {
   version: 1;
   learned: Record<string, number>;
   achievements: Record<string, number>;
-  adventure: { done: Record<string, number>; progress: Record<string, boolean[]>; seen: Record<string, boolean> };
+  adventure: { done: Record<string, number>; progress: Record<string, boolean[]>; seen: Record<string, boolean>; started?: boolean; recovery?: { createdAt: number; files: Record<string, { content: string; owner: string; mode: number; mtime: number } | null> } };
   pipe: { solved: Record<string, number>; drafts?: Record<string, number[]>; current?: string };
   runner: { mode: 'Rapid' | 'Infinite'; rapidBest: number; infiniteHigh: number; sound: boolean; family?: string; legacyBest?: number };
   imports: { id: string; importedAt: number; source: string }[];

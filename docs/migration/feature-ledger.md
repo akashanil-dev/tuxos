@@ -8,7 +8,7 @@ Status distinguishes implemented behavior from full release verification. Source
 | Four desktops and greeters | de.js, greeters.js, css | Existing shells and access policy | Switch all four without awarding lessons; imported choices survive | Implemented; all-shell regression tests pass |
 | Wallpapers, icons, preferences, fast boot | core.js, apps/system.js | appearance/settings/session | Correct defaults and credits; explicit choices/resume persist | Implemented; import mapping pending |
 | Desktop/lesson continuity | apps/journal.js | course-view/JourneyScreen | Use Files and Terminal beside instruction; retain work | Implemented; browser focus/window continuity verified |
-| Ten quests and dungeon story | quests.js, fs.js | learn-adventure | Every objective, hints, partial resume, scoped reset | Pending |
+| Ten quests and dungeon story | quests.js, fs.js | learn-adventure | Every objective, hints, partial resume, scoped reset | Implemented; ten-quest replay and browser first quest pass; guide follows |
 | Pipe Dream, eight levels | apps/pipedream.js, coreutils.js | pipe-dream | Block stages, previews, terminal parity, saved completion | Implemented; eight-solution parity tests and browser solve pass |
 | Know Your Distro | apps/runner.js | know-your-distro | Rapid/Infinite, families/map, scores/combos, controls, sound, weather, showcase | Pending |
 | Learned commands/print | apps/journal.js, shell.js | exploration/reference | Successful learner commands, examples, readable print, import | Implemented; print and import verification pending |
@@ -20,7 +20,7 @@ Status distinguishes implemented behavior from full release verification. Source
 | Teaching editors | apps/terminal.js | terminal/shell | nano/vim open/edit/save/exit, permission/cancel behavior | Pending |
 | Package families | shell.js | apt/family practice | apt depth retained; explicit dnf/pacman exercises | Pending |
 | Fun commands and secrets | shell.js, boot.js | shell/adventure/desktop | Inventory each trigger, avoid duplicate implementations | Pending |
-| File reset without lost progress | apps/system.js | scoped practice recovery | Personal files/courses/scores preserved, backup restore | Pending |
+| File reset without lost progress | apps/system.js | scoped practice recovery | Personal files/courses/scores preserved, backup restore | Adventure recovery implemented and tested; general backup manager follows |
 | Companion reactions/shortcuts | tux.js | offline Vasu | Useful without AI/API, cooldown/dismiss/hide, focus intact | Pending |
 | Window instances/geometry | wm.js | SDK/system/WindowFrame | Singleton races, multi-terminal, unsaved editor, viewport clamp | Implemented; concurrency, document identity and geometry tests pass |
 | Touch/reduced motion/notifications | wm.js, de.js, css | shared desktop | All shells, keyboard/touch, unobstructed controls, phone rescue | Implemented; physical touch verification pending |
@@ -28,4 +28,4 @@ Status distinguishes implemented behavior from full release verification. Source
 | Performance | startup scripts and loops | production web build | Same-device cold/warm, populated saves, hidden/visible games/Vasu | Pending |
 | Metadata, credits, old links | index.html, assets, deployment | web/deploy/docs | Continuation identity, original-origin export and meaningful old links | Pending |
 | Stats and unfinished career tracks | analytics.js, tracks.js | verify deployed scope | Do not invent parity for absent local stats or empty tracks | Investigation |
-| TuxOS additions | current modules | preserve | Linux 34 lessons/150 tasks, Docker, filesystem, editor/apt, plugins/widgets, account versioning, AI | 562 integration tests pass; full visual matrix pending |
+| TuxOS additions | current modules | preserve | Linux 34 lessons/150 tasks, Docker, filesystem, editor/apt, plugins/widgets, account versioning, AI | 567 integration tests pass; full visual matrix pending |

@@ -51,6 +51,8 @@ export interface Step {
 export type Condition =
   | { ran: RanCondition }
   | { opened: string }
+  /** A narrowly named, trusted host fact (used by exploration quests). */
+  | { fact: string }
   | { cwd: string }
   | { exists: string; kind?: 'file' | 'dir' }
   | { missing: string }
@@ -63,6 +65,8 @@ export type Condition =
 export interface RanCondition {
   /** A command name that must appear in the line, e.g. "grep". */
   command?: string;
+  /** Require this command to have completed successfully, even within a mixed shell line. */
+  succeeded?: boolean;
   /** Pattern the whole typed line must match. */
   line?: string;
   code?: number;

@@ -1,0 +1,87 @@
+{
+  "~/welcome.txt": {
+    "content": "Hi adventurer,\n\nI'm Tux, the Linux penguin. I need your help!\n\nThe Segfault Daemon stole my Kernel Crown and hid it somewhere\ndeep inside this computer. Only someone who knows the terminal\ncan get it back.\n\nStart by going into the dungeon:   cd dungeon\nThen look around with:             ls\n\nGood luck!\n  - Tux \ud83d\udc27",
+    "mode": 420,
+    "owner": "user"
+  },
+  "~/dungeon/README.txt": {
+    "content": "Welcome to the Dungeon.\n\nAdventurers who only look at the obvious miss the most important things.\nIn Linux, hidden files start with a dot.\n\nTry:  ls -a",
+    "mode": 420,
+    "owner": "user"
+  },
+  "~/dungeon/.map": {
+    "content": "THE MAP\n=======\n\nThe gate to the crypt needs a secret word.\nThe word is written in one of the books in library/.\n\nThere are too many books to read one by one.\nSearch them all at once:   grep -r secret library\n\nThen open the gate:        ./gate.sh <the-secret-word>",
+    "mode": 420,
+    "owner": "user"
+  },
+  "~/dungeon/library/the-first-penguin.txt": {
+    "content": "Long ago, in 1991, a student named Linus wrote a small kernel.\nHe said it was \"just a hobby, won't be big and professional\".\nToday it runs phones, servers, cars and even the International Space Station.",
+    "mode": 420,
+    "owner": "user"
+  },
+  "~/dungeon/library/on-sharing.txt": {
+    "content": "Richard Stallman began the GNU project in 1983.\nHe believed software should respect the people who use it.\nGNU tools plus the Linux kernel made a complete, free operating system.",
+    "mode": 420,
+    "owner": "user"
+  },
+  "~/dungeon/library/bestiary.txt": {
+    "content": "GOBLIN: small, grumpy, lives in files. Weak against rm.\nDAEMON: a background process. Most are friendly. One is not.\nZOMBIE: a process that finished but whose parent never noticed.",
+    "mode": 420,
+    "owner": "user"
+  },
+  "~/dungeon/library/recipes.txt": {
+    "content": "Penguin stew: do not make penguin stew.\nFish tacos: preferred by penguins everywhere.\nCoffee: required by system administrators.",
+    "mode": 420,
+    "owner": "user"
+  },
+  "~/dungeon/library/the-four-freedoms.txt": {
+    "content": "Free software grants four freedoms:\n0. Run the program for any purpose.\n1. Study how it works and change it.\n2. Share copies with others.\n3. Share your improved versions.\nThe secret word for the gate is: freedom",
+    "mode": 420,
+    "owner": "user"
+  },
+  "~/dungeon/library/distros.txt": {
+    "content": "A distribution, or distro, is the Linux kernel bundled with tools and apps.\nDebian, Fedora and Arch are families. Ubuntu and Mint grew from Debian.\nThere are hundreds of them, and that is a feature.",
+    "mode": 420,
+    "owner": "user"
+  },
+  "~/dungeon/library/poetry.txt": {
+    "content": "Roses are red,\nterminals are black,\ntype rm -rf /\nand there is no way back.",
+    "mode": 420,
+    "owner": "user"
+  },
+  "~/dungeon/library/maps-and-paths.txt": {
+    "content": "Paths that start with / are absolute: they start at the root.\nPaths without / are relative: they start where you are.\n.. means the parent directory. ~ means your home.",
+    "mode": 420,
+    "owner": "user"
+  },
+  "~/dungeon/library/lost-and-found.txt": {
+    "content": "Nothing to see here. The good stuff is elsewhere.\nTry searching instead of reading every single book.",
+    "mode": 420,
+    "owner": "user"
+  },
+  "~/dungeon/library/the-shell.txt": {
+    "content": "The shell reads what you type and runs programs.\nBash is the most common one. Zsh and fish are popular too.\nPress Tab to autocomplete. Press Up to repeat a command.",
+    "mode": 420,
+    "owner": "user"
+  },
+  "~/dungeon/library/dragons.txt": {
+    "content": "There are no dragons in this library.\nThere is, however, a very old printer that jams constantly.",
+    "mode": 420,
+    "owner": "user"
+  },
+  "~/dungeon/library/permissions.txt": {
+    "content": "Every file has permissions: read (r), write (w) and execute (x).\nA script cannot run unless it has x. chmod +x adds it.\nType ls -l to see permissions.",
+    "mode": 420,
+    "owner": "user"
+  },
+  "~/dungeon/gate.sh": {
+    "content": "#!/bin/bash\n# Opens the gate to the crypt.\n# Usage: ./gate.sh <secret-word>",
+    "mode": 420,
+    "owner": "user"
+  },
+  "/root/crown.txt": {
+    "content": "      _.+._\n    (^\\/^\\/^)\n     \\@*@*@/\n     {_____}\n\nTHE KERNEL CROWN\n\nYou found it! Only the superuser could read this file.\nClaim it: make a trophies folder in your home and copy me there.\n  mkdir ~/trophies\n  sudo cp /root/crown.txt ~/trophies/",
+    "mode": 384,
+    "owner": "root"
+  }
+}

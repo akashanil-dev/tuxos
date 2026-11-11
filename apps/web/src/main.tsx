@@ -1,3 +1,4 @@
+import { manifest as adventureManifest } from '@tuxos/module-learn-adventure/manifest';
 import { manifest as explorationManifest } from '@tuxos/module-exploration/manifest';
 import { manifest as pipeManifest } from '@tuxos/module-pipe-dream/manifest';
 import { isPhone } from './boot/PhoneScreen';
@@ -68,6 +69,7 @@ const system = createLocalSystem({
   journey: true,
   ai,
   modules: [
+    { manifest: adventureManifest, load: () => import('@tuxos/module-learn-adventure').then(m => m.learnAdventure) },
     { manifest: explorationManifest, load: () => import('@tuxos/module-exploration').then(m => m.exploration) },
     { manifest: pipeManifest, load: () => import('@tuxos/module-pipe-dream').then(m => m.pipeDream) },
     // Apps appear on the desktop in this order: the Terminal first, then Plugins.

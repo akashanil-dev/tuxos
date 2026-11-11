@@ -50,6 +50,7 @@ function conditionProblems(condition: Condition | undefined): string[] {
     const patterns = [condition.ran.line, condition.ran.stdout, condition.ran.stderr];
     return patterns.filter((pattern) => pattern !== undefined).flatMap(patternProblems);
   }
+  if ('fact' in condition) return /^[a-z0-9][a-z0-9:./_-]*$/i.test(condition.fact) ? [] : ['invalid fact name'];
   if ('contains' in condition) return patternProblems(condition.contains.pattern);
   if ('mode' in condition) return /^[0-7]{3}$/.test(condition.mode.is) ? [] : [`bad mode ${condition.mode.is}`];
   if ('opened' in condition || 'cwd' in condition || 'exists' in condition || 'missing' in condition) return [];

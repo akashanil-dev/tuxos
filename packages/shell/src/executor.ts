@@ -80,13 +80,23 @@ export class ShellImpl implements ShellInternals {
 
   async runAsCommand(args: string[], stdin: string, user: string, io: ShellIO = {}): Promise<RunResult> {
     this.ran.push(args[0]!);
-    const definition = this.registry.get(args[0]!);
+    const definition = this.definition(args[0]!);
     if (!definition || (definition.learningOnly && !this.learningModule)) {
       const stderr = `${args[0]}: command not found\n`;
       io.stderr?.(stderr);
       return { stdout: '', stderr, code: 127 };
     }
     return this.executeCommand(definition, args.slice(1), stdin, user, undefined, io);
+  }
+
+  private definition(name: string): CommandDefinition | undefined {
+    const registered = this.registry.get(name);
+    if (registered || !name.includes('/') || !this.kernel.actions().some(action => action.type === 'learn-adventure.script')) return registered;
+    return { name, summary: 'Run a supported practice script', usage: `${name} [ARGUMENTS]`, run: ctx => {
+      const result = ctx.dispatch<string>('learn-adventure.script', { path: ctx.resolve(name), args: ctx.args });
+      if (!result.ok) { ctx.stderr(`${name}: ${result.error.message}\n`); return result.error.code === 'ENOENT' ? 127 : 126; }
+      ctx.stdout(result.value); return 0;
+    } };
   }
 
   private async runInternal(line: string, user: string, io: ShellIO): Promise<RunResult> {
@@ -136,7 +146,7 @@ export class ShellImpl implements ShellInternals {
         return { stdout: '', stderr: stderr + error, code: 2 };
       }
       this.ran.push(name);
-      const definition = this.registry.get(name);
+      const definition = this.definition(name);
       if (!definition || (definition.learningOnly && !this.learningModule)) {
         const error = `${name}: command not found\n`;
         io.stderr?.(error);
