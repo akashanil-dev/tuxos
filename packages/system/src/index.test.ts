@@ -3,12 +3,13 @@ import { bashPrompt, createLocalSystem, type KeyValueStorage } from './index';
 import { about } from '../../../modules/about/src/index';
 
 function storage(): KeyValueStorage & { value: string; writes: number } {
+  const other = new Map<string,string>();
   return {
     value: '',
     writes: 0,
-    async get() { return this.value || null; },
-    async set(_key, value) { this.value = value; this.writes += 1; },
-    async remove() { this.value = ''; },
+    async get(key) { return key === 'tuxos.save' ? this.value || null : other.get(key) ?? null; },
+    async set(key, value) { if (key === 'tuxos.save') { this.value = value; this.writes += 1; } else other.set(key, value); },
+    async remove(key) { if (key === 'tuxos.save') this.value = ''; else other.delete(key); },
   };
 }
 

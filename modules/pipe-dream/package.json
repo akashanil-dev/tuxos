@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./manifest": "./src/manifest.ts",
-    "./view": "./src/view.tsx"
+    "./view": "./src/view.tsx",
+    "./levels": "./src/levels.ts"
   },
   "dependencies": {
     "@tuxos/kernel": "*",

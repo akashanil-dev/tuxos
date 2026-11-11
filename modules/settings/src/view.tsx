@@ -17,7 +17,7 @@ export default function SettingsView({ system }: AppViewProps) {
   const clearHistory = async () => {
     setResetting(true); setError('');
     try { await system.restartLearning(); }
-    catch (cause) { setError(`Could not clear history: ${cause instanceof Error ? cause.message : String(cause)}`); setResetting(false); }
+    catch (cause) { setError(`Could not reset system: ${cause instanceof Error ? cause.message : String(cause)}`); setResetting(false); }
   };
   const lockText = (id: RewardId) => { const reward = REWARDS.find(r => r.id === id)!; return `Unlock after lesson ${reward.at} · ${reward.title}`; };
   const apply = async (type: string, payload: unknown) => { const result = await system.dispatch(type, payload); if (!result.ok) setError(result.error.message); else { try { await system.flush(); setError(''); } catch (cause) { setError(String(cause)); } } };
@@ -91,16 +91,16 @@ export default function SettingsView({ system }: AppViewProps) {
     <button disabled={!available('plugins')} onClick={() => void system.openApp('plugins')}>Open Plugins</button>
     {!available('plugins') && <p className="settings-intro">🔒 {lockText('plugins')}</p>}
 
-    {journey && <section className="settings-reset" aria-label="Learning history">
-      <h3>Learning history</h3>
-      <p>Start a fresh simulated system and learning history. Your desktop stays available.</p>
-      <button onClick={() => setConfirmReset(true)}>Clear history</button>
+    {journey && <section className="settings-reset" aria-label="Full system reset">
+      <h3>Full system reset</h3>
+      <p>Start a fresh simulated system. For adventure repairs, use the scoped recovery controls inside Adventure.</p>
+      <button onClick={() => setConfirmReset(true)}>Reset whole system</button>
       {confirmReset && <div className="settings-reset-confirm" role="alertdialog" aria-labelledby="reset-history-title" aria-describedby="reset-history-details">
-        <h4 id="reset-history-title">Clear history and start over?</h4>
-        <p id="reset-history-details">This deletes your saved TuxOS lessons, XP, achievements, installed software, plugins and practice files. Your account stays signed in. This cannot be undone.</p>
+        <h4 id="reset-history-title">Back up and reset the whole system?</h4>
+        <p id="reset-history-details">This replaces all lessons, discoveries, game scores, software, plugins and personal and practice files. A browser backup is required first. Restore it using Import & backups in the top save bar. Your account stays signed in.</p>
         <div className="settings-reset-actions">
           <button autoFocus disabled={resetting} onClick={() => setConfirmReset(false)}>Cancel</button>
-          <button className="settings-reset-delete" disabled={resetting} onClick={() => void clearHistory()}>{resetting ? 'Clearing history…' : 'Clear history and restart'}</button>
+          <button className="settings-reset-delete" disabled={resetting} onClick={() => void clearHistory()}>{resetting ? 'Backing up and resetting…' : 'Back up and reset'}</button>
         </div>
       </div>}
     </section>}

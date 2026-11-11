@@ -178,6 +178,29 @@ describe('accounts', () => {
     await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
     expect(local.values.has('tuxos.save')).toBe(true);
   });
+
+  it('transfers an explorer guest into a differently named authenticated account with explicit preview and unchanged personal text', async () => {
+    const service = fakeService();
+    const { system, local } = setup(service, memory(), false);
+    const explore = await screen.findByRole('button', { name: 'Explore TuxOS' });
+    await waitFor(() => expect((explore as HTMLButtonElement).disabled).toBe(false)); fireEvent.click(explore);
+    await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
+    await system.dispatch('fs.write', { path: '/home/explorer/note.txt', content: 'Personal reference: /home/explorer' }); await system.flush();
+    fireEvent.click(screen.getByRole('button', { name: 'Save to an account' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Sign in' }));
+    fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'grace' } }); fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'pw' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Choose saved progress' });
+    expect(dialog.textContent).toContain('from explorer to grace'); expect(dialog.textContent).toContain('virtual files');
+    expect(service.saves.size).toBe(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Use browser progress' }));
+    await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
+    expect(await system.user()).toBe('grace');
+    expect(await system.dispatch('fs.read', { path: '/home/grace/note.txt' })).toMatchObject({ ok: true, value: 'Personal reference: /home/explorer' });
+    expect(await system.dispatch('fs.stat', { path: '/home/grace/note.txt' })).toMatchObject({ ok: true, value: { owner: 'grace' } });
+    expect(JSON.parse(local.values.get('tuxos.save')!).username).toBe('explorer');
+    expect(JSON.parse(service.saves.get('grace')!.data).username).toBe('grace');
+  });
   it('offers an account retry without blocking exploration', async () => {
     const service = fakeService();
     service.client.me = vi.fn().mockRejectedValueOnce(new Error('Account service unavailable')).mockResolvedValue(null);

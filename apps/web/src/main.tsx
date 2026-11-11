@@ -17,6 +17,7 @@ import { manifest as learnLinuxManifest } from '@tuxos/module-learn-linux/manife
 import { manifest as settingsManifest } from '@tuxos/module-settings/manifest';
 import { manifest as terminalManifest } from '@tuxos/module-terminal/manifest';
 import { createLocalSystem, type KeyValueStorage } from '@tuxos/system';
+import { backupStore } from '@tuxos/system/backups';
 import { httpTransport } from '@tuxos/tutor';
 import { httpAccounts, switchableStorage } from './accounts';
 import { webAiKeys } from './ai-key';
@@ -31,6 +32,7 @@ import './styles/tutor.css';
 import './styles/continuation.css';
 
 const browserStorage: KeyValueStorage = {
+  async keys() { return Object.keys(localStorage); },
   async get(key) { try { return localStorage.getItem(key); } catch { return null; } },
   async set(key, value) {
     try {
@@ -62,12 +64,13 @@ const accounts: AccountsWiring = {
     void ai.load(target === 'account');
   },
   localSave: () => browserStorage.get('tuxos.save'),
-  backup: (value, label) => browserStorage.set(`tuxos.backup.${label}.${Date.now()}`, value),
+  backup: async (value, label) => { const username = JSON.parse(value).username; await backupStore(browserStorage).create(value, username, label); },
 };
 
 // Only manifests load up front; each module's code is fetched the first time it is used.
 const system = createLocalSystem({
   storage,
+  backupStorage: browserStorage,
   journey: true,
   ai,
   modules: [

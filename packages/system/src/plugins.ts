@@ -169,8 +169,8 @@ export class ManagedPlugins implements PluginManager {
           }
           if (!metadata || !Array.isArray(metadata.approved) || !metadata.approved.every((cap) => typeof cap === 'string')) throw new Error('Invalid saved permission approval.');
           entry.approved = metadata.approved as string[];
-          approvePlugin(manifest, { approvedCapabilities: entry.approved });
           if (metadata.enabled === true) {
+            approvePlugin(manifest, { approvedCapabilities: entry.approved });
             if (JSON.stringify(this.registered.get(manifest.id)) !== JSON.stringify(pkg)) {
               await this.unregister(manifest.id);
               this.host.validate(this.moduleManifest(pkg));

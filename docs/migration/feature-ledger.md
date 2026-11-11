@@ -29,3 +29,5 @@ Status distinguishes implemented behavior from full release verification. Source
 | Metadata, credits, old links | index.html, assets, deployment | web/deploy/docs | Continuation identity, original-origin export and meaningful old links | Pending |
 | Stats and unfinished career tracks | analytics.js, tracks.js | verify deployed scope | Do not invent parity for absent local stats or empty tracks | Investigation |
 | TuxOS additions | current modules | preserve | Linux 34 lessons/150 tasks, Docker, filesystem, editor/apt, plugins/widgets, account versioning, AI | 594 integration tests pass; full visual matrix pending |
+
+| Save migration and recovery | Native validated import/backup manager | Previewed home-file conflict choices, history/quest/score conversion, compatible apt installs, unchanged source download, idempotent provenance, renamed authenticated transfer and mandatory local recovery copies. 617-test integration plus focused account/plugin/recovery checks; browser import/read/score verification and restore drill. Original-origin export deployment and volunteer migrations remain release gates. |

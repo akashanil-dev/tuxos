@@ -3,6 +3,8 @@ import { learningRuntime, type TrainerFeedback } from '@tuxos/lessons';
 import { createModuleHost, type ModuleHost } from '@tuxos/module-host';
 import { discoverPlugins, type PluginLoaderHooks } from './plugin-loader';
 import { ManagedPlugins } from './plugins';
+import { backupStore, type BackupInfo } from './backups';
+export type { BackupInfo } from './backups';
 import type {
   Actor, AppContribution, DispatchResult, KernelEvent, ModuleDefinition, ModuleManifest, LearningBackend, PluginManager,
 } from '@tuxos/sdk';
@@ -20,6 +22,7 @@ export interface KeyValueStorage {
   get(key: string): Promise<string | null>;
   set(key: string, value: string): Promise<void>;
   remove(key: string): Promise<void>;
+  keys?(): Promise<string[]>;
 }
 
 export interface ModuleEntry {
@@ -125,6 +128,12 @@ export interface SystemClient {
   flush(): Promise<void>;
   /** Export the current snapshot even when storage is unavailable. */
   exportSave?(): string;
+  backups?(): Promise<BackupInfo[]>;
+  readBackup?(id: string): Promise<string>;
+  createBackup?(label?: string): Promise<BackupInfo>;
+  deleteBackup?(id: string): Promise<void>;
+  /** The preview's source snapshot is required: changed destinations must be previewed again. */
+  replaceSave?(value: string, expected: string, label: string): Promise<BackupInfo>;
   /** Protect unsaved UI work before changing accounts or powering off. */
   registerLeaveGuard?(id: string, guard: () => boolean): () => void;
   canLeave?(): boolean;
@@ -190,6 +199,8 @@ interface Running {
 
 export function createLocalSystem(options: {
   storage: KeyValueStorage;
+  /** Browser-local backup storage, even when the active save belongs to an account. */
+  backupStorage?: KeyValueStorage;
   journey?: boolean;
   modules: ModuleEntry[];
   learning?: LearningBackend;
@@ -205,6 +216,7 @@ export function createLocalSystem(options: {
   const pendingSaves = new Set<Promise<void>>();
   const leaveGuards = new Map<string, () => boolean>();
   let restarting = false;
+  const backups = backupStore(options.backupStorage ?? options.storage);
 
   const current = (): Running => {
     if (!running) throw new Error('system has not booted');
@@ -270,6 +282,43 @@ export function createLocalSystem(options: {
   const client: SystemClient = {
     boot,
     exportSave() { const { kernel } = current(); return JSON.stringify({ username: kernel.user, snapshot: kernel.snapshot() }); },
+    backups: async () => (await backups.list()).filter(item => item.username === current().kernel.user),
+    async readBackup(id) { if (!(await client.backups!()).some(item => item.id === id)) throw new Error('This backup belongs to a different learner.'); return backups.read(id); },
+    async createBackup(label = 'Manual backup') { return backups.create(client.exportSave!(), current().kernel.user, label); },
+    async deleteBackup(id) { if (!(await client.backups!()).some(item => item.id === id)) throw new Error('This backup belongs to a different learner.'); await backups.remove(id); },
+    async replaceSave(value, expected, label) {
+      if (restarting) throw new Error('Another save transfer is in progress.');
+      if (!client.canLeave!()) throw new Error('Save transfer cancelled to keep unsaved work.');
+      const { nativeSave, parseBounded, MAX_BYTES } = await import('@tuxos/migration');
+      if (restarting) throw new Error('Another save transfer is in progress.');
+      const parsed = nativeSave(parseBounded(value)), user = current().kernel.user;
+      if (parsed.username !== user) throw new Error('Preview the backup for this destination username first.');
+      if (new TextEncoder().encode(value).length > MAX_BYTES || new TextEncoder().encode(JSON.stringify({ data: value, version: Number.MAX_SAFE_INTEGER })).length > MAX_BYTES * 2) throw new Error('The converted save is too large for the account request limit.');
+      if (client.exportSave!() !== expected) throw new Error('Your system changed after the preview. Refresh the preview before importing.');
+      const old = current();
+      restarting = true; old.kernel.suspendWrites(true);
+      if (timer) clearTimeout(timer); timer = undefined;
+      let written = false;
+      let recovered = false;
+      try {
+        // Older writes must finish before the single replacement. An error leaves the source available.
+        await Promise.all([...pendingSaves]);
+        const backup = await backups.create(expected, user, label);
+        await options.storage.set(SAVE_KEY, value); written = true;
+        try { await boot(user); }
+        catch (cause) {
+          try { await options.storage.set(SAVE_KEY, expected); await boot(user); recovered = true; }
+          catch (recovery) { current().kernel.suspendWrites(true); throw new Error(`Import could not start (${String(cause)}). Automatic restore also failed (${String(recovery)}). Your ${backup.label} backup is retained in this browser. Writes are paused; restore that backup or reload after reconnecting.`); }
+          for (const listener of restartListeners) listener();
+          throw new Error(`Import could not start; the original system was restored: ${String(cause)}`);
+        }
+        for (const listener of restartListeners) listener();
+        return backup;
+      } finally {
+        restarting = false;
+        if (!written || recovered) old.kernel.suspendWrites(false);
+      }
+    },
     registerLeaveGuard(id, guard) { leaveGuards.set(id, guard); return () => { if (leaveGuards.get(id) === guard) leaveGuards.delete(id); }; },
     canLeave() { return [...leaveGuards.values()].every(guard => guard()); },
     async hasSave() {
@@ -331,7 +380,7 @@ export function createLocalSystem(options: {
       const { kernel, registry } = current();
       const key = options.resumeKey ?? (options.learningModule ? `course:${options.learningModule}` : undefined);
       const context = key ? kernel.getState().session.terminals?.[key] : undefined;
-      const shell = createShell(kernel, { registry, openApp: (id, args) => client.openApp(id, args), plugins: current().plugins, learningModule: options.learningModule, history: context?.history });
+      const shell = createShell(kernel, { registry, openApp: (id, args) => client.openApp(id, args), plugins: current().plugins, learningModule: options.learningModule, history: context?.history ?? (!options.learningModule ? kernel.getState().session.terminals?.legacy?.history : undefined) });
       const cwd = context?.cwd ?? options.cwd;
       if (cwd) {
         const stat = kernel.dispatch<{ kind: string }>({ type: 'fs.stat', payload: { path: cwd } });
@@ -389,24 +438,9 @@ export function createLocalSystem(options: {
       return () => restartListeners.delete(listener);
     },
     async restartLearning() {
-      if (restarting) throw new Error('A reset is already in progress.');
       const username = current().kernel.user;
-      if (!current().kernel.getState().session.journey) throw new Error('Learning journey is not enabled.');
-      restarting = true;
-      if (timer) clearTimeout(timer);
-      timer = undefined;
-      try {
-        // Finish older writes before replacing the account save. If saving fails, keep the
-        // current system running so Settings can show the error and offer another attempt.
-        await Promise.allSettled([...pendingSaves]);
-        const fresh = createKernel({ username, journey: true }).snapshot();
-        await options.storage.set(SAVE_KEY, JSON.stringify({ username, snapshot: fresh }));
-        await boot(username);
-      } finally {
-        restarting = false;
-      }
-      for (const listener of restartListeners) listener();
-      scheduleSave();
+      const fresh = createKernel({ username, journey: options.journey }).snapshot();
+      await client.replaceSave!(JSON.stringify({ username, snapshot: fresh }), client.exportSave!(), 'Before full system reset');
     },
     async reset() {
       if (timer) clearTimeout(timer);

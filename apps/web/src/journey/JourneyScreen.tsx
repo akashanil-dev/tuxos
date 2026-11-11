@@ -12,6 +12,7 @@ import './journey.css';
 
 export function JourneyScreen(props: {
   system: SystemClient; tutor?: Transport; onPower(action: PowerAction): void;
+  active?: boolean;
   verifySudo: ((password: string) => Promise<boolean>) | null;
 }) {
   const [generation, setGeneration] = useState(0);
@@ -19,8 +20,9 @@ export function JourneyScreen(props: {
   return <JourneySession key={generation} {...props} />;
 }
 
-function JourneySession({ system, tutor, onPower, verifySudo }: {
+function JourneySession({ system, tutor, onPower, verifySudo, active = true }: {
   system: SystemClient; tutor?: Transport; onPower(action: PowerAction): void;
+  active?: boolean;
   verifySudo: ((password: string) => Promise<boolean>) | null;
 }) {
   const { progress, loaded } = useJourney(system);
@@ -41,7 +43,7 @@ function JourneySession({ system, tutor, onPower, verifySudo }: {
   }, [system]);
   useEffect(() => system.onSaveError(cause => setError(cause.message)), [system]);
   if (!loaded) return <div className="journey-loading">Opening your desktop…</div>;
-  if (!progress) return <Desktop system={system} tutor={tutor} onPower={onPower} verifySudo={verifySudo} />;
+  if (!progress) return <Desktop active={active} system={system} tutor={tutor} onPower={onPower} verifySudo={verifySudo} />;
   const level = journeyLevel(progress);
   const next = REWARDS.find(r => !unlocked(progress, r.id));
   const reward = [...REWARDS].reverse().find(r => unlocked(progress, r.id) && !progress.acknowledged.includes(r.id));
@@ -57,7 +59,7 @@ function JourneySession({ system, tutor, onPower, verifySudo }: {
     finally { setSaving(false); }
   };
   return <div className="journey-shell">
-    <div className="journey-desktop" inert={map}><Desktop system={system} tutor={tutor} onPower={onPower} verifySudo={verifySudo} active={!map} onAchievements={() => setMap(true)} /></div>
+    <div className="journey-desktop" inert={map || !active}><Desktop system={system} tutor={tutor} onPower={onPower} verifySudo={verifySudo} active={active && !map} onAchievements={() => setMap(true)} /></div>
     {error && <div role="alert" className="journey-save-error">{error}<button onClick={() => void system.flush().then(() => { setError(''); }).catch(cause => setError(String(cause)))}>Retry saving</button></div>}
     {map && <JourneyDialog className="journey-map" label="Your reward map" onClose={() => setMap(false)}>
       <header><div><small>YOUR LINUX JOURNEY</small><h2>Your achievements</h2></div><button onClick={() => setMap(false)}>Close rewards</button></header>

@@ -121,6 +121,18 @@ describe('managed plugin lifecycle', () => {
     expect((await system.apps()).length).toBe(2);
   });
 
+  it('allows an imported disabled package to request fresh approval without inheriting old permissions', async () => {
+    const { system, manager, install } = await setup();
+    await install();
+    await system.dispatch('fs.write', { path: '/home/ada/.local/share/tuxos/plugins/example/install.json', content: '{"enabled":false,"approved":[]}' });
+    await manager.reload();
+    expect((await manager.list())[0]?.status).toBe('disabled');
+    expect(await system.apps()).toEqual([]);
+    await expect(manager.setEnabled('example', true)).rejects.toThrow('approve');
+    await manager.setEnabled('example', true, { approvedCapabilities: ['fs:read', 'fs:write'] });
+    expect(manager.isEnabled('example')).toBe(true);
+  });
+
   it('reports corrupt packages without failing boot; they can be removed', async () => {
     const { system, manager } = await setup();
     await system.dispatch('fs.mkdir', { path: '/home/ada/.local/share/tuxos/plugins/broken', parents: true });

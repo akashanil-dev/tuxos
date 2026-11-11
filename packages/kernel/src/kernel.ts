@@ -68,6 +68,10 @@ export class Kernel {
   private readonly logLimit: number;
   private readonly now: () => number;
   private seq = 0;
+  private suspended = false;
+
+  /** Quiesce the old kernel during a save replacement, including asynchronous shell continuations. */
+  suspendWrites(value: boolean): void { this.suspended = value; }
 
   constructor(options: KernelOptions) {
     this.now = options.now ?? Date.now;
@@ -127,6 +131,7 @@ export class Kernel {
   }
 
   dispatch<R = unknown>(action: Action, options: DispatchOptions = {}): DispatchResult<R> {
+    if (this.suspended && this.definitions.get(action.type)?.mutates) return failure('EBUSY', 'A save transfer is in progress. Try again when it finishes.');
     const now = this.now();
     const actor = options.actor ?? { kind: 'user', id: this.sessionUser };
     const user = options.user ?? this.sessionUser;

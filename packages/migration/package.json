@@ -1,0 +1,15 @@
+{
+  "name": "@tuxos/migration",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@tuxos/kernel": "*",
+    "@tuxos/sdk": "*",
+    "@tuxos/appearance": "*",
+    "@tuxos/module-apt": "*",
+    "@tuxos/module-pipe-dream": "*",
+    "@tuxos/module-learn-adventure": "*"
+  }
+}

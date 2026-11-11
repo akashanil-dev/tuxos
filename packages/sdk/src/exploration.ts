@@ -7,7 +7,7 @@ export interface ExplorationProgress {
   pipe: { solved: Record<string, number>; drafts?: Record<string, number[]>; current?: string };
   runner: { mode: 'Rapid' | 'Infinite'; rapidBest: number; infiniteHigh: number; sound: boolean; family?: string; legacyBest?: number };
   guide?: { answers: number[]; recommendation?: string };
-  imports: { id: string; importedAt: number; source: string }[];
+  imports: { id: string; importedAt: number; source: string; report?: { notes: string[]; unsupported: string[] } }[];
 }
 
 export interface SessionPreferences {

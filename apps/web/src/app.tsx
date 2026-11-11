@@ -4,7 +4,7 @@ import { desktopById, wallpaperById } from '@tuxos/appearance';
 import { useWallpaper } from './hooks/useWallpaper';
 import type { SystemClient } from '@tuxos/system';
 import type { Transport } from '@tuxos/tutor';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { BootLog } from './boot/BootLog';
 import { PhoneScreen } from './boot/PhoneScreen';
 import { Grub } from './boot/Grub';
@@ -34,6 +34,7 @@ export interface AccountsWiring {
 }
 
 const SAVE_KEY = 'tuxos.save';
+const ImportAndBackups = lazy(() => import('./migration/ImportAndBackups'));
 
 /** Each desktop environment's display manager, as a real distribution pairs them. */
 const GREETERS = { sddm: Sddm, gdm: Gdm, dtlogin: Dtlogin, tuigreet: Tuigreet };
@@ -65,7 +66,8 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
   const [authOpen, setAuthOpen] = useState(false);
   const [guestBusy, setGuestBusy] = useState(false);
   const [saveToAccount, setSaveToAccount] = useState(false);
-  const [transfer, setTransfer] = useState<{ existing: boolean; choose(choice: 'guest' | 'account' | 'cancel'): void } | null>(null);
+  const [recoveryOpen, setRecoveryOpen] = useState(false);
+  const [transfer, setTransfer] = useState<{ existing: boolean; from?: string; to?: string; summary: string; choose(choice: 'guest' | 'account' | 'cancel'): void } | null>(null);
   const wallpaper = useWallpaper('default').background;
   useEffect(() => {
     if (!booted) return;
@@ -92,14 +94,14 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
     if (screen !== 'greeter') return;
     let active = true;
     setSavedUser(undefined);
-    setAccount(null);
+    setAccount(accounts ? undefined : null);
     // Read the guest save directly: a locked account session keeps running, and its storage must not change.
     const guestSave = accounts
       ? accounts.localSave().then((saved) => (saved ? (JSON.parse(saved) as { username?: string }).username ?? null : null))
       : system.hasSave();
     void guestSave.then(value => { if (active) setSavedUser(value); }).catch(() => { if (active) setSavedUser(null); });
     setAccountError('');
-    if (accounts) void accounts.client.me().then(value => { if (active) setAccount(value); }).catch(cause => { if (active) setAccountError(String(cause)); });
+    if (accounts) void accounts.client.me().then(value => { if (active) setAccount(value); }).catch(cause => { if (active) { setAccount(null); setAccountError(String(cause)); } });
     return () => { active = false; };
   }, [system, screen, accounts, retry]);
 
@@ -113,20 +115,25 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
     const local = await accounts.localSave();
     if (local && (mode === 'register' || saveToAccount)) {
       const guest = JSON.parse(local) as { username?: string };
-      // Cross-name file transfer is handled by the import preview. Never attach a mismatched kernel to an account.
-      if (guest.username !== username && saveToAccount) throw new Error(`This browser save belongs to ${guest.username}. Use that account name to transfer this whole system, or import its files into your other account.`);
-      if (guest.username === username) {
+      if (guest.username === username || saveToAccount || mode === 'register') {
         const target = accounts.client.storage();
         const existing = await target.get(SAVE_KEY);
-        const choice = await new Promise<'guest' | 'account' | 'cancel'>(resolve => setTransfer({ existing: Boolean(existing), choose: resolve }));
+        // Validate and map only structured identity/path fields before offering this concrete transfer.
+        const { nativeSave, parseBounded, renameNative } = await import('@tuxos/migration');
+        const mapped = renameNative(nativeSave(parseBounded(local)), username);
+        const transferable = JSON.stringify({ username, snapshot: { ...mapped.snapshot, version: 2 } });
+        const countFiles = (node: import('@tuxos/kernel').VNode): number => node.kind === 'file' ? 1 : Object.values(node.children).reduce((sum, child) => sum + countFiles(child), 0);
+        const summary = `${countFiles(mapped.snapshot.state.fs)} virtual files, ${mapped.snapshot.state.session.journey?.lessons.length ?? 0} completed Linux lessons and ${Object.keys(mapped.snapshot.state.exploration?.adventure.done ?? {}).length} adventure quests. Game records and other saved course files travel with this system.`;
+        const choice = await new Promise<'guest' | 'account' | 'cancel'>(resolve => setTransfer({ existing: Boolean(existing), from: guest.username, to: username, summary, choose: resolve }));
         setTransfer(null);
         if (choice === 'cancel') throw new Error('Transfer cancelled. Both saved systems are unchanged.');
         if (choice === 'guest') {
+          if (booted?.startsWith('guest:') && system.exportSave?.() !== local) throw new Error('Browser progress changed during the preview. Try the transfer again to include the latest work.');
           if (existing) {
             if (!accounts.backup) throw new Error('A recoverable account backup is required before replacing its progress.');
             await accounts.backup(existing, `account-${username}`);
           }
-          await target.set(SAVE_KEY, local);
+          await target.set(SAVE_KEY, transferable);
         }
       }
     }
@@ -167,7 +174,7 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
   };
   const openAccount = async () => {
     if (system.canLeave?.() === false) return;
-    try { await system.flush(); setSaveToAccount(true); setAuthOpen(true); setScreen('greeter'); }
+    try { await system.flush(); setSavedUser(undefined); setAccount(undefined); setSaveToAccount(true); setAuthOpen(true); setScreen('greeter'); }
     catch (cause) { setPowerError(`Save to this browser first, or download a backup: ${String(cause)}`); }
   };
 
@@ -203,8 +210,9 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
     case 'grub': return <Grub onBoot={onBoot} onMemoryTest={() => bootDiscoveries.current.add('memtest')} />;
     case 'boot': return <BootLog recovery={recovery} onDone={toGreeter} />;
     case 'off': return <PowerOff onPowerOn={powerOn} />;
-    case 'desktop': return <>{powerError && <div className="journey-save-error" role="alert">{powerError}<button onClick={download}>Download backup</button></div>}<JourneyScreen key={booted} system={system} tutor={tutor} onPower={power} verifySudo={verifySudo} />
-      <aside className="session-save-status" aria-label="Save location"><span>{booted?.startsWith('guest:') ? 'Browser storage' : `Account: ${account}`}</span><button onClick={download}>Export backup</button>{booted?.startsWith('guest:') && accounts && <button onClick={() => void openAccount()}>Save to an account</button>}</aside></>;
+    case 'desktop': return <>{powerError && <div className="journey-save-error" role="alert">{powerError}<button onClick={download}>Download backup</button></div>}<JourneyScreen active={!recoveryOpen} key={booted} system={system} tutor={tutor} onPower={power} verifySudo={verifySudo} />
+      <aside className="session-save-status" aria-label="Save location"><span>{booted?.startsWith('guest:') ? 'Browser storage' : `Account: ${account}`}</span><button onClick={download}>Export backup</button><button onClick={() => setRecoveryOpen(true)}>Import & backups</button>{booted?.startsWith('guest:') && accounts && <button onClick={() => void openAccount()}>Save to an account</button>}</aside>
+      {recoveryOpen && <Suspense fallback={<div className="journey-loading" role="status">Opening import and recovery…</div>}><ImportAndBackups system={system} close={() => setRecoveryOpen(false)} /></Suspense>}</>;
   }
   const greeter = desktopById(desktop).greeter;
   const Greeter = GREETERS[greeter];
@@ -220,6 +228,7 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
     </div></main>}
     {authOpen && <button className="explore-back" onClick={() => { setAuthOpen(false); setSaveToAccount(false); }}>← Back to exploration</button>}
     {authOpen && accountError && <div className="account-connection" role="status"><p>Account connection unavailable. You can still explore as a guest.</p><button onClick={() => setRetry(n => n + 1)}>Retry connection</button></div>}
+    {authOpen && (savedUser === undefined || account === undefined) && <p className="account-connection" role="status">Checking saved account…</p>}
     {authOpen && savedUser !== undefined && account !== undefined && <Greeter
       // A different account or legacy save means a fresh form.
       key={`${account}|${savedUser}`}
@@ -232,6 +241,6 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
       login={login}
       onPower={(action) => power(action)}
     />}
-    {transfer && <div className="transfer-overlay"><section className="transfer-card" role="dialog" aria-modal="true" aria-label="Choose saved progress"><h2>Choose the progress to keep</h2><p>{transfer.existing ? 'This account already has a saved system. Replacing it will first keep a recoverable backup in this browser.' : 'Bring the system from this browser into your account, or start with the account’s own system.'} Your browser save stays unchanged.</p><button onClick={() => transfer.choose('guest')}>{transfer.existing ? 'Back up account and use browser progress' : 'Use browser progress'}</button><button onClick={() => transfer.choose('account')}>Use account progress</button><button onClick={() => transfer.choose('cancel')}>Cancel transfer</button></section></div>}
+    {transfer && <div className="transfer-overlay"><section className="transfer-card" role="dialog" aria-modal="true" aria-label="Choose saved progress"><h2>Choose the progress to keep</h2><p>{transfer.existing ? 'This account already has a saved system. Replacing it will first keep a recoverable backup in this browser.' : 'Bring the system from this browser into your account, or start with the account’s own system.'} Your browser save stays unchanged.</p><p>{transfer.summary}</p>{transfer.from !== transfer.to && <p>The home folder and ownership will change from <strong>{transfer.from}</strong> to <strong>{transfer.to}</strong>. Personal file text and command history stay unchanged. Choosing browser progress replaces the whole account system; its courses and files are not merged.</p>}<button onClick={() => transfer.choose('guest')}>{transfer.existing ? 'Back up account and use browser progress' : 'Use browser progress'}</button><button onClick={() => transfer.choose('account')}>Use account progress</button><button onClick={() => transfer.choose('cancel')}>Cancel transfer</button></section></div>}
   </div>;
 }
