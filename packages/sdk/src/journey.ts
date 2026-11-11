@@ -22,6 +22,10 @@ export const REWARDS = [
   { id: 'complete', at: 34, title: 'Your system. Your freedom.', description: 'Every desktop and customisation is unlocked. Keep experimenting and revisit any lesson.', icon: '★' },
 ] as const;
 export type RewardId = typeof REWARDS[number]['id'];
+/** Interface access is independent of assessed course progress. Only the anniversary cosmetic is earned. */
+export function featureAvailable(progress: JourneyProgress | undefined, feature: RewardId, retained: readonly RewardId[] = []): boolean {
+  return feature !== 'anniversary' || retained.includes(feature) || unlocked(progress, feature);
+}
 export function journeyLevel(progress: JourneyProgress): number {
   const next = JOURNEY_LESSONS.findIndex(id => !progress.lessons.includes(id));
   return next < 0 ? JOURNEY_LESSONS.length : next;
@@ -46,7 +50,8 @@ export const DESKTOP_PACKAGES = [
   { id: 'cde', name: 'CDE', package: 'tuxos-cde', dependencies: ['tuxos-dtwm'] },
 ] as const;
 export function desktopReady(progress: JourneyProgress | undefined, desktop = 'plasma'): boolean {
-  return !progress || (unlocked(progress, desktopReward(desktop)) && Boolean(progress.installedDesktops?.includes(desktop)));
+  // Package-installation exercise status only. This does not control desktop access.
+  return !progress || Boolean(progress.installedDesktops?.includes(desktop));
 }
 export function desktopsFromStatus(status: string): string[] {
   const packages = new Set(status.split(/\n\s*\n/).filter(block => /^Status: install ok installed$/m.test(block)).map(block => /^Package: (.+)$/m.exec(block)?.[1]?.trim()));

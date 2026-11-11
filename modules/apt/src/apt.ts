@@ -1,4 +1,4 @@
-import { DESKTOP_PACKAGES, desktopReward, REWARDS, unlocked } from '@tuxos/sdk';
+import { DESKTOP_PACKAGES } from '@tuxos/sdk';
 // apt, apt-get, dpkg and which, printing what Ubuntu 24.04 prints. Changing packages needs root, so learners
 // meet apt's real "are you root?" errors and learn to use sudo.
 
@@ -121,14 +121,6 @@ async function install(ctx: CommandContext, files: Files, tool: string, args: st
     if (!listsFetched(files)) ctx.stderr('Hint: run sudo apt update to load the package catalog, then try again.\n');
     else ctx.stderr('TuxOS has a small practice repository, not the full Ubuntu archive. Use apt list to see supported packages.\n');
     return 100;
-  }
-  const journey = ctx.kernel.getState().session.journey;
-  for (const desktop of DESKTOP_PACKAGES.filter(item => words.includes(item.package))) {
-    if (!unlocked(journey, desktopReward(desktop.id))) {
-      const milestone = REWARDS.find(item => item.id === desktopReward(desktop.id))!;
-      ctx.stderr(`E: ${desktop.name} unlocks after lesson ${milestone.at}. Finish that milestone, then install it.\n`);
-      return 100;
-    }
   }
   const have = installed(files);
   const plan: Package[] = [];

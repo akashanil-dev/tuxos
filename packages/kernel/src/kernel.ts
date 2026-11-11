@@ -5,6 +5,7 @@
 import type {
   Action, ActionDefinition as SdkActionDefinition, ActionError, Actor, Capability, DispatchResult, KernelEvent,
 } from '@tuxos/sdk';
+import { defaultPreferences, emptyExploration } from '@tuxos/sdk';
 import { KernelError } from './errors';
 import { expandFilesystem } from './filesystem-layout';
 import { createInitialState, emptySession, type KernelState } from './state';
@@ -31,7 +32,8 @@ export interface ActionContext {
 export type ActionDefinition<P = unknown, R = unknown> = SdkActionDefinition<P, R, ActionContext>;
 
 export interface KernelSnapshot {
-  version: typeof SNAPSHOT_VERSION;
+  /** Version 1 remains readable; new writes use version 2 to protect against old clients. */
+  version: 1 | 2;
   state: KernelState;
 }
 
@@ -52,7 +54,7 @@ export interface DispatchOptions {
   user?: string;
 }
 
-const SNAPSHOT_VERSION = 1;
+const SNAPSHOT_VERSION = 2;
 const SYSTEM: Actor = { kind: 'system', id: 'kernel' };
 const SWITCH_USER = 'user:switch';
 
@@ -70,7 +72,7 @@ export class Kernel {
   constructor(options: KernelOptions) {
     this.now = options.now ?? Date.now;
     if (options.snapshot) {
-      if (options.snapshot.version !== SNAPSHOT_VERSION) {
+      if (options.snapshot.version !== 1 && options.snapshot.version !== SNAPSHOT_VERSION) {
         throw new KernelError('EINVAL', `unsupported snapshot version: ${options.snapshot.version}`);
       }
       this.state = restoreState(options.snapshot.state);
@@ -223,6 +225,13 @@ function restoreState(state: KernelState): KernelState {
   const restored = structuredClone(state);
   // Older saves may lack the session, or its desktop settings: fill in the defaults.
   restored.session = { ...emptySession(), ...restored.session };
+  restored.session.preferences = { ...defaultPreferences(), ...restored.session.preferences };
+  restored.session.appearanceGrants = [...new Set([
+    ...(restored.session.appearanceGrants ?? []),
+    ...(restored.session.wallpaper === 'kde-30th' ? ['anniversary' as const] : []),
+  ])];
+  restored.exploration ??= emptyExploration();
+  if (restored.exploration.version !== 1) throw new KernelError('EINVAL', 'This exploration save needs a newer TuxOS version.');
   const fill = (node: import('./vfs').VNode): void => {
     node.mtime ??= 0;
     if (node.kind === 'dir') for (const child of Object.values(node.children)) fill(child);

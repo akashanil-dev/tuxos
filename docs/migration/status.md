@@ -7,7 +7,7 @@ The accepted [implementation plan](../research/tuxplore-comparison-2026-11-11/im
 | Phase | State | Evidence or next work |
 | --- | --- | --- |
 | 0 Baseline | In progress | Existing typecheck passes; baseline 539/540 tests pass. One shell listing assertion hard-coded October against the real clock. Production build succeeds. Freeze source/feature inventory and save fixtures. |
-| 1 Contracts and export | Pending | Separate mastery/access, preserve preferences, version saved additions, safe storage transitions, legacy export. |
+| 1 Contracts and export | Implemented; integration verification | Version 2 snapshots read v1 and preserve appearance. Desktop/theme/plugin access is independent of mastery; anniversary entitlement is retained. Storage transitions drain original writes; API refuses schema downgrade. Original-origin export bridge is prepared, not deployed. |
 | 2 Convenient entry | Pending | Guest/account entry, fast boot/resume, clipboard, appearance defaults, notifications. |
 | 3 Continuous desktop learning | Pending | Windowed learning/focus, terminal continuity, Files, window policies, touch. |
 | 4 Signature features | Pending | Adventure, both games, reference, achievements, guide, shell teaching, local help. |
@@ -29,6 +29,9 @@ The accepted [implementation plan](../research/tuxplore-comparison-2026-11-11/im
 ## Commit log
 
 Record each meaningful implementation batch with its verification here as the work proceeds.
+
+- `8d31deb`: baseline research, implementation plan, feature ledger, synthetic fixtures, source/build manifests, and a fixed-clock shell test (26 shell tests passed).
+- Access/persistence batch: SDK exploration/preferences contracts, v1→v2 snapshot support, retained cosmetics, optional package practice, isolated storage transitions, API downgrade protection, and the legacy export page. First full check: 547/548 tests passed; the remaining assertion expected the old session shape and was updated to include the new preferences. All 43 targeted tests then passed, including the corrected test; typecheck and production build passed. Fixture puzzle IDs were corrected to the actual eight level IDs, and the upstream license notice is retained.
 
 ## External release gates
 

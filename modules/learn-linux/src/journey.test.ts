@@ -26,12 +26,12 @@ async function solve(index: number) {
   }
   expect((await system.session()).journey!.lessons, lesson.id).toContain(lesson.id);
 }
-it('locks features and future lessons, and viewing answers awards nothing', async () => {
+it('allows desktop exploration while preserving lesson prerequisites and honest awards', async () => {
   await boot();
-  expect((await system.openApp('files')).ok).toBe(false);
-  expect((await system.dispatch('session.setDesktop', { desktop: 'gnome' })).ok).toBe(false);
+  expect((await system.openApp('files')).ok).toBe(true);
+  expect((await system.dispatch('session.setDesktop', { desktop: 'gnome' })).ok).toBe(true);
   expect((await system.dispatch('session.setWallpaper', { wallpaper: 'kde-30th' })).ok).toBe(false);
-  expect((await system.dispatch('session.setTheme', { theme: JOURNEY_THEMES[0] })).ok).toBe(false);
+  expect((await system.dispatch('session.setTheme', { theme: JOURNEY_THEMES[0] })).ok).toBe(true);
   expect((await system.dispatch('learn-linux.start', { lesson: 'permissions' })).ok).toBe(false);
   expect((await system.dispatch('journey.record', { lessons: [...JOURNEY_LESSONS], steps: ['fake'] })).ok).toBe(false);
   await system.dispatch('learn-linux.start', { lesson: 'first-words' });
@@ -49,7 +49,7 @@ it('earns every milestone through the real curriculum, retains rewards on replay
     expect(journeyLevel(progress)).toBe(i + 1);
     for (const reward of REWARDS) expect(unlocked(progress, reward.id), reward.id).toBe(reward.at <= i + 1);
     for (const desktop of DESKTOP_PACKAGES.filter(item => REWARDS.find(r => r.id === desktopReward(item.id))!.at === i + 1)) {
-      expect((await system.dispatch('session.setDesktop', { desktop: desktop.id })).ok).toBe(false);
+      expect((await system.dispatch('session.setDesktop', { desktop: desktop.id })).ok).toBe(true);
       const installer = await system.createTerminal();
       await installer.run('sudo apt update');
       expect((await installer.run(`sudo apt install -y ${desktop.package}`)).code).toBe(0);
@@ -92,11 +92,13 @@ it('imports existing reviewed progress and resumes a question in the same workin
   expect(result.feedback?.correct).toBe(true);
 });
 
-it('requires earned, confirmed desktop installs; cancellation, previews and retries keep state consistent', async () => {
+it('offers optional desktop installation practice; cancellation, previews and retries keep package state consistent', async () => {
   await boot();
   const installer = await system.createTerminal({ learningModule: 'desktop-installation' });
   await installer.run('sudo apt update');
-  expect((await installer.run('sudo apt install -y kde-plasma-desktop')).stderr).toContain('unlocks after lesson 2');
+  expect((await installer.run('sudo apt install -s kde-plasma-desktop')).code).toBe(0);
+  expect((await system.openApp('files')).ok).toBe(true);
+  expect((await system.session()).journey!.lessons).toEqual([]);
   await solve(0); await solve(1);
   await system.dispatch('learn-linux.start', { lesson: course.lessons[2]!.id });
   const beforeInstallation = await system.dispatch('learn-linux.status', {});
@@ -121,7 +123,7 @@ it('requires earned, confirmed desktop installs; cancellation, previews and retr
   expect(completed.stdout).toContain('100% Configuring');
   expect(desktopReady((await system.session()).journey)).toBe(true);
   expect((await installer.run('sudo apt install -y kde-plasma-desktop')).stdout).toContain('already the newest version');
-  expect((await installer.run('sudo apt install -y gnome-core')).stderr).toContain('unlocks after lesson 7');
+  expect((await installer.run('sudo apt install -y gnome-core')).code).toBe(0);
   expect((await installer.run('sudo apt remove -y kde-plasma-desktop')).stderr).toContain('desktop is in use');
   await system.flush(); await system.boot('ada');
   expect(desktopReady((await system.session()).journey)).toBe(true);

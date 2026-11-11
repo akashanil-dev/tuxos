@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Keep your Tuxplore progress</title><meta name="robots" content="noindex"><style>
+body{margin:0;background:#232629;color:#eff0f1;font:17px/1.6 system-ui,sans-serif}main{max-width:42rem;margin:8vh auto;padding:1.5rem}h1{line-height:1.2}a{color:#8ecdf4}button{font:inherit;border:1px solid #61727a;border-radius:6px;background:#3daee9;color:#10202b;padding:.65rem 1rem;margin:.3rem .5rem .3rem 0;cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid #ffcf66;outline-offset:4px}.secondary{background:transparent;color:inherit}#status{padding:1rem 0;white-space:pre-wrap}small{color:#c5d0d5}</style></head>
+<body><main><p>Tuxplore → TuxOS</p><h1>Keep your progress</h1>
+<p>Download your quests, files, discoveries and game records from this browser. In TuxOS, choose <strong>Import Tuxplore progress</strong> to review and bring them with you.</p>
+<p>This page works at the original Tuxplore address. It does not upload anything, read your password, or sign you into another account.</p>
+<button id="export">Download Tuxplore progress</button><button id="original" class="secondary">Download original backup</button>
+<p id="status" role="status" aria-live="polite"></p>
+<p>If you used an online account, <a href="./">sign in to Tuxplore</a> first so its saved progress is available in this browser. Keep the original backup until you have checked your import.</p>
+<p><a href="https://tuxos.akashanil.dev">Open TuxOS</a> · <a href="./">Return to Tuxplore</a> · <a href="about.html">About</a> · <a href="stats.html">Public stats</a></p>
+<small>Local progress belongs to this site and browser. Opening this page on another domain cannot read it.</small>
+</main><script type="module">
+import { exportLocalSave, downloadJSON } from './export.mjs';
+const status = document.getElementById('status');
+document.getElementById('export').onclick = () => {
+  try {
+    const value = exportLocalSave(localStorage, location.origin);
+    downloadJSON(JSON.stringify(value, null, 2), 'tuxplore-progress.json');
+    status.textContent = `Export prepared for ${value.save.username || 'your guest session'}. Your original progress is unchanged. Keep this file private: it includes your simulated files.`;
+  } catch (error) { status.textContent = error.message; }
+};
+document.getElementById('original').onclick = () => {
+  try { const raw = localStorage.getItem('tuxos-save-v1'); if (!raw) throw new Error('No original save was found on this site.'); downloadJSON(raw, 'tuxplore-original-backup.json'); status.textContent = 'Original backup prepared. Keep it private and unchanged for recovery.'; }
+  catch (error) { status.textContent = error.message; }
+};
+</script></body></html>

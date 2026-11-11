@@ -50,14 +50,14 @@
   },
   "pipe": {
     "solved": {
-      "0": 1791676800000,
-      "1": 1791676800001,
-      "2": 1791676800002,
-      "3": 1791676800003,
-      "4": 1791676800004,
-      "5": 1791676800005,
-      "6": 1791676800006,
-      "7": 1791676800007
+      "fruit": 1791676800000,
+      "abc": 1791676800001,
+      "count": 1791676800002,
+      "dedupe": 1791676800003,
+      "top3": 1791676800004,
+      "shout": 1791676800005,
+      "logins": 1791676800006,
+      "popular": 1791676800007
     }
   },
   "runner": {
@@ -90,7 +90,7 @@
             "t": "f",
             "o": "root",
             "m": "644",
-            "c": "ELF... (this is the Linux kernel. It is binary, not text.)"
+            "c": "\u007fELF... (this is the Linux kernel. It is binary, not text.)"
           }
         }
       },
@@ -164,7 +164,7 @@
                 "t": "f",
                 "o": "user",
                 "m": "644",
-                "c": "Hi explorer,\n\nI'm Tux, the Linux penguin. I need your help!\n\nThe Segfault Daemon stole my Kernel Crown and hid it somewhere\ndeep inside this computer. Only someone who knows the terminal\ncan get it back.\n\nStart by going into the dungeon:   cd dungeon\nThen look around with:             ls\n\nGood luck!\n  - Tux 🐧"
+                "c": "Hi explorer,\n\nI'm Tux, the Linux penguin. I need your help!\n\nThe Segfault Daemon stole my Kernel Crown and hid it somewhere\ndeep inside this computer. Only someone who knows the terminal\ncan get it back.\n\nStart by going into the dungeon:   cd dungeon\nThen look around with:             ls\n\nGood luck!\n  - Tux \ud83d\udc27"
               },
               "Documents": {
                 "t": "d",

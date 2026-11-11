@@ -188,5 +188,7 @@ export interface PluginRPCEvent {
 
 export * from './plugins';
 
-export { JOURNEY_LESSONS, REWARDS, JOURNEY_THEMES, journeyLevel, unlocked, desktopReward, desktopReady, desktopsFromStatus, DESKTOP_PACKAGES } from './journey';
+export { JOURNEY_LESSONS, REWARDS, JOURNEY_THEMES, journeyLevel, unlocked, featureAvailable, desktopReward, desktopReady, desktopsFromStatus, DESKTOP_PACKAGES } from './journey';
+export { emptyExploration, defaultPreferences } from './exploration';
+export type { ExplorationProgress, SessionPreferences } from './exploration';
 export type { JourneyProgress, RewardId } from './journey';

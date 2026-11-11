@@ -1,4 +1,4 @@
-import { validatePluginTheme, validPluginId } from '@tuxos/sdk';
+import { defaultPreferences, validatePluginTheme, validPluginId } from '@tuxos/sdk';
 import { demandReward, demandDesktop } from './journey';
 import { KernelError } from '../errors';
 import type { ActionDefinition } from '../kernel';
@@ -58,6 +58,19 @@ function focus(session: SessionState, window: Window): void {
 }
 
 export const sessionActions: ActionDefinition[] = [
+  {
+    type: 'session.setPreferences', capability: 'session:control', description: 'Choose startup, learning view and companion preferences.', mutates: true,
+    run: ({ state }, payload) => {
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new KernelError('EINVAL', 'Preferences must be an object.');
+      const prefs = { ...defaultPreferences(), ...state.session.preferences };
+      for (const [key, value] of Object.entries(payload)) {
+        if (key === 'resume' && (value === 'desktop' || value === 'learn')) prefs.resume = value;
+        else if (['fastBoot', 'showVasu', 'richVasu'].includes(key) && typeof value === 'boolean') prefs[key as 'fastBoot' | 'showVasu' | 'richVasu'] = value;
+        else throw new KernelError('EINVAL', `Invalid preference: ${key}`);
+      }
+      state.session.preferences = prefs;
+    },
+  },
   {
     type: 'session.setTheme', capability: 'session:control', description: 'Apply or reset desktop theme colours.', mutates: true,
     run: ({ state }, payload) => {
