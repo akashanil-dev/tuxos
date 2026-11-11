@@ -1,0 +1,731 @@
+{
+  "source": "/home/akash/Documents/tuxplore/tuxplore-clean",
+  "files": [
+    {
+      "path": "404.html",
+      "bytes": 1667,
+      "sha256": "8f617adb6d207db3309514c980139893af8d84a7baa005283015101d2eafc371",
+      "upstreamSame": false
+    },
+    {
+      "path": "api/README.md",
+      "bytes": 1624,
+      "sha256": "943fc42ac1d4b12a9a6ee9d6251f0ab1c485ebf99ac864c113e8ecc2212049cf",
+      "upstreamSame": false
+    },
+    {
+      "path": "api/src/index.js",
+      "bytes": 12042,
+      "sha256": "7ae62753de3c0a332a79911a489499a3a37ac8bd0c4cbe86a0bbe1665d7d24bc",
+      "upstreamSame": true
+    },
+    {
+      "path": "css/apps.css",
+      "bytes": 30294,
+      "sha256": "a475d042eadc9c5e9f15baa1c57788ca979c69e0f1e46ad98516fc6175b669f1",
+      "upstreamSame": true
+    },
+    {
+      "path": "css/desktops.css",
+      "bytes": 20199,
+      "sha256": "ceee86deeabc155268755f13728bf6c4e9a85b8b221df6f2f30feaa96991be00",
+      "upstreamSame": true
+    },
+    {
+      "path": "css/greeters.css",
+      "bytes": 14334,
+      "sha256": "2c530eb2c18e88adde8ad19f2281434e0c6db25334e3fdf6d05b47b71009cf89",
+      "upstreamSame": true
+    },
+    {
+      "path": "css/os.css",
+      "bytes": 18895,
+      "sha256": "a82d2ec5d3c27601fae0956b04ee81baa42bcfec8ad93ce0f7070d34435fdd1c",
+      "upstreamSame": true
+    },
+    {
+      "path": "css/page.css",
+      "bytes": 6677,
+      "sha256": "39aaf6f486a485702f4a93513cd712824e714c2daf0f0aef00e8fcb8aaa6307b",
+      "upstreamSame": false
+    },
+    {
+      "path": "images/app/desktop.webp",
+      "bytes": 64268,
+      "sha256": "a95aa9c0e01b55043b7d09e7e9269f442686abd420c1fcbe22e649eeb70f685b",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/app/icon-180.png",
+      "bytes": 22572,
+      "sha256": "c21dc44c9119d28e9683580e8bacef0770912b13a311f7b479f2c4d0afc8d321",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/app/icon-192.png",
+      "bytes": 24841,
+      "sha256": "1440ac8ff53a3b4fb13fcb6b93b62ea9639f26f75aa55ebc6ebeeed9957fbcde",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/app/icon-512.png",
+      "bytes": 88684,
+      "sha256": "a66240045935d8df51b9dfca54bff5a21404ba4bf6fc52416d463e3cccf7d4bf",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/app/og.jpg",
+      "bytes": 100796,
+      "sha256": "8d50dc1a5d77b3882245a744cc19c7c985a4e8b37ad4003ca040934286d81025",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/CREDITS.md",
+      "bytes": 859,
+      "sha256": "52f73aba160afbc791bd8290a70827ccbd707926c44bf97ade23b2cb79949be3",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/absolute.png",
+      "bytes": 17542,
+      "sha256": "3b66779dcffe0f57fa8d47651c249a5007b969f6b46eed092376f299bc4a1a35",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/almalinux.png",
+      "bytes": 17551,
+      "sha256": "b0600a100e3858d6913b250ccde2a7a7883a2d6687eb00e7526813d71e19a20a",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/arch.png",
+      "bytes": 13602,
+      "sha256": "c279fbcccb2230b691faae4e26377df0fe19689282315409f3f73ecf957b0b96",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/arcolinux.png",
+      "bytes": 50470,
+      "sha256": "376c7198952a5453f2f8dbd4702c2acde34a967e54c48b31f6d093406c25ed97",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/artix.png",
+      "bytes": 49658,
+      "sha256": "13286df721cd0534255f1d1534db8794782925c779b209aeda2eb22138afe4a9",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/blackarch.png",
+      "bytes": 58438,
+      "sha256": "43be3b1641f23f5d555725ec4a770b31db1246d11c4c92ad6ce129faa8472a31",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/calculate.png",
+      "bytes": 58587,
+      "sha256": "b95a33c208685f0094346a755f1a3666183e2b2bf27e941468562bc3d5884f44",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/centos.png",
+      "bytes": 15869,
+      "sha256": "6f1189f0144b0d14008aef83f6ebef023ae3f546c0af4433d032e6d059f461f9",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/debian.png",
+      "bytes": 15497,
+      "sha256": "1322a7d70585cb63cceb51751934b03a9909388d120589e06b497ea8584d8107",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/deepin.png",
+      "bytes": 68101,
+      "sha256": "12900951585aeaaf465112a12e05b8c998b77608d79fed87dbffcae65b9ad8be",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/elementary.png",
+      "bytes": 72494,
+      "sha256": "ce36384d2cbc42b15db9d64e1a9ebb22ba6b22a8fad491899638e8ed7b8d2766",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/endeavouros.png",
+      "bytes": 15508,
+      "sha256": "aa481bf31b2ac2af680f5984a9086f8dc60dccd416e66ef4905082512c620710",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/fedora.png",
+      "bytes": 13615,
+      "sha256": "d045c2e17baf89cd9860515be6daa3dbcbedc2908444340ac290a62e8d437eff",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/funtoo.png",
+      "bytes": 33551,
+      "sha256": "3d29b97b1e5d05817cddcdad19d9e1c273e43c33fdb224858e6013e2ff47904f",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/gentoo.png",
+      "bytes": 26739,
+      "sha256": "62eca392a693c8435e1a152d494074d60d5a6725f37efcacd809ecdf5d0ae2bc",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/kali.png",
+      "bytes": 9373,
+      "sha256": "8444f90843900e9dbd542ff9b69d046b2db7deebc052983987106d8b09f5ae6a",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/kubuntu.png",
+      "bytes": 52816,
+      "sha256": "24085e9d37267dec658a16097d46e6e041fe500abd3e0a0605f6ef2ca4593e75",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/manjaro.png",
+      "bytes": 6915,
+      "sha256": "32128e367efe477f3582a7f25a824f24aa68e510f34adb8325340cc3394ca805",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/mint.png",
+      "bytes": 46172,
+      "sha256": "f3b4d47b3afc0f03d28dd3bc53f1d8147d7aaffcf066674234ebea907acfb5d4",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/mx.png",
+      "bytes": 11598,
+      "sha256": "60bc11597808c6d1eceb947a355c95c1228977328820ed081cabe485b0e709a5",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/oracle.png",
+      "bytes": 18224,
+      "sha256": "8a8b7e6a838282f627accd57c3244698e21de9b29b0d74b5d1fe929d2b098c97",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/parrotos.png",
+      "bytes": 10623,
+      "sha256": "cdda5311d2032d6f64e70526e64f0bdc2b0b68c608716d87b1c6ceded5600714",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/popos.png",
+      "bytes": 54248,
+      "sha256": "e45239cc5d40816ffaa3860b53d4a7eafe168f31cb463758e46aaa8357a5a732",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/raspios.png",
+      "bytes": 88951,
+      "sha256": "81f59d43d068046bdc544652964b0bd47f13e55bcd209e36babb1300c01319e9",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/red_hat.png",
+      "bytes": 16444,
+      "sha256": "6d4dff54cbffbf9518cb72d64020cf40023f59946d6ee75adf2463a7bf35ac69",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/rocky.png",
+      "bytes": 38688,
+      "sha256": "0c6556869448261a9c175b97e6e2d3d4809d54716ad231374cb4cd1b7909cd8f",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/salixos.png",
+      "bytes": 5313,
+      "sha256": "5c39062e7f324512c3f9745b4399c71c9a0cbc1aaecb08577aa811850d2da2f1",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/slackware.png",
+      "bytes": 37463,
+      "sha256": "b0aba5a467cb2eb2366c450891366f7b95995aa16edeb1f6a88620ec812dd785",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/steamos.png",
+      "bytes": 65564,
+      "sha256": "eaa6a24a69b8a7c19f1dfd925e066381eb6a11c1b13c8c8ca5ef0725de7f4987",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/tails.png",
+      "bytes": 64320,
+      "sha256": "5fb38b6a32c3e245b84993cf368cfe1a2a5902bb9bcd9712b8493b9933229293",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/ubuntu.png",
+      "bytes": 12270,
+      "sha256": "8414b792e819c26351ba0d6dc9139fd5158e307dd3f70657badbc2a1abe43ccb",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/distros/zorin.png",
+      "bytes": 33236,
+      "sha256": "43ef6d9d4c7ed46aef49be8f0118ed897f9078b07ff30c672074d71c47a10a56",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/CREDITS.md",
+      "bytes": 2210,
+      "sha256": "1518f23e117c32682ffb15c72b5de48ee350f7112d5ccedea40997e37d5a5917",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/gnome/achievements.svg",
+      "bytes": 3186,
+      "sha256": "397490a5496af132a98242e50b11c10c4259fd1cb9edce98356b0ae3773c6b92",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/gnome/files.svg",
+      "bytes": 9431,
+      "sha256": "f38bab4647df800d79f3de043975c8b8d05ce6f7e67c966b49e820efb58d44f9",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/gnome/install.svg",
+      "bytes": 14811,
+      "sha256": "e624f3e9e7521b98f969bf0dfe733e4f485171b04de7260781f58a0aaf68934c",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/gnome/journal.svg",
+      "bytes": 5094,
+      "sha256": "72d965e4c36df8f9d0dc7744e8a7945ac5701abda03b10293bc7e08ab04c1a81",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/gnome/pipedream.svg",
+      "bytes": 8111,
+      "sha256": "fa3fa9291218a2aa54cd8f8a0f4ab22021208708a99cf6a43f03eaf3d2e66f1c",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/gnome/runner.svg",
+      "bytes": 3366,
+      "sha256": "d5cad218e31dae8b3037017600fdb668b4d52143b2a0c33b59fa9e9524531686",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/gnome/settings.svg",
+      "bytes": 7424,
+      "sha256": "81eca454d2c61c1d4f9346a9e8ec2910e1b937378e6343d1c35bf6221459f25e",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/gnome/terminal.svg",
+      "bytes": 1754,
+      "sha256": "76274314c637b6bc820e1e3853f8b3551d27924107969322268ece8d0c18b13b",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/kde/achievements.svg",
+      "bytes": 3584,
+      "sha256": "e75d1b7f7b7b5d449f2058e63d0ca5f52e3593e0dc984f875e2bebde3e194b85",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/kde/files.svg",
+      "bytes": 8455,
+      "sha256": "bce0ac3acba1a9d8512dfc87264df33607ed67bf1c423ee8449f168c21cab464",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/kde/install.svg",
+      "bytes": 3330,
+      "sha256": "a93523bea85e2e6e7609f15583b6b7a4030946e323607e6b48726713ddc63143",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/kde/journal.svg",
+      "bytes": 7197,
+      "sha256": "97881cc458f3593a2a47028e6b36e7c097928a4c0516b9984ff43d12db3bf6eb",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/kde/pipedream.svg",
+      "bytes": 5456,
+      "sha256": "2f7b3ca320d1ade902e290072936f0a9516ea002d41e510f92d6a2c3f0091866",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/kde/runner.svg",
+      "bytes": 5542,
+      "sha256": "171cfbe029687ff891d1dcd002756a2edf080066ad4262186a07b06e1e414746",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/kde/settings.svg",
+      "bytes": 10430,
+      "sha256": "6a5d2c429fb37bad21211ddaf2199c5b00b09428d38f79d5dfeed331e26b100c",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/kde/terminal.svg",
+      "bytes": 1745,
+      "sha256": "87838237b73dbfc8fd01e8ccb46018acf2acba6c0bc4b2c293cf9bbdc126b4a1",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/retro/achievements.svg",
+      "bytes": 536,
+      "sha256": "13cece0e186b58f90acafc22821a820103e7b677dde3fd89cc57154bf2a933b1",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/retro/files.svg",
+      "bytes": 652,
+      "sha256": "ba480bf3b439b9237749171ac259f5c83369fb1cdeb9cb493c6662fb8e3e32b3",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/retro/install.svg",
+      "bytes": 411,
+      "sha256": "12e84721247695ed15954e959dca0caf6d30d3287806346d703ae6d33a5f927a",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/retro/journal.svg",
+      "bytes": 418,
+      "sha256": "ecf2b36e0cefb15623acaf20c589bf34f8ab6e06ed50b870692702aa1b4beda9",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/retro/pipedream.svg",
+      "bytes": 504,
+      "sha256": "72e50268664f7895c07baded6c165643e59f929e598f652dab71e47b9c5f5cfe",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/retro/runner.svg",
+      "bytes": 567,
+      "sha256": "fc6630804c62e079bdb3c218a76b55f2662ada53c842e73372ba0a3f234fd2db",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/retro/settings.svg",
+      "bytes": 533,
+      "sha256": "772600dd08ef2cd5bdfed837204770b18bfea1c9d830e7ac288929fd06391241",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/retro/terminal.svg",
+      "bytes": 546,
+      "sha256": "658140347cc0ddac4678853d96920b4384b39f4d36baae87e7f2ebf920c90f8c",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/tiling/achievements.svg",
+      "bytes": 3906,
+      "sha256": "6f92f1a8c3f7482b05d04d965c4125dc79ef3608be59b92e37604797a1f47670",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/tiling/files.svg",
+      "bytes": 1185,
+      "sha256": "1b57a7649819206d58c5e1a1ef40b442cad085a332a6302f6930fb1a654963ae",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/tiling/install.svg",
+      "bytes": 791,
+      "sha256": "29c83a671265fd6afce5548f47cc49c9968ff5f3e4eb50645d05dd9be195cfdc",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/tiling/journal.svg",
+      "bytes": 1345,
+      "sha256": "331ae74383709c8570e78734d9eb231f8596bc7e7ba144149e79d468d0e040e1",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/tiling/pipedream.svg",
+      "bytes": 2848,
+      "sha256": "08d3557c5f19fc314ca2b13b5081e133f1b6fd7ca622a033e64ec2de9e708cd9",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/tiling/runner.svg",
+      "bytes": 1613,
+      "sha256": "99e21161ba26adcd79d4856e1bba6d582e1e6ed738e76c2cc296d6506c37e4ba",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/tiling/settings.svg",
+      "bytes": 4434,
+      "sha256": "e7510b7f0cfe822fba4229c622a76b0bab55fc5b037cb4f8630fe60532c4386d",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/icons/tiling/terminal.svg",
+      "bytes": 10821,
+      "sha256": "13e67957b1b313c03fa66c065d7e7c2fe2f27513e024692b328bbd30f0e39caa",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/wall/command.webp",
+      "bytes": 14976,
+      "sha256": "178fb50054751fb0865144bb982b9ed61bb11df87748be8d778374e0f0c04ab1",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/wall/freedom.webp",
+      "bytes": 18886,
+      "sha256": "d8f0761d70d4cf7956196e20f7dcad97f9111cf1593879a70bc8b3bbcf600608",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/wall/gnu-zen.webp",
+      "bytes": 94628,
+      "sha256": "b42f3f353c726be146c75356ea055b17fcea5c88b0184f1057940a1435ab9645",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/wall/gnu.webp",
+      "bytes": 54984,
+      "sha256": "b30d2323327b44cc2e5ae7b10e28204f1533cebe18b7a95bcd5f7878d6c956c5",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/wall/linus.webp",
+      "bytes": 41688,
+      "sha256": "6ed97706d30403c971b1fa231c0f5e67f2cfb4bd7414152b50705902d9fe1182",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/wall/rabbit.webp",
+      "bytes": 18102,
+      "sha256": "3be687ec7ef5a19389858909bf0f7a3ad37b442f21335c31e83dba8dda355873",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/wall/root.webp",
+      "bytes": 28628,
+      "sha256": "45f7ba97c4f7d2adbf27761cbe7ff1bc65e3922adb6aa516731b5bd3191a487a",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/wall/thumbs/command.webp",
+      "bytes": 684,
+      "sha256": "3abcd9822d9fae49c4d91d88cb24c166a7009c1e043f2df3a8be7e65608019e3",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/wall/thumbs/freedom.webp",
+      "bytes": 1212,
+      "sha256": "3421bc4d56c50f7d152b8c6d649fef61e977fcc339fe5ef9d61622de3f51ecb6",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/wall/thumbs/gnu-zen.webp",
+      "bytes": 3994,
+      "sha256": "b35d6aca9331adf2acd4d6d34fe46c18a519a6a47d5706d1f5b2616d7555eb18",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/wall/thumbs/gnu.webp",
+      "bytes": 2420,
+      "sha256": "ba0d6ea7098384f963e8cf281561efe23aad8cfc9ac38f5b3030ff5ad47e1d8b",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/wall/thumbs/linus.webp",
+      "bytes": 2924,
+      "sha256": "9141c55ea802a147699f22636a4b5e02f3655fd067def4a1da728c5febcaf0a1",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/wall/thumbs/rabbit.webp",
+      "bytes": 1424,
+      "sha256": "45738249a5b2c8c1acb224e3d28a90599fc2931cd02e061001be3ee6bb7bbb69",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/wall/thumbs/root.webp",
+      "bytes": 1430,
+      "sha256": "78f1f641c7fd505c903d15725073086135c8a2285a9b2e89ff8855f29452f5e5",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/wall/thumbs/topo.webp",
+      "bytes": 2586,
+      "sha256": "e018816b013695c04cfc75824c01c3f8b193d5c8a5415981820bfc6fe592d242",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/wall/thumbs/tux.webp",
+      "bytes": 1196,
+      "sha256": "2a23fa67a99f84162ad1ec1a79af7977bf25e8a7c5943cb57764e538aa841d9f",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/wall/topo.webp",
+      "bytes": 159614,
+      "sha256": "21632cfad46e3d32acdc2aaf44beab356a73a32dfc37547dfbeb47149a65aa92",
+      "upstreamSame": true
+    },
+    {
+      "path": "images/wall/tux.webp",
+      "bytes": 15302,
+      "sha256": "6697ad10cfe66814e54d96f9cc1b7ad8601314872723624d1fd7eab7328332b6",
+      "upstreamSame": true
+    },
+    {
+      "path": "index.html",
+      "bytes": 6441,
+      "sha256": "04647e5f504815af6299ae9f3bcce9687220c6a583aae1e69a7769acbb38870c",
+      "upstreamSame": false
+    },
+    {
+      "path": "js/analytics.js",
+      "bytes": 1679,
+      "sha256": "d995d6e03442e05af4856501f3ab9107e57de64bb73c2e41cd6f8a63236c6d08",
+      "upstreamSame": false
+    },
+    {
+      "path": "js/apps/files.js",
+      "bytes": 7415,
+      "sha256": "eed7564edddc93868ae4a3d4873d3af3fa872324400c581658cd34d21784deb9",
+      "upstreamSame": true
+    },
+    {
+      "path": "js/apps/journal.js",
+      "bytes": 6795,
+      "sha256": "8662f110a5727685aad446314591dbbac79d6482270018081cb1eb491a3d0fdf",
+      "upstreamSame": true
+    },
+    {
+      "path": "js/apps/pipedream.js",
+      "bytes": 8686,
+      "sha256": "622d3945f3ce3677acdcdb380b2305424005ed21e94ca6539de8912f2ae5aab4",
+      "upstreamSame": true
+    },
+    {
+      "path": "js/apps/runner.js",
+      "bytes": 66619,
+      "sha256": "36adb5e6a6536c130abe2a84a86cbaf0b6694d325a5d93d74f03348b42f962fb",
+      "upstreamSame": true
+    },
+    {
+      "path": "js/apps/system.js",
+      "bytes": 17400,
+      "sha256": "77b63d20b2166466962fd5d0eeb503bf74359f1d59883c800419014309fe946a",
+      "upstreamSame": false
+    },
+    {
+      "path": "js/apps/terminal.js",
+      "bytes": 12716,
+      "sha256": "69c4798d8d23a0731f88ebe9c5664995957ee3408f5319414a6b103b54413e2e",
+      "upstreamSame": true
+    },
+    {
+      "path": "js/boot.js",
+      "bytes": 24057,
+      "sha256": "9594981c3cc8d63766123910982ef5a8f7aa1fc152acfa60fc310752425fdc58",
+      "upstreamSame": false
+    },
+    {
+      "path": "js/cloud.js",
+      "bytes": 3727,
+      "sha256": "9222df76310a0207216df21f24c98bc0933083ccc404714f9aa723800850b5f8",
+      "upstreamSame": false
+    },
+    {
+      "path": "js/core.js",
+      "bytes": 11308,
+      "sha256": "2533d4a1f8ed175df653f12a8aa94a91548acf479304f96808f5f558f7f60348",
+      "upstreamSame": true
+    },
+    {
+      "path": "js/coreutils.js",
+      "bytes": 5499,
+      "sha256": "dfc66f54ba80f0f52f333c8f7d8e1b37dea63581ad232a2ef114cffc21e55f4c",
+      "upstreamSame": true
+    },
+    {
+      "path": "js/de.js",
+      "bytes": 18802,
+      "sha256": "b79daf691d8c6f5af2b366a47605d21138aec29819a6b053fddd1e987b177d01",
+      "upstreamSame": true
+    },
+    {
+      "path": "js/fs.js",
+      "bytes": 16113,
+      "sha256": "5d984119eae72312b4728a6c2d9cd754281f3767ccf189d23e3cb2ffc7098861",
+      "upstreamSame": false
+    },
+    {
+      "path": "js/greeters.js",
+      "bytes": 15916,
+      "sha256": "ff1575c4217e98a0cd772be7444b88cec839a4ef988beb0837c0533c44acccd8",
+      "upstreamSame": false
+    },
+    {
+      "path": "js/main.js",
+      "bytes": 230,
+      "sha256": "421a93d89242f9d02dd85ba7937c1af9dbd7a7a0477761f05b0a2506a6be8092",
+      "upstreamSame": true
+    },
+    {
+      "path": "js/quests.js",
+      "bytes": 11179,
+      "sha256": "93db80bf668d4b36bdf144ec6128abe839a8291c41e19a3119b3930340e89c9d",
+      "upstreamSame": false
+    },
+    {
+      "path": "js/shell.js",
+      "bytes": 53900,
+      "sha256": "2a2342fb75600dffdf466e9725c56b552b94e771530b90650efb0611f18a4f68",
+      "upstreamSame": false
+    },
+    {
+      "path": "js/stats.js",
+      "bytes": 8364,
+      "sha256": "c123d884f9a869cfc53d202a42b2074a7b9cf0664c9f8f9ec93ea3c2bb12aac1",
+      "upstreamSame": false
+    },
+    {
+      "path": "js/tracks.js",
+      "bytes": 4742,
+      "sha256": "f8e8cdad9eff88fc3a28033aa7a3da4601396564a10a342d07fc773872c1e695",
+      "upstreamSame": true
+    },
+    {
+      "path": "js/tux.js",
+      "bytes": 5341,
+      "sha256": "efef6dfa6148db0eb25ad2192a4cea26b9f51fdf7b8665f903c59502d568ea3b",
+      "upstreamSame": true
+    },
+    {
+      "path": "js/vendor/goatcounter.js",
+      "bytes": 9213,
+      "sha256": "792b7abd26c1fb6ae62906833e09a301251e2641816e69e4f95aba518f3fe3f0",
+      "upstreamSame": true
+    },
+    {
+      "path": "js/wm.js",
+      "bytes": 23320,
+      "sha256": "5d3c414d7172a4b6e613cf7995c32a10fb7451849edd1852eb7ee5ae5f24ea49",
+      "upstreamSame": false
+    },
+    {
+      "path": "site.webmanifest",
+      "bytes": 516,
+      "sha256": "8584e6993e5d6d66826424797b6ae7b31b91a18852586fcbf58cb271978b9778",
+      "upstreamSame": true
+    }
+  ]
+}

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { createKernel } from '@tuxos/kernel';
 import { createShell, type CommandDefinition } from './index';
 
-const make = () => createShell(createKernel({ username: 'ada' }));
+// File listing assertions use a fixed clock, independent of the month tests run in.
+const make = () => createShell(createKernel({ username: 'ada', now: () => Date.UTC(2026, 9, 11, 8, 15) }));
 
 async function run(shell: ReturnType<typeof make>, line: string) {
   return shell.run(line);
