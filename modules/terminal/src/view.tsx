@@ -2,7 +2,9 @@ import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
 import '@xterm/xterm/css/xterm.css';
 import type { AppViewProps } from '@tuxos/system';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import type { EditorRequest } from '@tuxos/shell';
+import { TeachingEditor } from './TeachingEditor';
 import { DESKTOP_PACKAGES } from '@tuxos/sdk';
 import { TerminalController } from './controller';
 import { CLIPBOARD_LOCK_MESSAGE, guardTerminalClipboard } from './clipboard';
@@ -45,17 +47,18 @@ export interface TerminalTypeDetail {
 
 export default function TerminalView(props: AppViewProps) {
   const desktop = DESKTOP_PACKAGES.find(item => item.id === props.args?.installDesktop);
-  return <div className="terminal-install-window">{desktop && <section className="terminal-install-guide"><strong>Install {desktop.name}</strong><p>Practice installing these simulated packages. Desktop styles are already available in Settings.</p><pre>sudo apt update{'\n'}sudo apt install {desktop.package}</pre><small>TuxOS practice packages · simulated installation</small></section>}<TerminalSurface system={props.system} windowId={props.windowId} args={props.args} learningModule={desktop ? "desktop-installation" : undefined} colourOutput={Boolean(desktop)} /></div>;
+  return <div className="terminal-install-window">{desktop && <section className="terminal-install-guide"><strong>Install {desktop.name}</strong><p>Practice installing these simulated packages. Desktop styles are already available in Settings.</p><pre>sudo apt update{'\n'}sudo apt install {desktop.package}</pre><small>TuxOS practice packages · simulated installation</small></section>}<TerminalSurface system={props.system} windowId={props.windowId} setCloseGuard={props.setCloseGuard} args={props.args} learningModule={desktop ? "desktop-installation" : undefined} colourOutput={Boolean(desktop)} /></div>;
 }
 
 /** Reusable real xterm surface for terminal-first learning labs. */
-export function TerminalSurface({ system, windowId, args, learningModule, inputId = windowId, clipboardDisabled = false, colourOutput = Boolean(learningModule) }: {
+export function TerminalSurface({ system, windowId, args, learningModule, inputId = windowId, clipboardDisabled = false, colourOutput = Boolean(learningModule), setCloseGuard }: {
   system: AppViewProps['system']; windowId?: string; args?: AppViewProps['args']; learningModule?: string;
   /** The id that TERMINAL_TYPE_EVENT uses to type here; a window's terminal uses its window id. */
   inputId?: string;
   /** Optional, explicitly chosen typing practice. Output can always be copied. */
   clipboardDisabled?: boolean;
   colourOutput?: boolean;
+  setCloseGuard?: AppViewProps['setCloseGuard'];
 }) {
   // Vasu's own terminal runs his commands as the tutor, so they never count towards the learner's lessons.
   const owner = args?.owner === 'vasu' ? 'vasu' : 'learner';
@@ -67,6 +70,25 @@ export function TerminalSurface({ system, windowId, args, learningModule, inputI
   const [error, setError] = useState('');
   const [running, setRunning] = useState(false);
   const interrupt = useRef<() => void>(() => {});
+  const [editing, setEditing] = useState<EditorRequest | null>(null);
+  const editorResolve = useRef<((closed: boolean) => void) | null>(null);
+  const editorGuard = useRef<(() => boolean) | null>(null);
+  const guardTarget = useRef(setCloseGuard); guardTarget.current = setCloseGuard;
+  const setEditorGuard = useCallback((guard: (() => boolean) | null) => { editorGuard.current = guard; guardTarget.current?.(guard); }, []);
+  const finishEdit = useCallback((closed: boolean) => {
+    editorResolve.current?.(closed); editorResolve.current = null; setEditorGuard(null); setEditing(null);
+  }, [setEditorGuard]);
+  const hadEditor = useRef(false);
+  useEffect(() => {
+    if (editing) hadEditor.current = true;
+    else if (hadEditor.current) { hadEditor.current = false; terminal.current?.focus(); }
+  }, [editing]);
+  useEffect(() => system.registerLeaveGuard?.(`terminal-editor:${inputId}`, () => editorGuard.current?.() ?? true), [system, inputId]);
+  useEffect(() => {
+    const beforeUnload = (event: BeforeUnloadEvent) => { if (editorGuard.current) { event.preventDefault(); event.returnValue = ''; } };
+    window.addEventListener('beforeunload', beforeUnload);
+    return () => window.removeEventListener('beforeunload', beforeUnload);
+  }, []);
 
   useEffect(() => {
     const element = container.current;
@@ -104,6 +126,15 @@ export function TerminalSurface({ system, windowId, args, learningModule, inputI
     };
     window.addEventListener(TERMINAL_TYPE_EVENT, onType);
     const windowActions = {
+      editFile: (request: EditorRequest): Promise<boolean> => {
+        if (disposed) return Promise.resolve(false);
+        return new Promise(resolve => {
+          const abort = () => { editorResolve.current = null; if (!disposed) { setEditorGuard(null); setEditing(null); } resolve(false); };
+          editorResolve.current = closed => { request.signal?.removeEventListener('abort', abort); resolve(closed); };
+          request.signal?.addEventListener('abort', abort, { once: true });
+          if (request.signal?.aborted) abort(); else setEditing(request);
+        });
+      },
       runningChanged: (value: boolean) => { if (!disposed) setRunning(value); },
       close: () => { if (windowId) void system.dispatch('session.close', { id: windowId }); },
       setTitle: (title: string) => {
@@ -165,6 +196,7 @@ export function TerminalSurface({ system, windowId, args, learningModule, inputI
     return () => {
       disposed = true;
       controller?.dispose();
+      editorResolve.current?.(false); editorResolve.current = null; setEditorGuard(null); setEditing(null);
       interrupt.current = () => {};
       window.removeEventListener(TERMINAL_TYPE_EVENT, onType);
       observer?.disconnect();
@@ -193,8 +225,9 @@ export function TerminalSurface({ system, windowId, args, learningModule, inputI
       <span id={clipboardTipId} role="tooltip" className="terminal-clipboard-tooltip">{CLIPBOARD_LOCK_MESSAGE}</span>
       <span className="terminal-clipboard-announcement" role="status">{clipboardNotice ? CLIPBOARD_LOCK_MESSAGE : ''}</span>
     </div>}
-    {running && <button className="terminal-stop" onClick={() => interrupt.current()} title="Interrupt the running command (Ctrl+C)">Stop command</button>}
+    {running && !editing && <button className="terminal-stop" onClick={() => interrupt.current()} title="Interrupt the running command (Ctrl+C)">Stop command</button>}
     {error && <p className="terminal-error" role="alert">Terminal error: {error}</p>}
-    <div className="terminal-screen" ref={container} />
+    <div className="terminal-screen" ref={container} style={{ visibility: editing ? 'hidden' : undefined }} />
+    {editing && <TeachingEditor request={editing} finish={finishEdit} setGuard={setEditorGuard} />}
   </div>;
 }

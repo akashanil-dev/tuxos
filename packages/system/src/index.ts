@@ -259,6 +259,11 @@ export function createLocalSystem(options: {
     running = { kernel, registry, host, plugins, unsubscribe };
     await discoverPlugins(client, host, options.plugins);
     await host.start();
+    // Restored windows render without calling openApp again. Activate their owners before exposing
+    // the desktop so their actions exist on reload, while keeping unopened modules lazy.
+    const installedApps = new Set(host.apps().map(app => app.id));
+    const restoredApps = [...new Set(kernel.getState().session.windows.map(window => window.appId))];
+    await Promise.all(restoredApps.filter(id => installedApps.has(id)).map(id => host.openApp(id).catch(() => undefined)));
     if (options.journey) kernel.dispatch({ type: 'journey.reconcile', payload: {} });
   };
 

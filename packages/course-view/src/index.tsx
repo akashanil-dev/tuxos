@@ -73,12 +73,13 @@ export function CourseView({ system, courseId }: { system: SystemClient; courseI
 export type LabVariant = 'linux' | 'docker' | 'chmod';
 
 /** Terminal-first course window: the generated task is always visible above the learner's shell. */
-export function LearningLabView({ system, courseId, variant }: {
+export function LearningLabView({ system, courseId, variant, setCloseGuard }: {
   system: SystemClient;
   courseId: string;
   variant: LabVariant;
+  setCloseGuard?: (guard: (() => boolean) | null) => void;
 }) {
-  if (variant === 'linux') return <LinuxTerminalLab system={system} courseId={courseId} />;
+  if (variant === 'linux') return <LinuxTerminalLab system={system} courseId={courseId} setCloseGuard={setCloseGuard} />;
   const { status, error, call } = useLessonStatus(system, courseId);
   const [selected, setSelected] = useState<string | null>(null);
   const terminal = useRef<LabTerminalHandle>(null);
@@ -189,10 +190,10 @@ function LabProgress({ lessons }: { lessons: { steps: number; completed: number 
   </div>;
 }
 
-function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId: string }) {
+function LinuxTerminalLab({ system, courseId, setCloseGuard }: { system: SystemClient; courseId: string; setCloseGuard?: (guard: (() => boolean) | null) => void }) {
   return <div className="linux-terminal-lab continuous-learning">
     <div className="learning-instructions"><LinuxLessonPanel system={system} courseId={courseId} /></div>
-    <TerminalSurface system={system} learningModule={courseId} inputId={`${courseId}-lab`} />
+    <TerminalSurface system={system} setCloseGuard={setCloseGuard} learningModule={courseId} inputId={`${courseId}-lab`} />
   </div>;
 }
 

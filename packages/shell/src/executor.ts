@@ -1,4 +1,4 @@
-import { Kernel, resolvePath, type Stat } from '@tuxos/kernel';
+import { Kernel, resolvePath, type Stat, type ShellRan } from '@tuxos/kernel';
 import type { Actor, DispatchResult } from '@tuxos/sdk';
 import { parse, type ParsedCommand, type ParsedList, type ParsedWord, type WordSegment } from './parser';
 import type {
@@ -10,6 +10,7 @@ import type {
   ShellOptions,
   ShellIO,
 } from './commands';
+import { commandNotFound } from './commands/teaching';
 import { strerror } from './commands/helpers';
 import { complete } from './complete';
 import { createCommandRegistry, type CommandRegistry } from './registry';
@@ -29,6 +30,7 @@ export class ShellImpl implements ShellInternals {
   /** Command names run by the current line, for the shell.ran record. */
   private ran: string[] = [];
   private succeeded: string[] = [];
+  private activities: NonNullable<ShellRan['activities']> = [];
 
   constructor(readonly kernel: Kernel, options: ShellOptions = {}) {
     this.actor = options.actor;
@@ -54,9 +56,10 @@ export class ShellImpl implements ShellInternals {
     this.remember(line);
     this.ran = [];
     this.succeeded = [];
+    this.activities = [];
     // Slash commands are terminal-native learning controls. Ordinary absolute paths such as /etc/passwd
     // remain untouched; only the explicitly supported learning commands lose their leading slash.
-    const executableLine = this.learningModule ? line.replace(/^(\s*)\/(hint|answer|task|next)(?=\s|$)/, '$1$2') : line;
+    const executableLine = this.learningModule ? line.replace(/^(\s*)\/(hint|answer|task|next)(?=\s|$)/, '$1$2') : line.replace(/^(\s*)\/(hint)(?=\s|$)/, '$1$2');
     const result = await this.runInternal(executableLine, this.kernel.user, io);
     if (line.trim()) this.record(line, result);
     return result;
@@ -82,7 +85,7 @@ export class ShellImpl implements ShellInternals {
     this.ran.push(args[0]!);
     const definition = this.definition(args[0]!);
     if (!definition || (definition.learningOnly && !this.learningModule)) {
-      const stderr = `${args[0]}: command not found\n`;
+      const stderr = commandNotFound(args[0]!, this.commands().filter(command => command.available?.() !== false).map(command => command.name));
       io.stderr?.(stderr);
       return { stdout: '', stderr, code: 127 };
     }
@@ -148,7 +151,7 @@ export class ShellImpl implements ShellInternals {
       this.ran.push(name);
       const definition = this.definition(name);
       if (!definition || (definition.learningOnly && !this.learningModule)) {
-        const error = `${name}: command not found\n`;
+        const error = commandNotFound(name, this.commands().filter(command => command.available?.() !== false).map(command => command.name));
         io.stderr?.(error);
         return { stdout: '', stderr: stderr + error, code: 127 };
       }
@@ -157,6 +160,7 @@ export class ShellImpl implements ShellInternals {
       const result = await this.executeCommand(definition, expanded.slice(1), input, user, command, {
         ...io, stdout: terminalOutput ? io.stdout : undefined,
         readLine: terminalInput ? io.readLine : undefined,
+        editFile: terminalInput && terminalOutput ? io.editFile : undefined,
         terminal: terminalInput && terminalOutput ? io.terminal : undefined,
       });
       stderr += result.stderr;
@@ -194,6 +198,7 @@ export class ShellImpl implements ShellInternals {
     const context: CommandContext = {
       args,
       stdin,
+      activity: kind => { if (!this.activities.includes(kind)) this.activities.push(kind); },
       user,
       stdout: (text) => {
         stdout += text;
@@ -203,6 +208,7 @@ export class ShellImpl implements ShellInternals {
       },
       stderr: (text) => { stderr += text; io.stderr?.(text); },
       readLine: io.readLine,
+      editFile: io.editFile,
       signal: io.signal,
       terminal: io.terminal,
       shell: this,
@@ -245,6 +251,7 @@ export class ShellImpl implements ShellInternals {
       stderr: cap(result.stderr),
       commands: this.ran,
       successfulCommands: [...new Set(this.succeeded)],
+      activities: [...this.activities],
       learningModule: this.learningModule,
     }, this.kernel.user);
   }

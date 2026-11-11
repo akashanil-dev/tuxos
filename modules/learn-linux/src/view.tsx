@@ -3,7 +3,7 @@ import { LearningLabView } from '@tuxos/course-view';
 import type { LessonStatus } from '@tuxos/lessons';
 import type { AppViewProps } from '@tuxos/system';
 
-export default function LearnLinuxView({ system, args }: AppViewProps) {
+export default function LearnLinuxView({ system, args, setCloseGuard }: AppViewProps) {
   const started = useRef(false);
   useEffect(() => {
     if (!args?.guided || started.current) return;
@@ -17,6 +17,6 @@ export default function LearnLinuxView({ system, args }: AppViewProps) {
   }, [system, args?.guided]);
   return <div className="learning-entry">
     <nav aria-label="Learning activities"><button onClick={() => void system.openApp('learn-adventure')}>Tux’s Adventure</button><button onClick={() => void system.openApp('play')}>Play</button><button aria-current="page">Linux course</button><button onClick={() => void system.openApp('learn-docker')}>Docker</button><button onClick={() => void system.openApp('learn-filesystem')}>Filesystem guide</button></nav>
-    <LearningLabView system={system} courseId="learn-linux" variant="linux" />
+    <LearningLabView setCloseGuard={setCloseGuard} system={system} courseId="learn-linux" variant="linux" />
   </div>;
 }

@@ -12,7 +12,7 @@ Status distinguishes implemented behavior from full release verification. Source
 | Pipe Dream, eight levels | apps/pipedream.js, coreutils.js | pipe-dream | Block stages, previews, terminal parity, saved completion | Implemented; eight-solution parity tests and browser solve pass |
 | Know Your Distro | apps/runner.js | know-your-distro | Rapid/Infinite, families/map, scores/combos, controls, sound, weather, showcase | Implemented; full model/replay tests and browser gameplay pass |
 | Learned commands/print | apps/journal.js, shell.js | exploration/reference | Successful learner commands, examples, readable print, import | Implemented; print and import verification pending |
-| Thirty achievements | core.js and triggers | shared exploration progress | Stable IDs/timestamps, exact-once triggers, import, no tutor farming | Catalog and shared observer implemented; feature triggers continue |
+| Thirty achievements | core.js and triggers | shared exploration progress | Stable IDs/timestamps, exact-once triggers, import, no tutor farming | Catalog, shared/game/quest/editor/Matrix/root-refusal triggers implemented; boot/Konami/daemon/sandwich continue |
 | Try Linux | apps/system.js | try-linux | Four-question selector/six distros, sourced guide, next steps | Implemented; quiz/reload tests and browser complete flow pass |
 | File navigation and preview | apps/files.js | files | Places/breadcrumbs, permissions, equivalent CLI, terminal-here | Implemented; browser preview and terminal-here verified |
 | Clipboard and teaching tone | terminal.js | terminal/JourneyScreen | Copy/paste/context menu, Ctrl+C, neutral optional practice | Implemented; browser paste and lesson completion verified |

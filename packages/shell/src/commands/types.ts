@@ -1,4 +1,4 @@
-import type { Kernel } from '@tuxos/kernel';
+import type { Kernel, ShellRan } from '@tuxos/kernel';
 import type { Actor, CommandDefinition as SdkCommandDefinition, DispatchResult, PluginManager } from '@tuxos/sdk';
 import type { CommandRegistry } from '../registry';
 
@@ -8,11 +8,20 @@ export interface RunResult {
   code: number;
 }
 
+export interface EditorRequest {
+  mode: 'nano' | 'vim';
+  path: string;
+  content: string;
+  signal?: AbortSignal;
+  save(content: string): { ok: true } | { ok: false; error: string };
+}
+
 /** Optional live terminal I/O. Headless callers still receive a complete buffered result. */
 export interface ShellIO {
   stdout?(text: string): void;
   stderr?(text: string): void;
   readLine?(prompt: string): Promise<string | null>;
+  editFile?(request: EditorRequest): Promise<boolean>;
   signal?: AbortSignal;
   terminal?: { columns: number; rows: number };
 }
@@ -49,7 +58,9 @@ export interface CommandContext {
   kernel: Kernel;
   dispatch<R>(type: string, payload: unknown): DispatchResult<R>;
   resolve(path: string): string;
+  activity?(kind: NonNullable<ShellRan['activities']>[number]): void;
   readLine?: ShellIO['readLine'];
+  editFile?: ShellIO['editFile'];
   signal?: AbortSignal;
   terminal?: ShellIO['terminal'];
 }

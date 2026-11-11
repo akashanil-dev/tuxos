@@ -23,3 +23,21 @@ it('tracks successful learner commands only, retains timestamps, and never turns
   expect((await system.dispatch('exploration.observe', null)).ok).toBe(false);
   await system.reset();
 });
+
+it('records actual editor exit and protected root refusal, without rewarding help or tutor activity', async () => {
+  const system = createLocalSystem({ storage: { get: async () => null, set: async () => {}, remove: async () => {} }, modules: [{ manifest: exploration.manifest, load: async () => exploration }] });
+  await system.boot('ada'); const shell = await system.createTerminal();
+  await shell.run('vim --help');
+  let status = await system.dispatch<ExplorationProgress>('exploration.status', {});
+  expect(status.ok && status.value.achievements.vim_escape).toBeUndefined();
+  await shell.run('vim note', { editFile: async () => true });
+  expect((await shell.run('sudo rm -rf /')).code).toBe(1);
+  expect((await shell.run('cat /etc/passwd')).code).toBe(0);
+  const tutor = system.tutor(); tutor.setCapabilities(['*']);
+  await (await tutor.createTerminal()).run('rm -r /');
+  status = await system.dispatch<ExplorationProgress>('exploration.status', {});
+  expect(status.ok && status.value.achievements.vim_escape).toBeGreaterThan(0);
+  expect(status.ok && status.value.achievements.rm_rf).toBeGreaterThan(0);
+  expect(status.ok && status.value.learned.rm).toBeUndefined();
+  await system.reset();
+});

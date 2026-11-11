@@ -1,6 +1,7 @@
 // Connects a screen (xterm.js in the app, a fake in tests) to one shell session: prompt, line editing,
 // running commands, completion, and the few things bash itself handles rather than a program (exit).
 
+import type { ShellIO } from '@tuxos/shell';
 import type { TerminalSession } from '@tuxos/system';
 import { LineEditor, type EditorEvent } from './line-editor';
 
@@ -14,6 +15,7 @@ export interface Screen {
 export interface WindowActions {
   close(): void;
   setTitle(title: string): void;
+  editFile?: ShellIO['editFile'];
   runningChanged?(running: boolean): void;
 }
 
@@ -127,6 +129,7 @@ export class TerminalController {
     try {
       const result = await this.session.run(line, {
         stdout: text => write(text), stderr: text => write(text, true), signal: this.running.signal,
+        editFile: this.window.editFile,
         terminal: { columns: this.screen.cols, rows: this.screen.rows ?? 24 },
         readLine: (prompt) => {
           if (this.disposed || this.running?.signal.aborted) return Promise.resolve(null);

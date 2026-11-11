@@ -89,10 +89,14 @@ function remove(): CommandDefinition {
         ctx.stderr('rm: missing operand\n');
         return 1;
       }
+      if (flags.has('r') && args.some(raw => ctx.resolve(raw) === '/')) {
+        ctx.activity?.('root-refused');
+        ctx.stderr('rm: refusing to remove the filesystem root. Your files are safe. Practise removal inside a named exercise folder.\n'); return 1;
+      }
       let code = 0;
       for (const raw of args) {
         const result = ctx.dispatch('fs.remove', { path: ctx.resolve(raw), recursive: flags.has('r') });
-        if (!result.ok && !flags.has('f')) {
+        if (!result.ok && !(flags.has('f') && result.error.code === 'ENOENT')) {
           ctx.stderr(`rm: cannot remove '${raw}': ${strerror(result.error.code)}\n`);
           code = 1;
         }

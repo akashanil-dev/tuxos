@@ -79,7 +79,7 @@ function sudo(): CommandDefinition {
       }
       const result = await (ctx.shell as ShellInternals).runAsCommand(args, ctx.stdin, 'root', {
         stdout: ctx.stdout, stderr: ctx.stderr, readLine: ctx.readLine,
-        signal: ctx.signal, terminal: ctx.terminal,
+        signal: ctx.signal, terminal: ctx.terminal, editFile: ctx.editFile,
       });
       return result.code;
     },

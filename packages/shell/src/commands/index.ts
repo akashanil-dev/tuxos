@@ -2,6 +2,7 @@ import type { CommandDefinition } from './types';
 import { fileCommands } from './files';
 import { navigationCommands } from './navigation';
 import { systemCommands } from './system';
+import { teachingCommands } from './teaching';
 import { textCommands } from './text';
 
 export function builtinCommands(): CommandDefinition[] {
@@ -10,11 +11,13 @@ export function builtinCommands(): CommandDefinition[] {
     ...fileCommands(),
     ...textCommands(),
     ...systemCommands(),
+    ...teachingCommands(),
   ];
 }
 
 export type {
   ShellIO,
+  EditorRequest,
   CommandContext,
   CommandDefinition,
   Completion,

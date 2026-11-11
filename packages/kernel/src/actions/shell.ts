@@ -14,6 +14,7 @@ export interface ShellRan {
   commands: string[];
   successfulCommands?: string[];
   learningModule?: string;
+  activities?: ('vim-exit' | 'matrix' | 'root-refused' | 'sandwich' | 'daemon')[];
 }
 
 function valid(payload: unknown): payload is ShellRan {

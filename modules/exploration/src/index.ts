@@ -1,5 +1,6 @@
 import { emptyExploration, type KernelEvent, type ModuleDefinition } from '@tuxos/sdk';
 import { KernelError, type ActionContext, type ShellRan } from '@tuxos/kernel';
+import { WINDOWS_COMMANDS } from '@tuxos/shell';
 import { manifest } from './manifest';
 export { manifest } from './manifest';
 
@@ -31,8 +32,8 @@ export const exploration: ModuleDefinition = {
           if (ran.code === 0 && /(^|[^|])\|([^|]|$)/.test(ran.line)) award('first_pipe');
           if (success.includes('sudo')) award('sudo_lecture');
           for (const name of ['cowsay', 'fortune', 'sl']) if (success.includes(name)) award(name);
-          if (success.includes('cmatrix') || success.includes('matrix')) award('matrix');
-          if (ran.commands.some(name => ['dir', 'cls', 'ipconfig', 'copy', 'del', 'type'].includes(name))) award('windows_habit');
+          for (const [activity, id] of Object.entries({ 'vim-exit': 'vim_escape', matrix: 'matrix', 'root-refused': 'rm_rf', sandwich: 'sandwich', daemon: 'daemon' })) if (ran.activities?.includes(activity as NonNullable<ShellRan['activities']>[number])) award(id);
+          if (ran.commands.some(name => Object.hasOwn(WINDOWS_COMMANDS, name.toLowerCase()))) award('windows_habit');
         }
         if (event.action.type === 'session.setDesktop') { if (lastDesktop !== state.session.desktop) award('theme_switch'); lastDesktop = state.session.desktop; }
         if (event.action.type === 'session.open') {

@@ -1,3 +1,4 @@
+import type { CommandContext } from '@tuxos/shell';
 import type { ModuleDefinition } from '@tuxos/sdk';
 import { learningRuntime } from '@tuxos/lessons';
 import { manifest } from './manifest';
@@ -24,8 +25,13 @@ export const terminal: ModuleDefinition = {
         name,
         summary: manifest.contributes.commands!.find((command) => command.name === name)!.summary,
         usage: `/${name}`,
-        learningOnly: true,
-        async run(command: { stdout(text: string): void; stderr(text: string): void; shell: { learningModule?: string } }) {
+        learningOnly: name !== 'hint',
+        async run(command: CommandContext) {
+          if (name === 'hint' && !command.shell.learningModule) {
+            const quest = command.shell.commands().find(item => item.name === 'quest');
+            if (quest) return quest.run({ ...command, args: ['hint'] });
+            command.stdout('Open Tux’s Adventure from Play for story hints, or open Learn Linux for course hints.\n'); return 0;
+          }
           const runner = command.shell.learningModule ? learningRuntime.get(command.shell.learningModule) : undefined;
           if (!runner) {
             command.stderr('No active AI learning task. Open Learn Linux or Learn Docker and start a day first.\n');

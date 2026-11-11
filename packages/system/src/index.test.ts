@@ -199,3 +199,19 @@ it('resumes bounded cwd, environment and history without awarding lesson progres
   expect(await independent.history()).toEqual([]);
   await client.reset();
 });
+
+it('activates restored window modules before boot returns without opening duplicates or unopened apps', async () => {
+  const values = new Map<string, string>();
+  const storage = { get: async (key: string) => values.get(key) ?? null, set: async (key: string, value: string) => { values.set(key, value); }, remove: async (key: string) => { values.delete(key); } };
+  let activations = 0, unopened = 0;
+  const manifest: import('@tuxos/sdk').ModuleManifest = { id: 'resumable', version: '1.0.0', title: 'Resumable', capabilities: ['fs:read'], activation: ['onApp:resumable'], contributes: { apps: [{ id: 'resumable', title: 'Resumable', icon: 'game' }] } };
+  const lazy = { manifest, activate(ctx: import('@tuxos/sdk').ModuleContext) { activations++; ctx.registerAction({ type: 'resumable.status', capability: 'fs:read', description: 'Resume probe', mutates: false, run: () => 'ready' }); } };
+  const idle: import('@tuxos/sdk').ModuleDefinition = { manifest: { ...manifest, id: 'unopened', activation: ['onApp:unopened'], contributes: { apps: [{ id: 'unopened', title: 'Unopened', icon: 'game' }] } }, activate() { unopened++; } };
+  const client = createLocalSystem({ storage, modules: [lazy, idle].map(module => ({ manifest: module.manifest, load: async () => module })) });
+  await client.boot('ada'); expect(activations).toBe(0);
+  await client.openApp('resumable'); expect(activations).toBe(1);
+  await client.flush(); await client.boot('ada'); expect(activations).toBe(2); expect(unopened).toBe(0);
+  expect(await client.dispatch('resumable.status', {})).toEqual({ ok: true, value: 'ready' });
+  expect((await client.session()).windows.filter(window => window.appId === 'resumable')).toHaveLength(1);
+  await client.reset();
+});
