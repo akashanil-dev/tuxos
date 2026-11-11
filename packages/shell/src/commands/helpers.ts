@@ -10,7 +10,7 @@ export interface Stat {
   mtime: number;
 }
 
-export function options(ctx: CommandContext, supported = ''): {
+export function options(ctx: Pick<CommandContext, 'args'>, supported = ''): {
   flags: Set<string>; args: string[]; unknown?: string;
 } {
   const flags = new Set<string>();
@@ -34,7 +34,7 @@ export function options(ctx: CommandContext, supported = ''): {
 }
 
 export function invalidOption(
-  ctx: CommandContext, name: string, option: string, code = 1, bashBuiltin = false,
+  ctx: Pick<CommandContext, 'stderr'>, name: string, option: string, code = 1, bashBuiltin = false,
 ): number {
   if (bashBuiltin) ctx.stderr(`bash: ${name}: ${option}: invalid option\n`);
   else {
@@ -44,20 +44,20 @@ export function invalidOption(
   return code;
 }
 
-export function stat(ctx: CommandContext, path: string): DispatchResult<Stat> {
+export function stat(ctx: Pick<CommandContext, 'dispatch'>, path: string): DispatchResult<Stat> {
   return ctx.dispatch<Stat>('fs.stat', { path });
 }
 
-export function read(ctx: CommandContext, path: string): string | undefined {
+export function read(ctx: Pick<CommandContext, 'dispatch'>, path: string): string | undefined {
   const result = ctx.dispatch<string>('fs.read', { path });
   return result.ok ? result.value : undefined;
 }
 
-export function readResult(ctx: CommandContext, path: string): DispatchResult<string> {
+export function readResult(ctx: Pick<CommandContext, 'dispatch'>, path: string): DispatchResult<string> {
   return ctx.dispatch<string>('fs.read', { path });
 }
 
-export function report(ctx: CommandContext, name: string, result: DispatchResult<unknown>): number {
+export function report(ctx: Pick<CommandContext, 'stderr'>, name: string, result: DispatchResult<unknown>): number {
   if (!result.ok) ctx.stderr(`${name}: ${strerror(result.error.code)}\n`);
   return result.ok ? 0 : 1;
 }
@@ -120,7 +120,7 @@ function shiftsFor(who: string): number[] {
   return [...new Set(who)].map((group) => (group === 'u' ? 6 : group === 'g' ? 3 : 0));
 }
 
-export function recursiveFiles(ctx: CommandContext, path: string): string[] {
+export function recursiveFiles(ctx: Pick<CommandContext, 'dispatch'>, path: string): string[] {
   const result = ctx.dispatch<Stat[]>('fs.list', { path });
   if (!result.ok) return [];
   const files: string[] = [];

@@ -1,4 +1,4 @@
-import type { Stat } from '@tuxos/kernel';
+import { resolvePath, type Stat } from '@tuxos/kernel';
 import type { AppViewProps } from '@tuxos/system';
 import { useEffect, useState } from 'react';
 import { FileTable } from './file-table';
@@ -11,24 +11,35 @@ type Pending =
   | { kind: 'delete'; entry: Stat }
   | null;
 
-export default function FilesView({ system, args }: AppViewProps) {
+export default function FilesView({ system, args, windowId }: AppViewProps) {
   const [path, setPath] = useState('');
   const [typedPath, setTypedPath] = useState('');
   const [back, setBack] = useState<string[]>([]);
-  const [showHidden, setShowHidden] = useState(false);
+  const [showHidden, setShowHidden] = useState(args?.hidden === 'true');
   const [selected, setSelected] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending>(null);
   const [notice, setNotice] = useState('');
-  const { entries, error } = useDirectory(system, path);
+  const [presentation, setPresentation] = useState<'table' | 'icons'>(args?.view === 'icons' ? 'icons' : 'table');
+  const [preview, setPreview] = useState<{ path: string; content: string } | null>(null);
+  const [previewPath, setPreviewPath] = useState<string | null>(null);
+  const { entries, error, loading } = useDirectory(system, path);
 
   useEffect(() => {
     let active = true;
-    void system.user().then((user) => { if (active) go(args?.path ?? `/home/${user}`, false); });
+    void system.user().then((user) => { const next = args?.path ?? `/home/${user}`; if (active && next !== path) go(next, false); });
     return () => { active = false; };
   }, [system, args?.path]);
 
+  useEffect(() => {
+    if (!path || loading || error || (args?.path === path && args?.hidden === String(showHidden) && args?.view === presentation)) return;
+    // Persist only a directory that loaded successfully; an unavailable path remains recoverable via Places.
+    void system.dispatch('session.setArgs', { id: windowId, args: { path, hidden: String(showHidden), view: presentation } });
+  }, [system, windowId, path, loading, error, showHidden, presentation, args?.path, args?.hidden, args?.view]);
+
   function go(next: string, remember = true) {
-    if (remember && path) setBack((history) => [...history, path]);
+    next = resolvePath(next);
+    setPreviewPath(null); setPreview(null);
+    if (remember && path) setBack((history) => [...history, path].slice(-100));
     setPath(next);
     setTypedPath(next);
     setSelected(null);
@@ -39,8 +50,20 @@ export default function FilesView({ system, args }: AppViewProps) {
   function open(entry: Stat) {
     const target = joinPath(path, entry.name);
     if (entry.kind === 'dir') go(target);
-    else void system.openApp('editor', { path: target });
+    else setPreviewPath(target);
   }
+
+  useEffect(() => {
+    if (!previewPath) return;
+    let active = true;
+    setPreview(null);
+    void system.dispatch<string>('fs.read', { path: previewPath }).then(result => {
+      if (!active) return;
+      if (result.ok) setPreview({ path: previewPath, content: result.value });
+      else { setNotice(reason(result.error.code, result.error.message)); setPreviewPath(null); }
+    });
+    return () => { active = false; };
+  }, [system, previewPath]);
 
   async function create(kind: 'new-folder' | 'new-file', name: string) {
     const problem = nameError(name);
@@ -103,9 +126,15 @@ export default function FilesView({ system, args }: AppViewProps) {
     <nav className="files-bar" aria-label="Places">
       <button onClick={() => go('/')}>Filesystem /</button>
       <button onClick={() => void system.user().then(user => go(`/home/${user}`))}>Home</button>
+      <button onClick={() => void system.user().then(user => go(`/home/${user}/Documents`))}>Documents folder</button>
+      <button onClick={() => go('/tmp')}>Temporary files</button>
+      <button disabled={!path} onClick={() => void system.openApp('terminal', { cwd: path, from: 'files' }).then(result => { if (!result.ok) setNotice(result.error.message); })}>Open terminal here</button>
+      <button aria-pressed={presentation === 'icons'} onClick={() => setPresentation(value => value === 'icons' ? 'table' : 'icons')}>{presentation === 'icons' ? 'List view' : 'Icon view'}</button>
       <button onClick={() => setShowHidden(value => !value)} aria-pressed={showHidden}>Hidden files</button>
       <button onClick={() => void system.openApp('learn-filesystem').then(result => { if (!result.ok) setNotice(result.error.message); })}>Learn this filesystem ↗</button>
     </nav>
+    <nav className="files-bar files-breadcrumbs" aria-label="Folder breadcrumbs"><button onClick={() => go('/')}>/</button>{path.split('/').filter(Boolean).map((part, index, parts) => <button key={index} onClick={() => go('/' + parts.slice(0, index + 1).join('/'))}>{part}</button>)}<small>Terminal equivalent: <code>cd {shellQuote(path)}</code></small></nav>
+    {selectedEntry && <div className="files-bar"><span>{selectedEntry.owner} · permissions {selectedEntry.mode.toString(8).padStart(3, '0')}</span><button onClick={() => open(selectedEntry)}>{selectedEntry.kind === 'dir' ? 'Open folder' : 'Preview file'}</button>{selectedEntry.kind === 'file' && <button onClick={() => void system.openApp('editor', { path: joinPath(path, selectedEntry.name) })}>Open in Text Editor</button>}</div>}
     {pending && pending.kind !== 'delete' && <NamePrompt
       label={pending.kind === 'new-folder' ? 'Folder name' : 'File name'}
       pending={pending}
@@ -122,11 +151,12 @@ export default function FilesView({ system, args }: AppViewProps) {
       <button onClick={() => setPending(null)}>Cancel</button>
     </div>}
     {notice && <p className="files-bar files-error" role="alert">{notice}</p>}
-    {error
+    {loading ? <p className="files-empty" role="status">Opening folder…</p> : error
       ? <p className="files-empty files-error" role="alert">{error}</p>
-      : <FileTable entries={visible} selected={selected} onSelect={setSelected} onOpen={open} />}
+      : <FileTable entries={visible} selected={selected} onSelect={name => { setSelected(name); setPreviewPath(null); setPreview(null); }} onOpen={open} presentation={presentation} />}
+    {preview && <aside className="files-preview" aria-label="File preview"><header><strong>{preview.path}</strong><button onClick={() => { setPreviewPath(null); setPreview(null); }}>Close preview</button><button onClick={() => void system.openApp('editor', { path: preview.path })}>Edit file</button></header><small>Terminal equivalent: <code>cat {shellQuote(preview.path)}</code></small><pre>{preview.content}</pre></aside>}
     <footer className="files-status">
-      {selectedEntry ? `“${selectedEntry.name}” — ${formatSize(selectedEntry)}` : `${visible.length} items`}
+      {loading ? 'Opening folder…' : selectedEntry ? `“${selectedEntry.name}” — ${formatSize(selectedEntry)}` : `${visible.length} items`}
       {showHidden ? ' · showing hidden files' : ' · Ctrl+H shows hidden files'}
     </footer>
   </div>;
@@ -154,3 +184,5 @@ function NamePrompt({ label, pending, onChange, onSubmit, onCancel }: {
     {pending.error && <span className="files-error" role="alert">{pending.error}</span>}
   </form>;
 }
+
+function shellQuote(value: string): string { return "'" + value.replaceAll("'", "'\"'\"'") + "'"; }

@@ -3,6 +3,7 @@ import { aptCommand, dpkgCommand, whichCommand } from './apt';
 import { CATALOG } from './catalog';
 import { ensureDatabase, type Files } from './dpkg';
 import { manifest } from './manifest';
+import { familyPracticeCommands } from './family-practice';
 import { PROGRAMS, program } from './programs';
 
 export { manifest } from './manifest';
@@ -29,6 +30,7 @@ export const apt: ModuleDefinition = {
   manifest,
   activate(ctx) {
     ensureDatabase(rootFiles(ctx));
+    for (const command of familyPracticeCommands()) ctx.registerCommand(command);
     ctx.registerCommand({ name: 'apt', summary: 'Install, remove and search for software packages', usage: 'apt install|remove|search|show|list|update PACKAGE', run: aptCommand('apt') });
     ctx.registerCommand({ name: 'apt-get', summary: 'Install and remove packages (the older apt interface)', usage: 'apt-get install|remove|update PACKAGE', run: aptCommand('apt-get') });
     ctx.registerCommand({ name: 'dpkg', summary: 'List installed packages and the files they own', usage: 'dpkg -l | -L PACKAGE | -s PACKAGE', run: dpkgCommand });

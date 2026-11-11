@@ -3,12 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./backups": "./src/backups.ts"
+  },
   "dependencies": {
     "@tuxos/kernel": "*",
     "@tuxos/lessons": "*",
     "@tuxos/module-host": "*",
     "@tuxos/sdk": "*",
-    "@tuxos/shell": "*"
+    "@tuxos/shell": "*",
+    "@tuxos/migration": "*"
   }
 }

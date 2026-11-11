@@ -15,6 +15,7 @@ export async function cmatrix(ctx: CommandContext): Promise<number> {
     ctx.stderr('cmatrix: unsupported option. Try cmatrix --help.\n');
     return 1;
   }
+  ctx.activity?.('matrix');
   const columns = Math.max(10, Math.min(ctx.terminal?.columns ?? 60, 180) - 1);
   const rows = Math.max(4, Math.min(ctx.terminal?.rows ?? 18, 70) - 2);
   const heads = Array.from({ length: Math.ceil(columns / 2) }, () => Math.floor(Math.random() * rows));

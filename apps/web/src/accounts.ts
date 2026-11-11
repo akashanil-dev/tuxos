@@ -25,7 +25,7 @@ async function call(method: string, path: string, body?: unknown): Promise<{ sta
       ...(body === undefined ? {} : { headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }),
     });
   } catch {
-    throw new Error('The account service is not reachable. Check your connection and try again. Your account is required to save progress.');
+    throw new Error('The account service is not reachable. Try again when connected. Guest exploration remains available in this browser.');
   }
   const data = await response.json().catch(() => ({})) as Record<string, unknown>;
   return { status: response.status, data };
@@ -40,8 +40,10 @@ export function httpAccounts(): AccountsClient {
   let queue: Promise<unknown> = Promise.resolve();
 
   const signIn = async (path: string, username: string, password: string) => {
+    await queue;
     const { status, data } = await call('POST', path, { username, password });
     if (status >= 300) throw failure(data, status);
+    version = 0;
   };
 
   return {
@@ -54,7 +56,9 @@ export function httpAccounts(): AccountsClient {
     register: (username, password) => signIn('/api/auth/register', username, password),
     login: (username, password) => signIn('/api/auth/login', username, password),
     async logout() {
+      await queue;
       await call('POST', '/api/auth/logout', {});
+      version = 0;
     },
     async verify(password) {
       const { status, data } = await call('POST', '/api/auth/verify', { password });
@@ -92,14 +96,32 @@ export function httpAccounts(): AccountsClient {
  */
 export function switchableStorage(local: KeyValueStorage) {
   let current = local;
+  let switching = false;
+  const pending = new Set<Promise<unknown>>();
+  const track = <T>(operation: (target: KeyValueStorage) => Promise<T>): Promise<T> => {
+    if (switching) return Promise.reject(new Error('Storage is switching accounts. Try saving again when it finishes.'));
+    // Capture the destination now. An asynchronous operation must never follow a later account switch.
+    const target = current;
+    const task = Promise.resolve().then(() => operation(target));
+    pending.add(task);
+    void task.then(() => pending.delete(task), () => pending.delete(task));
+    return task;
+  };
   return {
     storage: {
-      get: (key) => current.get(key),
-      set: (key, value) => current.set(key, value),
-      remove: (key) => current.remove(key),
+      get: (key) => track(target => target.get(key)),
+      set: (key, value) => track(target => target.set(key, value)),
+      remove: (key) => track(target => target.remove(key)),
     } satisfies KeyValueStorage,
-    use(target: KeyValueStorage) {
-      current = target;
+    async use(target: KeyValueStorage) {
+      if (switching) throw new Error('Another storage transition is in progress.');
+      switching = true;
+      try {
+        const results = await Promise.allSettled([...pending]);
+        const failed = results.find(result => result.status === 'rejected');
+        if (failed?.status === 'rejected') throw failed.reason;
+        current = target;
+      } finally { switching = false; }
     },
   };
 }

@@ -193,3 +193,8 @@
     display: none;
   }
 }
+
+.waybar-windows { flex-shrink:0; border:0; border-radius:5px; padding:4px 7px; background:#313244; color:inherit; font:inherit; white-space:nowrap; cursor:pointer; }
+.waybar-windows:hover { background:#45475a; }
+.waybar-windows:focus-visible { outline:2px solid #cba6f7; outline-offset:2px; }
+@media (max-width:600px) { .waybar-windows { font-size:10px; padding:4px; } }

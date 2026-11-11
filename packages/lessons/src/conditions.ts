@@ -13,6 +13,7 @@ export interface CheckContext {
   events: readonly KernelEvent[];
   home: string;
   read(path: string): Entry | undefined;
+  fact?(name: string): boolean;
 }
 
 interface ShellRan {
@@ -22,6 +23,7 @@ interface ShellRan {
   stdout: string;
   stderr: string;
   commands: string[];
+  successfulCommands?: string[];
 }
 
 export function satisfied(condition: Condition, ctx: CheckContext): boolean {
@@ -29,6 +31,7 @@ export function satisfied(condition: Condition, ctx: CheckContext): boolean {
   if ('any' in condition) return condition.any.some((part) => satisfied(part, ctx));
   if ('not' in condition) return !satisfied(condition.not, ctx);
   if ('ran' in condition) return shellRuns(ctx).some((run) => matchesRun(condition.ran, run));
+  if ('fact' in condition) return ctx.fact?.(condition.fact) ?? false;
   if ('opened' in condition) return opened(ctx).includes(condition.opened);
   if ('cwd' in condition) return shellRuns(ctx).at(-1)?.cwd === expand(condition.cwd, ctx.home);
   if ('exists' in condition) {
@@ -46,6 +49,7 @@ export function satisfied(condition: Condition, ctx: CheckContext): boolean {
 
 function matchesRun(want: RanCondition, run: ShellRan): boolean {
   return (want.command === undefined || run.commands.includes(want.command))
+    && (!want.succeeded || (want.command !== undefined && (run.successfulCommands ?? []).includes(want.command)))
     && (want.line === undefined || new RegExp(want.line).test(run.line))
     && (want.code === undefined || run.code === want.code)
     && (want.stdout === undefined || new RegExp(want.stdout, 'm').test(run.stdout))

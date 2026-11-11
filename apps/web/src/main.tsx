@@ -1,3 +1,8 @@
+import { manifest as runnerManifest } from '@tuxos/module-know-your-distro/manifest';
+import { manifest as guideManifest } from '@tuxos/module-try-linux/manifest';
+import { manifest as adventureManifest } from '@tuxos/module-learn-adventure/manifest';
+import { manifest as explorationManifest } from '@tuxos/module-exploration/manifest';
+import { manifest as pipeManifest } from '@tuxos/module-pipe-dream/manifest';
 import { isPhone } from './boot/PhoneScreen';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -12,6 +17,7 @@ import { manifest as learnLinuxManifest } from '@tuxos/module-learn-linux/manife
 import { manifest as settingsManifest } from '@tuxos/module-settings/manifest';
 import { manifest as terminalManifest } from '@tuxos/module-terminal/manifest';
 import { createLocalSystem, type KeyValueStorage } from '@tuxos/system';
+import { backupStore } from '@tuxos/system/backups';
 import { httpTransport } from '@tuxos/tutor';
 import { httpAccounts, switchableStorage } from './accounts';
 import { webAiKeys } from './ai-key';
@@ -23,8 +29,10 @@ import './styles/boot.css';
 import './styles/greeters.css';
 import './styles/window.css';
 import './styles/tutor.css';
+import './styles/continuation.css';
 
 const browserStorage: KeyValueStorage = {
+  async keys() { return Object.keys(localStorage); },
   async get(key) { try { return localStorage.getItem(key); } catch { return null; } },
   async set(key, value) {
     try {
@@ -42,27 +50,35 @@ const browserStorage: KeyValueStorage = {
   },
 };
 
-// All learners save to their account. Browser storage is read only for legacy save migration.
+// Explore locally first. Account storage is selected only after an explicit sign-in/transfer.
 const accountsClient = httpAccounts();
 const accountStorage = accountsClient.storage();
-const { storage, use } = switchableStorage(accountStorage);
+const { storage, use } = switchableStorage(browserStorage);
 // AI uses the learner's own provider and key, saved in their account.
 const ai = webAiKeys();
 const accounts: AccountsWiring = {
   client: accountsClient,
-  use: () => {
-    use(accountStorage);
-    return ai.load(true);
+  use: async target => {
+    await use(target === 'account' ? accountStorage : browserStorage);
+    // Provider availability must not make local exploration wait for the network.
+    void ai.load(target === 'account');
   },
   localSave: () => browserStorage.get('tuxos.save'),
+  backup: async (value, label) => { const username = JSON.parse(value).username; await backupStore(browserStorage).create(value, username, label); },
 };
 
 // Only manifests load up front; each module's code is fetched the first time it is used.
 const system = createLocalSystem({
   storage,
+  backupStorage: browserStorage,
   journey: true,
   ai,
   modules: [
+    { manifest: runnerManifest, load: () => import('@tuxos/module-know-your-distro').then(m => m.knowYourDistro) },
+    { manifest: guideManifest, load: () => import('@tuxos/module-try-linux').then(m => m.tryLinux) },
+    { manifest: adventureManifest, load: () => import('@tuxos/module-learn-adventure').then(m => m.learnAdventure) },
+    { manifest: explorationManifest, load: () => import('@tuxos/module-exploration').then(m => m.exploration) },
+    { manifest: pipeManifest, load: () => import('@tuxos/module-pipe-dream').then(m => m.pipeDream) },
     // Apps appear on the desktop in this order: the Terminal first, then Plugins.
     { manifest: terminalManifest, load: () => import('@tuxos/module-terminal').then((module) => module.terminal) },
     { manifest: pluginManagerModule.manifest, load: async () => pluginManagerModule },
@@ -98,6 +114,8 @@ const system = createLocalSystem({
 // With AI switched off (or no key), Vasu's requests never leave the browser.
 const tutor = httpTransport('/api/tutor', async (url, init) => {
   if (!ai.status().enabled) throw new Error('AI is turned off. Turn it on in Settings → AI.');
-  return fetch(url, { ...init, headers: { ...init?.headers as Record<string, string>, ...ai.headers() } });
+  return fetch(url, { ...init, credentials: ai.status().signedIn ? 'same-origin' : 'omit', headers: { ...init?.headers as Record<string, string>, ...ai.headers() } });
 });
-createRoot(document.getElementById('root')!).render(<StrictMode><App start={isPhone() ? 'phone' : 'grub'} system={system} tutor={tutor} accounts={accounts} /></StrictMode>);
+let fastBoot = true;
+try { fastBoot = localStorage.getItem('tuxos.fast-boot') !== '0'; } catch { /* Start normally when preferences are unavailable. */ }
+createRoot(document.getElementById('root')!).render(<StrictMode><App start={isPhone() ? 'phone' : fastBoot ? 'greeter' : 'grub'} system={system} tutor={tutor} accounts={accounts} /></StrictMode>);

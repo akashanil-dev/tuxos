@@ -55,10 +55,11 @@ function exportCommand(): CommandDefinition {
 
 function help(): CommandDefinition {
   return {
-    name: 'help', summary: 'Display information about commands', usage: 'help',
+    name: 'help', summary: 'Display information about commands', usage: 'help [COMMAND]',
     run(ctx) {
       const parsed = options(ctx);
       if (parsed.unknown) return invalidOption(ctx, 'help', `-${parsed.unknown}`);
+      if (parsed.args.length) return ctx.shell.commands().find(command => command.name === 'man')!.run({ ...ctx, args: parsed.args });
       const installed = ctx.shell.commands().filter((command) => command.available?.() !== false);
       ctx.stdout(installed.map((command) => `${command.name}\t${command.summary}`).join('\n') + '\n');
       return 0;
@@ -79,7 +80,7 @@ function sudo(): CommandDefinition {
       }
       const result = await (ctx.shell as ShellInternals).runAsCommand(args, ctx.stdin, 'root', {
         stdout: ctx.stdout, stderr: ctx.stderr, readLine: ctx.readLine,
-        signal: ctx.signal, terminal: ctx.terminal,
+        signal: ctx.signal, terminal: ctx.terminal, editFile: ctx.editFile,
       });
       return result.code;
     },

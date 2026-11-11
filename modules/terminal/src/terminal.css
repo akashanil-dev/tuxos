@@ -51,3 +51,16 @@
 .terminal-install-guide p { margin:6px 0; }
 .terminal-install-guide pre { margin:8px 0; color:#92deef; white-space:pre-wrap; }
 .terminal-install-guide small { color:#a9b7c9; }
+
+.teaching-editor { position:absolute; inset:0; z-index:4; display:flex; flex-direction:column; gap:8px; padding:12px; background:#0d1117; color:#e6edf3; font:13px/1.5 monospace; }
+.teaching-editor header { display:flex; flex-wrap:wrap; gap:8px 20px; border-bottom:1px solid #465365; padding-bottom:6px; }
+.teaching-editor header span { overflow-wrap:anywhere; }
+.teaching-editor p { margin:0; color:#a9d4e8; }
+.teaching-editor small { color:#a0adba; }
+.teaching-editor textarea { flex:1; min-height:70px; resize:none; border:1px solid #465365; border-radius:3px; background:#101820; color:#e6edf3; padding:10px; font:14px/1.5 monospace; tab-size:4; }
+.teaching-editor textarea:focus { outline:2px solid #79c0ff; outline-offset:-2px; }
+.teaching-editor-status { min-height:1.5em; overflow-wrap:anywhere; }
+.teaching-editor-actions, .teaching-editor form { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.teaching-editor button, .teaching-editor input { background:#212d3b; color:#e6edf3; border:1px solid #617487; padding:7px 10px; border-radius:4px; font:inherit; }
+.teaching-editor button { min-height:36px; cursor:pointer; }
+.teaching-editor label { display:flex; align-items:center; gap:8px; }

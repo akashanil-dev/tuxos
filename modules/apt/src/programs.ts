@@ -118,7 +118,9 @@ function wrap(text: string, width: number): string[] {
 }
 
 export const cowsay: Program = (ctx) => {
-  const text = ctx.args.length ? ctx.args.join(' ') : ctx.stdin.replace(/\n$/, '');
+  const args = [...ctx.args]; let tux = false;
+  if (args[0] === '-f') { tux = args[1] === 'tux'; if (!['tux', 'default'].includes(args[1] ?? '')) { ctx.stderr('cowsay: supported figures are default and tux.\n'); return 1; } args.splice(0, 2); }
+  const text = args.length ? args.join(' ') : ctx.stdin.replace(/\n$/, '') || 'Moo.';
   const lines = wrap(text, 40);
   const width = Math.max(...lines.map((line) => line.length));
   const body = lines.length === 1
@@ -129,11 +131,12 @@ export const cowsay: Program = (ctx) => {
     });
   ctx.stdout([
     ` ${'_'.repeat(width + 2)}`, ...body, ` ${'-'.repeat(width + 2)}`,
+    ...(tux ? ['        \\   .--.', '         \\ |o_o |', '            |:_/ |', '           //   \\ \\', '          (|     | )', '          /\'_   _/`\\', '          \\___)=(___/'] : [
     '        \\   ^__^',
     '         \\  (oo)\\_______',
     '            (__)\\       )\\/\\',
     '                ||----w |',
-    '                ||     ||',
+    '                ||     ||']),
   ].join('\n') + '\n');
   return 0;
 };
@@ -291,4 +294,15 @@ export const jq: Program = (ctx) => {
   }
 };
 
-export const PROGRAMS: Record<string, Program> = { tree, hello, cowsay, sl, neofetch, fortune, jq, cmatrix };
+const lolcat: Program = ctx => {
+  let text = ctx.stdin;
+  if (ctx.args.some(arg => arg.startsWith('-'))) { ctx.stderr('lolcat: this teaching version reads files or piped text; no options are supported.\n'); return 1; }
+  if (ctx.args.length) {
+    text = '';
+    for (const file of ctx.args) { const result = ctx.dispatch<string>('fs.read', { path: ctx.resolve(file) }); if (!result.ok) { ctx.stderr(`lolcat: ${file}: ${result.error.message}\n`); return 1; } text += result.value; }
+  }
+  const colors = [31, 33, 32, 36, 34, 35];
+  ctx.stdout(ctx.terminal ? [...text].map((char, i) => char === '\n' ? char : `\x1b[${colors[i % colors.length]}m${char}`).join('') + '\x1b[0m' : text); return 0;
+};
+
+export const PROGRAMS: Record<string, Program> = { tree, hello, cowsay, sl, neofetch, fortune, jq, cmatrix, lolcat };

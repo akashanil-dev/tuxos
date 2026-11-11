@@ -1,4 +1,4 @@
-import { validatePluginTheme, validPluginId } from '@tuxos/sdk';
+import { defaultPreferences, validatePluginTheme, validPluginId } from '@tuxos/sdk';
 import { demandReward, demandDesktop } from './journey';
 import { KernelError } from '../errors';
 import type { ActionDefinition } from '../kernel';
@@ -58,6 +58,34 @@ function focus(session: SessionState, window: Window): void {
 }
 
 export const sessionActions: ActionDefinition[] = [
+  { type: 'session.power', capability: 'session:control', description: 'Request a user-selected power action through the desktop’s unsaved-work checks.', mutates: false,
+    run: ({ actor }, raw) => { if (actor.kind !== 'user') throw new KernelError('EPERM', 'Only the learner can request session power actions.'); const action = (raw as { action?: unknown })?.action; if (!['restart', 'shutdown', 'logout'].includes(action as string)) throw new KernelError('EINVAL', 'Unsupported power action.'); return action; },
+  },
+  {
+    type: 'session.terminal', capability: 'shell:exec', description: 'Remember a bounded terminal context, without restoring running processes.', mutates: true,
+    run: ({ state }, raw) => {
+      const p = raw as { key?: unknown; cwd?: unknown; env?: unknown; history?: unknown };
+      if (!p || typeof p.key !== 'string' || !/^(window-[0-9]+|course:[a-z0-9-]+)$/.test(p.key) || typeof p.cwd !== 'string' || !p.cwd.startsWith('/') || p.cwd.length > 4096 || !p.env || typeof p.env !== 'object' || Array.isArray(p.env) || !Array.isArray(p.history)) throw new KernelError('EINVAL', 'Invalid terminal context.');
+      const entries = Object.entries(p.env);
+      if (entries.length > 100 || entries.some(([key, value]) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(key) || typeof value !== 'string' || value.length > 4096) || p.history.length > 100 || p.history.some(line => typeof line !== 'string' || line.length > 4096)) throw new KernelError('EINVAL', 'Terminal context is too large.');
+      const contexts = state.session.terminals ??= {};
+      if (!contexts[p.key] && Object.keys(contexts).length >= 64) delete contexts[Object.keys(contexts)[0]!];
+      contexts[p.key] = { cwd: p.cwd, env: Object.fromEntries(entries), history: p.history as string[] };
+    },
+  },
+  {
+    type: 'session.setPreferences', capability: 'session:control', description: 'Choose startup, learning view and companion preferences.', mutates: true,
+    run: ({ state }, payload) => {
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new KernelError('EINVAL', 'Preferences must be an object.');
+      const prefs = { ...defaultPreferences(), ...state.session.preferences };
+      for (const [key, value] of Object.entries(payload)) {
+        if (key === 'resume' && (value === 'desktop' || value === 'learn')) prefs.resume = value;
+        else if (['fastBoot', 'showVasu', 'richVasu'].includes(key) && typeof value === 'boolean') prefs[key as 'fastBoot' | 'showVasu' | 'richVasu'] = value;
+        else throw new KernelError('EINVAL', `Invalid preference: ${key}`);
+      }
+      state.session.preferences = prefs;
+    },
+  },
   {
     type: 'session.setTheme', capability: 'session:control', description: 'Apply or reset desktop theme colours.', mutates: true,
     run: ({ state }, payload) => {
@@ -102,6 +130,16 @@ export const sessionActions: ActionDefinition[] = [
       const appId = field(payload, 'appId', 'string') as string;
       if (!['terminal', 'learn-linux'].includes(appId)) demandDesktop(state.session, state.session.desktop);
       if (appId === 'plugins') demandReward(state.session, 'plugins');
+      const policy = field(payload, 'instance', 'string', true);
+      const windowArgs = args(payload);
+      const existing = state.session.windows.find(window => window.appId === appId &&
+        (policy === 'singleton' || (policy === 'document' && windowArgs?.path && window.args?.path === windowArgs.path)));
+      if (existing) {
+        // A document's live editor owns its state. Never replace it on a repeated launch.
+        if (policy === 'singleton' && windowArgs) existing.args = windowArgs;
+        focus(state.session, existing);
+        return existing.id;
+      }
       const title = field(payload, 'title', 'string') as string;
       const width = Math.max(MIN_WIDTH, field(payload, 'width', 'number', true) as number | undefined ?? 720);
       const height = Math.max(MIN_HEIGHT, field(payload, 'height', 'number', true) as number | undefined ?? 480);
@@ -111,7 +149,6 @@ export const sessionActions: ActionDefinition[] = [
         appId, title, width, height, x: 48 + index * 24, y: 40 + index * 24,
         minimized: false, maximized: false, z: topZ(state.session),
       };
-      const windowArgs = args(payload);
       if (windowArgs) window.args = windowArgs;
       state.session.windows.push(window);
       state.session.focusedId = window.id;
@@ -123,6 +160,7 @@ export const sessionActions: ActionDefinition[] = [
     run: ({ state }, payload) => {
       const windowId = id(payload);
       find(state.session, windowId);
+      if (state.session.terminals) delete state.session.terminals[windowId];
       state.session.windows = state.session.windows.filter((window) => window.id !== windowId);
       if (state.session.focusedId === windowId) {
         const next = [...state.session.windows].sort((a, b) => b.z - a.z)[0];
@@ -142,6 +180,15 @@ export const sessionActions: ActionDefinition[] = [
     description: 'Change the desktop wallpaper by name.',
     params: { type: 'object', properties: { wallpaper: { type: 'string' } }, required: ['wallpaper'] },
     run: ({ state }, payload) => { const wallpaper = settingId(payload, 'wallpaper'); demandReward(state.session, 'wallpaper'); if (wallpaper === 'kde-30th') demandReward(state.session, 'anniversary'); state.session.wallpaper = wallpaper; },
+  },
+  {
+    type: 'session.setArgs', capability: 'session:control', description: 'Remember an app window’s current location and view.', mutates: true,
+    run: ({ state }, payload) => {
+      const window = find(state.session, id(payload));
+      const args = (payload as { args?: unknown })?.args;
+      if (!args || typeof args !== 'object' || Array.isArray(args) || Object.keys(args).length > 16 || Object.entries(args).some(([key, value]) => ['__proto__', 'constructor', 'prototype'].includes(key) || typeof value !== 'string' || value.length > 4096)) throw new KernelError('EINVAL', 'Expected bounded text app arguments.');
+      window.args = { ...window.args, ...args as Record<string, string> };
+    },
   },
   {
     type: 'session.setTitle', capability: 'session:control', description: 'Change a window title.', mutates: true,

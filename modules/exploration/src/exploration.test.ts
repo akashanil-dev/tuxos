@@ -1,0 +1,65 @@
+import { expect, it } from 'vitest';
+import { createLocalSystem } from '@tuxos/system';
+import type { ExplorationProgress } from '@tuxos/sdk';
+import { exploration } from './index';
+it('tracks successful learner commands only, retains timestamps, and never turns discovery into course mastery', async () => {
+  let save: string | null = null;
+  const system = createLocalSystem({ journey: true, storage: { get: async () => save, set: async (_, value) => { save = value; }, remove: async () => { save = null; } }, modules: [{ manifest: exploration.manifest, load: async () => exploration }] });
+  await system.boot('ada');
+  const user = await system.createTerminal();
+  await user.run('cat missing; whoami');
+  await user.run('ls missing');
+  const tutor = system.tutor(); tutor.setCapabilities(['*']);
+  await (await tutor.createTerminal()).run('pwd');
+  let result = await system.dispatch<ExplorationProgress>('exploration.status', {});
+  expect(result.ok && Object.keys(result.value.learned)).toEqual(['whoami']);
+  expect(result.ok && result.value.achievements.first_cmd).toBeGreaterThan(0);
+  const original = result.ok && result.value.learned.whoami;
+  await user.run('whoami');
+  await system.flush(); await system.boot('ada');
+  result = await system.dispatch<ExplorationProgress>('exploration.status', {});
+  expect(result.ok && result.value.learned.whoami).toBe(original);
+  expect((await system.session()).journey?.lessons).toEqual([]);
+  expect((await system.dispatch('exploration.observe', null)).ok).toBe(false);
+  await system.reset();
+});
+
+it('records actual editor exit and protected root refusal, without rewarding help or tutor activity', async () => {
+  const system = createLocalSystem({ storage: { get: async () => null, set: async () => {}, remove: async () => {} }, modules: [{ manifest: exploration.manifest, load: async () => exploration }] });
+  await system.boot('ada'); const shell = await system.createTerminal();
+  await shell.run('vim --help');
+  let status = await system.dispatch<ExplorationProgress>('exploration.status', {});
+  expect(status.ok && status.value.achievements.vim_escape).toBeUndefined();
+  await shell.run('vim note', { editFile: async () => true });
+  expect((await shell.run('sudo rm -rf /')).code).toBe(1);
+  expect((await shell.run('cat /etc/passwd')).code).toBe(0);
+  const tutor = system.tutor(); tutor.setCapabilities(['*']);
+  await (await tutor.createTerminal()).run('rm -r /');
+  status = await system.dispatch<ExplorationProgress>('exploration.status', {});
+  expect(status.ok && status.value.achievements.vim_escape).toBeGreaterThan(0);
+  expect(status.ok && status.value.achievements.rm_rf).toBeGreaterThan(0);
+  expect(status.ok && status.value.learned.rm).toBeUndefined();
+  await system.reset();
+});
+
+it('awards each remaining secret once and rejects tutor or arbitrary awards', async () => {
+  const { learnLinux } = await import('../../learn-linux/src/index');
+  const system = createLocalSystem({ storage: { get: async () => null, set: async () => {}, remove: async () => {} }, modules: [exploration, learnLinux].map(module => ({manifest:module.manifest,load:async()=>module})) });
+  await system.boot('ada'); const shell = await system.createTerminal();
+  expect((await shell.run('ps')).stdout).toContain('666 segfault-daemon');
+  expect((await shell.run('kill 666')).code).toBe(1);
+  expect((await shell.run('sudo killall segfault-daemon')).code).toBe(0);
+  expect((await shell.run('ps')).stdout).not.toContain('666');
+  expect((await shell.run('ps')).stdout).toContain('420 report-worker');
+  expect((await shell.run('sudo kill 666')).code).toBe(1);
+  await shell.run('sudo make me a sandwich');
+  for(const id of ['konami','memtest','recovery']) expect((await system.dispatch('exploration.discover',{id})).ok).toBe(true);
+  expect((await system.dispatch('exploration.discover',{id:'quest_all'})).ok).toBe(false);
+  const before=await system.dispatch<ExplorationProgress>('exploration.status',{});
+  expect(before.ok && ['konami','memtest','recovery','sandwich','daemon'].every(id=>Boolean(before.value.achievements[id]))).toBe(true);
+  await system.dispatch('exploration.discover',{id:'konami'});
+  expect(await system.dispatch('exploration.status',{})).toEqual(before);
+  const tutor=system.tutor();tutor.setCapabilities(['*']);
+  expect((await tutor.dispatch('exploration.discover',{id:'recovery'})).ok).toBe(false);
+  await system.reset();
+});

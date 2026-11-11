@@ -1,0 +1,7 @@
+{
+  "format": "tuxos-release",
+  "version": 1,
+  "saveSchema": 2,
+  "readsSaveSchemas": [1, 2],
+  "accountDowngradeProtection": true
+}

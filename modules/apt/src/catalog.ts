@@ -52,6 +52,7 @@ const desktopPackages: Package[] = DESKTOP_PACKAGES.flatMap(desktop => [
 ]);
 export const CATALOG: Package[] = [
   ...desktopPackages,
+  { name: 'lolcat', version: '1.4-tuxos1', section: 'games', component: 'universe', summary: 'colour text with a rainbow', description: 'TuxOS text colour teaching program. Piped and redirected output remains plain text.', depends: [], installedSize: 20, downloadSize: 8, commands: ['lolcat'] },
   {
     name: 'cmatrix', version: '2.0-6', section: 'misc', component: 'universe',
     summary: 'simulates the display from The Matrix',

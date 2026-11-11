@@ -1,115 +1,71 @@
-import { StrictMode } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { createLocalSystem, type SystemClient } from '@tuxos/system';
-import { learnLinux, course } from '../../../../modules/learn-linux/src/index';
-import { terminal } from '../../../../modules/terminal/src/index';
-import { apt } from '../../../../modules/apt/src/index';
-import { files } from '../../../../modules/files/src/index';
+import { course, learnLinux } from '@tuxos/module-learn-linux';
+import { terminal } from '@tuxos/module-terminal';
+import { files } from '@tuxos/module-files';
+import { apt } from '@tuxos/module-apt';
 import { JourneyScreen } from './JourneyScreen';
 
-// xterm rendering needs a real canvas; lesson checks still use the real shell and kernel.
-vi.mock('@tuxos/module-terminal/view', () => ({ TerminalSurface: ({ clipboardDisabled }: { clipboardDisabled?: boolean }) => <div aria-label="Learning terminal" data-clipboard-disabled={String(clipboardDisabled)} /> }));
+vi.mock('@tuxos/module-terminal/view', () => ({ TerminalSurface: ({ clipboardDisabled = false }: { clipboardDisabled?: boolean }) => <div aria-label="Learning terminal" data-clipboard-disabled={String(clipboardDisabled)} /> }));
 let system: SystemClient;
 afterEach(async () => { cleanup(); await system?.reset(); localStorage.clear(); });
-async function setup() {
+async function setup(mode: 'desktop' | 'learn' = 'desktop') {
   const saves = new Map<string, string>();
   system = createLocalSystem({ journey: true,
     storage: { get: async k => saves.get(k) ?? null, set: async (k, v) => { saves.set(k, v); }, remove: async k => { saves.delete(k); } },
     modules: [learnLinux, terminal, files, apt].map(module => ({ manifest: module.manifest, load: async () => module })),
   });
   await system.boot('ada');
+  await system.dispatch('session.setPreferences', { resume: mode });
   render(<StrictMode><JourneyScreen system={system} onPower={() => {}} verifySudo={null} /></StrictMode>);
-  await screen.findByRole('heading', { name: course.lessons[0]!.steps[0]!.task });
   await act(async () => {});
   return saves;
 }
 
-it('starts with one question, offers free help, and keeps the desktop locked', async () => {
+it('opens the desktop without starting a course or requiring installation', async () => {
   await setup();
-  expect((screen.getByRole('button', { name: 'Desktop · unlock at lesson 2' }) as HTMLButtonElement).disabled).toBe(true);
-  fireEvent.click(screen.getByRole('button', { name: 'Hint' }));
-  expect(screen.getByText(/Open the Terminal/, { selector: 'pre' })).toBeTruthy();
-  fireEvent.click(screen.getByRole('button', { name: 'Show answer' }));
-  await screen.findByText(/Try this: whoami/);
-  expect((await system.session()).journey!.steps).toEqual([]);
-  expect(screen.getByText('0 XP')).toBeTruthy();
-  expect(screen.getByLabelText('Learning terminal').getAttribute('data-clipboard-disabled')).toBe('true');
-  expect(document.querySelector('.journey-console')).toBeTruthy();
-  fireEvent.click(screen.getByRole('button', { name: 'Your rewards' }));
-  const dialog = screen.getByRole('dialog', { name: 'Your reward map' });
-  expect(dialog.textContent).toContain('After lesson 16');
-  fireEvent.keyDown(dialog, { key: 'Escape' });
-  expect(screen.queryByRole('dialog')).toBeNull();
+  await screen.findByRole('button', { name: 'Application Launcher' }, { timeout: 4000 });
+  expect(screen.queryByLabelText('Learning terminal')).toBeNull();
+  expect((await system.session()).journey?.lessons).toEqual([]);
+  await act(async () => { expect((await system.openApp('files')).ok).toBe(true); });
+  await screen.findByRole('button', { name: 'Close Files' });
 });
 
-it('updates questions, saves XP, automatically opens installed KDE, and can return to learning', async () => {
-  const saves = await setup();
-  let shell = await system.createTerminal({ learningModule: 'learn-linux' });
-  await act(async () => { await shell.run('whoami'); });
-  await screen.findByRole('heading', { name: course.lessons[0]!.steps[1]!.task });
-  expect(screen.getByText('10 XP')).toBeTruthy();
-  await act(async () => { await shell.run('pwd'); await shell.run('ls'); });
-  const first = await screen.findByRole('dialog', { name: 'Reward unlocked' });
-  expect(first.textContent).toContain('Terminal Explorer');
-  fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-  fireEvent.click(screen.getByRole('button', { name: 'Continue to next lesson →' }));
-  await screen.findByRole('heading', { name: course.lessons[1]!.steps[0]!.task });
-  shell = await system.createTerminal({ learningModule: 'learn-linux' });
-  await act(async () => { for (const line of course.lessons[1]!.solution) if (typeof line === 'string') await shell.run(line); });
-  expect((await screen.findByRole('dialog', { name: 'Reward unlocked' })).textContent).toContain('Hello, KDE!');
-  fireEvent.click(screen.getByRole('button', { name: 'Set up KDE Plasma' }));
-  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-  await screen.findByRole('heading', { name: 'Install your first desktop: KDE Plasma' });
-  expect((screen.getByRole('button', { name: 'Install KDE to enter desktop' }) as HTMLButtonElement).disabled).toBe(true);
-  await act(async () => { await shell.run('sudo apt update'); await shell.run('sudo apt install -y kde-plasma-desktop'); });
-  await screen.findByRole('button', { name: 'Application Launcher' }, { timeout: 4000 });
-  const trophy = screen.getByRole('button', { name: 'Achievements' });
-  expect(trophy.getAttribute('title')).toContain('2/10 unlocked');
-  fireEvent.click(screen.getByRole('button', { name: 'Achievements' }));
-  const achievements = screen.getByRole('dialog', { name: 'Your reward map' });
-  expect(screen.getByText('2/10 achievements earned')).toBeTruthy();
-  expect(screen.getByRole('progressbar', { name: 'Progress toward Make it yours' }).getAttribute('value')).toBe('2');
-  expect(screen.getByRole('progressbar', { name: 'Progress toward Make it yours' }).getAttribute('max')).toBe('3');
-  fireEvent.keyDown(achievements, { key: 'Escape' });
-  expect(screen.queryByRole('dialog')).toBeNull();
-  expect(screen.queryByRole('button', { name: '← Continue learning' })).toBeNull();
-  expect(document.querySelector('.journey-return')).toBeNull();
-  // Both the trophy panel and the existing Learn Linux launcher resume the same lesson.
-  fireEvent.click(screen.getByRole('button', { name: 'Achievements' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Continue learning →' }));
-  await screen.findByRole('heading', { name: course.lessons[2]!.steps[0]!.task });
-  expect(screen.queryByRole('dialog')).toBeNull();
-  fireEvent.click(screen.getByRole('button', { name: 'Explore desktop ↗' }));
-  fireEvent.doubleClick(screen.getByTitle('Open Learn Linux'));
-  await screen.findByRole('heading', { name: course.lessons[2]!.steps[0]!.task });
-  fireEvent.click(screen.getByRole('button', { name: 'Explore desktop ↗' }));
-  fireEvent.click(screen.getAllByRole('button', { name: 'Learn Linux' }).find(button => button.getAttribute('data-tutor-target') === 'task:learn-linux')!);
-  expect((await system.session()).windows.some(window => window.appId === 'learn-linux')).toBe(false);
-  expect(document.querySelector('.journey-console')).toBeNull();
-  await screen.findByRole('heading', { name: course.lessons[2]!.steps[0]!.task });
-  expect(screen.getByLabelText('Learning terminal').getAttribute('data-clipboard-disabled')).toBe('false');
-  const windows = (await system.session()).windows.length;
-  fireEvent.keyDown(window, { key: 't', ctrlKey: true, altKey: true });
-  fireEvent.keyDown(window, { key: ' ', altKey: true });
-  await act(async () => {});
-  expect((await system.session()).windows).toHaveLength(windows);
-  expect(screen.queryByRole('dialog', { name: 'KRunner' })).toBeNull();
-  await system.flush();
-  expect(JSON.parse(saves.get('tuxos.save')!).snapshot.state.session.journey.lessons).toEqual(['first-words', 'moving-around']);
-  await act(async () => { await system.restartLearning(); });
-  await screen.findByRole('heading', { name: course.lessons[0]!.steps[0]!.task });
-  expect(screen.getByText('0 XP')).toBeTruthy();
-  expect(screen.queryByRole('button', { name: 'Application Launcher' })).toBeNull();
-  expect(screen.getByLabelText('Learning terminal').getAttribute('data-clipboard-disabled')).toBe('true');
-  expect((await system.session()).journey!.installedDesktops).toEqual([]);
-  expect((await system.session()).windows).toEqual([]);
-  const restarted = await system.createTerminal({ learningModule: 'learn-linux' });
-  await act(async () => { await restarted.run('whoami'); });
-  await screen.findByRole('heading', { name: course.lessons[0]!.steps[1]!.task });
-  expect(screen.getByText('10 XP')).toBeTruthy();
-  await system.flush();
-  expect(JSON.parse(saves.get('tuxos.save')!).snapshot.state.session.journey.lessons).toEqual([]);
+it('uses the same learning window and terminal in focus and desktop views', async () => {
+  await setup('learn');
+  await screen.findByText(course.lessons[0]!.steps[0]!.task);
+  const surface = screen.getByLabelText('Learning terminal');
+  expect(surface.getAttribute('data-clipboard-disabled')).toBe('false');
+  fireEvent.click(screen.getByRole('button', { name: 'Return to window' }));
+  expect(screen.getByLabelText('Learning terminal')).toBe(surface);
+  expect((await system.session()).journey!.steps).toEqual([]);
+  fireEvent.click(screen.getByRole('button', { name: 'Explore desktop' }));
+  await waitFor(async () => expect((await system.session()).preferences?.resume).toBe('desktop'));
+  await act(async () => { await system.openApp('learn-linux'); });
+  expect(screen.getByLabelText('Learning terminal')).toBe(surface);
+  expect((await system.session()).windows.filter(w => w.appId === 'learn-linux')).toHaveLength(1);
+});
 
-}, 10_000);
+it('keeps the terminal mounted across lessons, milestones and the rewards gallery', async () => {
+  const saves = await setup('learn');
+  await screen.findByText(course.lessons[0]!.steps[0]!.task);
+  const surface = screen.getByLabelText('Learning terminal');
+  const shell = await system.createTerminal({ learningModule: 'learn-linux' });
+  await act(async () => { for (const line of ['whoami', 'pwd', 'ls']) await shell.run(line); });
+  await screen.findByText('Terminal Explorer');
+  expect(screen.queryByRole('dialog', { name: 'Reward unlocked' })).toBeNull();
+  expect(screen.getByLabelText('Learning terminal')).toBe(surface);
+  fireEvent.click(screen.getByRole('button', { name: 'View rewards' }));
+  const gallery = screen.getByRole('dialog', { name: 'Your reward map' });
+  expect(gallery.textContent).toContain('1/10 achievements earned');
+  fireEvent.keyDown(gallery, { key: 'Escape' });
+  fireEvent.click(screen.getByRole('button', { name: 'Dismiss milestone' }));
+  await waitFor(() => expect(screen.queryByRole('button', { name: 'Dismiss milestone' })).toBeNull());
+  fireEvent.click(screen.getByRole('button', { name: /Let’s begin/ }));
+  await screen.findByText(course.lessons[1]!.steps[0]!.task);
+  expect(screen.getByLabelText('Learning terminal')).toBe(surface);
+  await system.flush();
+  expect(JSON.parse(saves.get('tuxos.save')!).snapshot.state.session.journey.lessons).toEqual(['first-words']);
+});

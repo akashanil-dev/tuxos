@@ -1,6 +1,6 @@
 // Kernel state and the fresh system a new learner boots into.
 
-import type { JourneyProgress, PluginTheme } from '@tuxos/sdk';
+import { defaultPreferences, emptyExploration, type ExplorationProgress, type SessionPreferences, type JourneyProgress, type PluginTheme, type RewardId } from '@tuxos/sdk';
 import { KernelError } from './errors';
 import { expandFilesystem } from './filesystem-layout';
 import { dir, file, type DirNode } from './vfs';
@@ -29,6 +29,10 @@ export interface DesktopWidget { appId: string; x: number; y: number; width: num
 
 export interface SessionState {
   journey?: JourneyProgress;
+  preferences?: SessionPreferences;
+  terminals?: Record<string, { cwd: string; env: Record<string, string>; history: string[] }>;
+  /** Existing/imported cosmetics stay available without awarding course mastery. */
+  appearanceGrants?: RewardId[];
   widgets?: DesktopWidget[];
   theme?: PluginTheme;
   windows: Window[];
@@ -44,10 +48,11 @@ export const DEFAULT_DESKTOP = 'plasma';
 export const DEFAULT_WALLPAPER = 'default';
 
 export function emptySession(): SessionState {
-  return { windows: [], focusedId: null, nextId: 1, desktop: DEFAULT_DESKTOP, wallpaper: DEFAULT_WALLPAPER };
+  return { windows: [], focusedId: null, nextId: 1, desktop: DEFAULT_DESKTOP, wallpaper: DEFAULT_WALLPAPER, preferences: defaultPreferences(), appearanceGrants: [] };
 }
 
 export interface KernelState {
+  exploration?: ExplorationProgress;
   filesystemVersion?: number;
   hostname: string;
   users: Record<string, UserAccount>;
@@ -80,6 +85,7 @@ export function createInitialState(username: string, hostname = 'tuxos', now = 0
   ].join('\n');
 
   const state: KernelState = {
+    exploration: emptyExploration(),
     hostname,
     users: {
       root: { uid: 0, home: '/root' },

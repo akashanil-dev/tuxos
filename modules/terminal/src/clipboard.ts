@@ -1,7 +1,7 @@
-export const CLIPBOARD_LOCK_MESSAGE = 'copy pasting makes you dumb, so we disabled it for now :)';
+export const CLIPBOARD_LOCK_MESSAGE = 'Typing practice is on. You can still copy output, or choose Allow paste to leave practice mode.';
 
 /** Intercept clipboard input before xterm handles it; ordinary typing and Ctrl+C interrupts stay intact. */
-export function guardTerminalClipboard(element: HTMLElement, hasSelection: () => boolean, onBlocked: () => void): () => void {
+export function guardTerminalClipboard(element: HTMLElement, _hasSelection: () => boolean, onBlocked: () => void): () => void {
   const block = (event: Event) => {
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -10,14 +10,14 @@ export function guardTerminalClipboard(element: HTMLElement, hasSelection: () =>
   const key = (event: KeyboardEvent) => {
     const name = event.key.toLowerCase();
     const modifier = event.ctrlKey || event.metaKey;
-    const clipboardKey = modifier && (name === 'v' || name === 'x' || (name === 'c' && (event.metaKey || event.shiftKey || hasSelection())));
-    if (clipboardKey || (name === 'insert' && (event.shiftKey || event.ctrlKey))) block(event);
+    const clipboardKey = modifier && name === 'v';
+    if (clipboardKey || (name === 'insert' && event.shiftKey)) block(event);
   };
   const input = (event: InputEvent) => {
-    if (['insertFromPaste', 'insertFromPasteAsQuotation', 'insertFromDrop', 'deleteByCut'].includes(event.inputType)) block(event);
+    if (['insertFromPaste', 'insertFromPasteAsQuotation', 'insertFromDrop'].includes(event.inputType)) block(event);
   };
   const middle = (event: MouseEvent) => { if (event.button === 1) block(event); };
-  const events = ['copy', 'cut', 'paste', 'contextmenu', 'drop', 'dragover'] as const;
+  const events = ['paste', 'drop', 'dragover'] as const;
   for (const type of events) element.addEventListener(type, block, true);
   element.addEventListener('keydown', key, true);
   element.addEventListener('beforeinput', input, true);

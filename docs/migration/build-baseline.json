@@ -1,0 +1,131 @@
+{
+  "commit": "2562174",
+  "compression": "gzip level 9, individual files",
+  "entry": {
+    "path": "/assets/index-3OzJoYRB.js",
+    "raw": 852971,
+    "gzip": 248989
+  },
+  "javascript": [
+    {
+      "file": "Penguin3D-CDhEr2Bs.js",
+      "raw": 527997,
+      "gzip": 132123
+    },
+    {
+      "file": "PluginManager-CPg_t7RA.js",
+      "raw": 32220,
+      "gzip": 10757
+    },
+    {
+      "file": "PluginWindowFrame-DkqMe9Jv.js",
+      "raw": 9006,
+      "gzip": 3614
+    },
+    {
+      "file": "SoftwareShop-Bmh--qkm.js",
+      "raw": 10301,
+      "gzip": 3805
+    },
+    {
+      "file": "dpkg-hTwHAEEU.js",
+      "raw": 3340,
+      "gzip": 1530
+    },
+    {
+      "file": "index-2u2nJAC6.js",
+      "raw": 2046,
+      "gzip": 985
+    },
+    {
+      "file": "index-3OzJoYRB.js",
+      "raw": 852971,
+      "gzip": 248989
+    },
+    {
+      "file": "index-BMjbqav7.js",
+      "raw": 23386,
+      "gzip": 8781
+    },
+    {
+      "file": "index-Bh0jIqgI.js",
+      "raw": 24466,
+      "gzip": 9438
+    },
+    {
+      "file": "index-C_2cXF4f.js",
+      "raw": 131,
+      "gzip": 135
+    },
+    {
+      "file": "index-Cnqp3ZOC.js",
+      "raw": 122,
+      "gzip": 125
+    },
+    {
+      "file": "index-CuhSVRKd.js",
+      "raw": 746,
+      "gzip": 475
+    },
+    {
+      "file": "index-D0i-t1uZ.js",
+      "raw": 115833,
+      "gzip": 22881
+    },
+    {
+      "file": "index-DU-aJogy.js",
+      "raw": 355,
+      "gzip": 288
+    },
+    {
+      "file": "index-DXxZ__r3.js",
+      "raw": 116,
+      "gzip": 121
+    },
+    {
+      "file": "index-PYFVwjdH.js",
+      "raw": 124,
+      "gzip": 128
+    },
+    {
+      "file": "view-BoQcUbNp.js",
+      "raw": 6009,
+      "gzip": 2432
+    },
+    {
+      "file": "view-CL20LQ75.js",
+      "raw": 11513,
+      "gzip": 4189
+    },
+    {
+      "file": "view-CXlew_7l.js",
+      "raw": 28837,
+      "gzip": 10302
+    },
+    {
+      "file": "view-C_SK3ACa.js",
+      "raw": 160,
+      "gzip": 154
+    },
+    {
+      "file": "view-Cj8-YOm9.js",
+      "raw": 6417,
+      "gzip": 2616
+    },
+    {
+      "file": "view-D4PQfLRx.js",
+      "raw": 2474,
+      "gzip": 1293
+    },
+    {
+      "file": "view-DRptAvKo.js",
+      "raw": 158,
+      "gzip": 153
+    },
+    {
+      "file": "view-D_7NCIji.js",
+      "raw": 941,
+      "gzip": 507
+    }
+  ]
+}

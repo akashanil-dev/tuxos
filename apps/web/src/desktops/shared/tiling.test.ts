@@ -1,9 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { tileLayout } from './tiling';
+import { tileLayout, tiledGroup } from './tiling';
 
 const area = { x: 0, y: 44, width: 1000, height: 600 };
 
 describe('tileLayout', () => {
+  it('keeps a large restored session readable while every focused window remains reachable', () => {
+    const ids = Array.from({ length: 14 }, (_, index) => `window-${index}`);
+    for (const focused of ids) {
+      const group = tiledGroup(ids, focused, area);
+      expect(group).toContain(focused);
+      for (const box of tileLayout(group.length, area)) {
+        expect(box.height).toBeGreaterThanOrEqual(220);
+        expect(box.y + box.height).toBeLessThanOrEqual(area.y + area.height);
+      }
+    }
+    expect(tiledGroup(ids, ids[5], { ...area, width: 700 })).toEqual([ids[5]]);
+    expect(tiledGroup([], null, area)).toEqual([]);
+  });
   it('places nothing when there are no windows', () => {
     expect(tileLayout(0, area)).toEqual([]);
   });

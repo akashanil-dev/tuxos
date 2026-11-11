@@ -1,0 +1,26 @@
+[
+  {
+    "url": "https://tuxplore.akashanil.dev/",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "url": "https://tuxplore.akashanil.dev/js/core.js",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "url": "https://tuxplore.akashanil.dev/js/apps/runner.js",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "url": "https://tuxplore.akashanil.dev/stats.html",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "url": "https://tuxos.akashanil.dev/",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "url": "https://tuxos.akashanil.dev/api/health",
+    "error": "HTTP Error 403: Forbidden"
+  }
+]

@@ -1,0 +1,415 @@
+{
+  "username": "explorer",
+  "theme": "kde",
+  "wallpaper": "freedom",
+  "fastBoot": false,
+  "unlockedThemes": [
+    "kde"
+  ],
+  "achievements": {
+    "first_boot": 1791676800000,
+    "first_cmd": 1791676800001
+  },
+  "learned": {
+    "whoami": 1791676800000,
+    "pwd": 1791676800001,
+    "ls": 1791676800002
+  },
+  "quests": {
+    "done": {
+      "hello": 1791676800000
+    },
+    "progress": {
+      "hello": [
+        true,
+        true,
+        true
+      ],
+      "letter": [
+        false
+      ]
+    }
+  },
+  "tracks": {
+    "active": null,
+    "done": {},
+    "progress": {}
+  },
+  "pipe": {
+    "solved": {
+      "fruit": 1791676800000
+    }
+  },
+  "runner": {
+    "best": 120,
+    "family": "debian",
+    "mode": "Rapid",
+    "rapidBest": 230,
+    "infiniteHigh": 1400,
+    "sound": false
+  },
+  "installed": {},
+  "history": [],
+  "fs": {
+    "t": "d",
+    "o": "root",
+    "m": "755",
+    "ch": {
+      "bin": {
+        "t": "d",
+        "o": "root",
+        "m": "755",
+        "ch": {}
+      },
+      "boot": {
+        "t": "d",
+        "o": "root",
+        "m": "755",
+        "ch": {
+          "vmlinuz-6.10-tuxos": {
+            "t": "f",
+            "o": "root",
+            "m": "644",
+            "c": "\u007fELF... (this is the Linux kernel. It is binary, not text.)"
+          }
+        }
+      },
+      "dev": {
+        "t": "d",
+        "o": "root",
+        "m": "755",
+        "ch": {
+          "null": {
+            "t": "f",
+            "o": "root",
+            "m": "666",
+            "c": ""
+          },
+          "random": {
+            "t": "f",
+            "o": "root",
+            "m": "644",
+            "c": "4\n8\n15\n16\n23\n42"
+          }
+        }
+      },
+      "etc": {
+        "t": "d",
+        "o": "root",
+        "m": "755",
+        "ch": {
+          "hostname": {
+            "t": "f",
+            "o": "root",
+            "m": "644",
+            "c": "tuxos"
+          },
+          "os-release": {
+            "t": "f",
+            "o": "root",
+            "m": "644",
+            "c": "NAME=\"TuxOS\"\nPRETTY_NAME=\"TuxOS 1.0 (Curious Penguin)\"\nID=tuxos\nID_LIKE=debian\nHOME_URL=\"https://kernel.org\""
+          },
+          "motd": {
+            "t": "f",
+            "o": "root",
+            "m": "644",
+            "c": "Welcome to TuxOS! Type \"help\" to see what you can do."
+          },
+          "passwd": {
+            "t": "f",
+            "o": "root",
+            "m": "644",
+            "c": "root:x:0:0:root:/root:/bin/bash\nexplorer:x:1000:1000:explorer:/home/explorer:/bin/bash\ntux:x:1001:1001:Tux the Penguin:/home/tux:/bin/bash"
+          },
+          "shadow": {
+            "t": "f",
+            "o": "root",
+            "m": "600",
+            "c": "root:$6$nice.try$...\n(passwords are stored hashed, and only root may read this file)"
+          }
+        }
+      },
+      "home": {
+        "t": "d",
+        "o": "root",
+        "m": "755",
+        "ch": {
+          "explorer": {
+            "t": "d",
+            "o": "user",
+            "m": "755",
+            "ch": {
+              "welcome.txt": {
+                "t": "f",
+                "o": "user",
+                "m": "644",
+                "c": "Hi explorer,\n\nI'm Tux, the Linux penguin. I need your help!\n\nThe Segfault Daemon stole my Kernel Crown and hid it somewhere\ndeep inside this computer. Only someone who knows the terminal\ncan get it back.\n\nStart by going into the dungeon:   cd dungeon\nThen look around with:             ls\n\nGood luck!\n  - Tux \ud83d\udc27"
+              },
+              "Documents": {
+                "t": "d",
+                "o": "user",
+                "m": "755",
+                "ch": {
+                  "linux-facts.txt": {
+                    "t": "f",
+                    "o": "user",
+                    "m": "644",
+                    "c": "Linux runs on all of the top 500 supercomputers.\nAndroid is built on the Linux kernel.\nThe mascot Tux was drawn by Larry Ewing in 1996.\nLinux is free: free as in price, and free as in freedom."
+                  },
+                  "todo.txt": {
+                    "t": "f",
+                    "o": "user",
+                    "m": "644",
+                    "c": "- learn the terminal\n- rescue the crown\n- tell friends about Linux"
+                  },
+                  "about-tuxplore.txt": {
+                    "t": "f",
+                    "o": "user",
+                    "m": "644",
+                    "c": "TUXPLORE\n========\n\nYou are playing Tuxplore: a game that teaches Linux by letting you use it.\nTuxOS, the system you are in now, is pretend, but the commands are real.\n\nWhat it is, what you will learn, and the FAQ:\n  https://tuxplore.akashanil.dev/about.html\n\nPublic usage stats:\n  https://tuxplore.akashanil.dev/stats.html\n\nMade by Akash A.  Liked it? Tell a friend who is curious about Linux."
+                  },
+                  "personal.txt": {
+                    "t": "f",
+                    "o": "user",
+                    "m": "640",
+                    "c": "A personal file that migration must preserve.\n"
+                  }
+                }
+              },
+              "Pictures": {
+                "t": "d",
+                "o": "user",
+                "m": "755",
+                "ch": {
+                  "tux.txt": {
+                    "t": "f",
+                    "o": "user",
+                    "m": "644",
+                    "c": "     .--.\n    |o_o |\n    |:_/ |\n   //   \\ \\\n  (|     | )\n /'\\_   _/`\\\n \\___)=(___/"
+                  }
+                }
+              },
+              "Music": {
+                "t": "d",
+                "o": "user",
+                "m": "755",
+                "ch": {}
+              },
+              "dungeon": {
+                "t": "d",
+                "o": "user",
+                "m": "755",
+                "ch": {
+                  "README.txt": {
+                    "t": "f",
+                    "o": "user",
+                    "m": "644",
+                    "c": "Welcome to the Dungeon.\n\nAdventurers who only look at the obvious miss the most important things.\nIn Linux, hidden files start with a dot.\n\nTry:  ls -a"
+                  },
+                  ".map": {
+                    "t": "f",
+                    "o": "user",
+                    "m": "644",
+                    "c": "THE MAP\n=======\n\nThe gate to the crypt needs a secret word.\nThe word is written in one of the books in library/.\n\nThere are too many books to read one by one.\nSearch them all at once:   grep -r secret library\n\nThen open the gate:        ./gate.sh <the-secret-word>"
+                  },
+                  "library": {
+                    "t": "d",
+                    "o": "user",
+                    "m": "755",
+                    "ch": {
+                      "the-first-penguin.txt": {
+                        "t": "f",
+                        "o": "user",
+                        "m": "644",
+                        "c": "Long ago, in 1991, a student named Linus wrote a small kernel.\nHe said it was \"just a hobby, won't be big and professional\".\nToday it runs phones, servers, cars and even the International Space Station."
+                      },
+                      "on-sharing.txt": {
+                        "t": "f",
+                        "o": "user",
+                        "m": "644",
+                        "c": "Richard Stallman began the GNU project in 1983.\nHe believed software should respect the people who use it.\nGNU tools plus the Linux kernel made a complete, free operating system."
+                      },
+                      "bestiary.txt": {
+                        "t": "f",
+                        "o": "user",
+                        "m": "644",
+                        "c": "GOBLIN: small, grumpy, lives in files. Weak against rm.\nDAEMON: a background process. Most are friendly. One is not.\nZOMBIE: a process that finished but whose parent never noticed."
+                      },
+                      "recipes.txt": {
+                        "t": "f",
+                        "o": "user",
+                        "m": "644",
+                        "c": "Penguin stew: do not make penguin stew.\nFish tacos: preferred by penguins everywhere.\nCoffee: required by system administrators."
+                      },
+                      "the-four-freedoms.txt": {
+                        "t": "f",
+                        "o": "user",
+                        "m": "644",
+                        "c": "Free software grants four freedoms:\n0. Run the program for any purpose.\n1. Study how it works and change it.\n2. Share copies with others.\n3. Share your improved versions.\nThe secret word for the gate is: freedom"
+                      },
+                      "distros.txt": {
+                        "t": "f",
+                        "o": "user",
+                        "m": "644",
+                        "c": "A distribution, or distro, is the Linux kernel bundled with tools and apps.\nDebian, Fedora and Arch are families. Ubuntu and Mint grew from Debian.\nThere are hundreds of them, and that is a feature."
+                      },
+                      "poetry.txt": {
+                        "t": "f",
+                        "o": "user",
+                        "m": "644",
+                        "c": "Roses are red,\nterminals are black,\ntype rm -rf /\nand there is no way back."
+                      },
+                      "maps-and-paths.txt": {
+                        "t": "f",
+                        "o": "user",
+                        "m": "644",
+                        "c": "Paths that start with / are absolute: they start at the root.\nPaths without / are relative: they start where you are.\n.. means the parent directory. ~ means your home."
+                      },
+                      "lost-and-found.txt": {
+                        "t": "f",
+                        "o": "user",
+                        "m": "644",
+                        "c": "Nothing to see here. The good stuff is elsewhere.\nTry searching instead of reading every single book."
+                      },
+                      "the-shell.txt": {
+                        "t": "f",
+                        "o": "user",
+                        "m": "644",
+                        "c": "The shell reads what you type and runs programs.\nBash is the most common one. Zsh and fish are popular too.\nPress Tab to autocomplete. Press Up to repeat a command."
+                      },
+                      "dragons.txt": {
+                        "t": "f",
+                        "o": "user",
+                        "m": "644",
+                        "c": "There are no dragons in this library.\nThere is, however, a very old printer that jams constantly."
+                      },
+                      "permissions.txt": {
+                        "t": "f",
+                        "o": "user",
+                        "m": "644",
+                        "c": "Every file has permissions: read (r), write (w) and execute (x).\nA script cannot run unless it has x. chmod +x adds it.\nType ls -l to see permissions."
+                      }
+                    }
+                  },
+                  "gate.sh": {
+                    "t": "f",
+                    "o": "user",
+                    "m": "644",
+                    "c": "#!/bin/bash\n# Opens the gate to the crypt.\n# Usage: ./gate.sh <secret-word>",
+                    "run": "gate"
+                  }
+                }
+              }
+            }
+          },
+          "tux": {
+            "t": "d",
+            "o": "root",
+            "m": "755",
+            "ch": {
+              "diary.txt": {
+                "t": "f",
+                "o": "user",
+                "m": "644",
+                "c": "Dear diary, someone took my crown. I am very sad. I ate a fish. I feel better."
+              }
+            }
+          }
+        }
+      },
+      "proc": {
+        "t": "d",
+        "o": "root",
+        "m": "755",
+        "ch": {
+          "cpuinfo": {
+            "t": "f",
+            "o": "root",
+            "m": "644",
+            "c": "processor\t: 0\nmodel name\t: Imaginary Penguin CPU @ 4.20GHz\ncores\t\t: 8"
+          },
+          "uptime": {
+            "t": "f",
+            "o": "root",
+            "m": "644",
+            "c": "1337.42 2048.00"
+          }
+        }
+      },
+      "root": {
+        "t": "d",
+        "o": "root",
+        "m": "700",
+        "ch": {
+          "crown.txt": {
+            "t": "f",
+            "o": "root",
+            "m": "600",
+            "c": "      _.+._\n    (^\\/^\\/^)\n     \\@*@*@/\n     {_____}\n\nTHE KERNEL CROWN\n\nYou found it! Only the superuser could read this file.\nClaim it: make a trophies folder in your home and copy me there.\n  mkdir ~/trophies\n  sudo cp /root/crown.txt ~/trophies/"
+          }
+        }
+      },
+      "tmp": {
+        "t": "d",
+        "o": "root",
+        "m": "777",
+        "ch": {}
+      },
+      "usr": {
+        "t": "d",
+        "o": "root",
+        "m": "755",
+        "ch": {
+          "bin": {
+            "t": "d",
+            "o": "root",
+            "m": "755",
+            "ch": {}
+          },
+          "share": {
+            "t": "d",
+            "o": "root",
+            "m": "755",
+            "ch": {
+              "doc": {
+                "t": "d",
+                "o": "root",
+                "m": "755",
+                "ch": {
+                  "README": {
+                    "t": "f",
+                    "o": "root",
+                    "m": "644",
+                    "c": "Documentation lives here. In the terminal, use man <command>."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "var": {
+        "t": "d",
+        "o": "root",
+        "m": "755",
+        "ch": {
+          "log": {
+            "t": "d",
+            "o": "root",
+            "m": "755",
+            "ch": {
+              "syslog": {
+                "t": "f",
+                "o": "root",
+                "m": "644",
+                "c": "Oct 08 09:10:00 tuxos NetworkManager: INFO started successfully\nOct 08 09:11:07 tuxos systemd: INFO connection established\nOct 08 09:12:14 tuxos sshd: INFO job completed\nOct 08 09:13:21 tuxos cron: WARN disk usage above 80%\nOct 08 09:14:28 tuxos kernel: INFO configuration reloaded\nOct 08 09:15:35 tuxos pulseaudio: ERROR failed to bind port 80\nOct 08 09:16:42 tuxos bluetoothd: INFO connection established\nOct 08 09:17:49 tuxos nginx: INFO job completed\nOct 08 09:18:56 tuxos NetworkManager: WARN retrying connection\nOct 08 09:19:03 tuxos systemd: INFO configuration reloaded\nOct 08 09:20:10 tuxos sshd: ERROR permission denied\nOct 08 09:21:17 tuxos cron: INFO connection established\nOct 08 09:22:24 tuxos kernel: INFO job completed\nOct 08 09:23:31 tuxos pulseaudio: INFO device connected\nOct 08 09:24:38 tuxos bluetoothd: ERROR permission denied\nOct 08 09:25:45 tuxos nginx: INFO started successfully\nOct 08 09:26:52 tuxos NetworkManager: WARN slow response from upstream\nOct 08 09:27:59 tuxos systemd: INFO job completed\nOct 08 09:28:06 tuxos sshd: INFO device connected\nOct 08 09:29:13 tuxos cron: ERROR out of goblin repellent\nOct 08 09:30:20 tuxos kernel: INFO started successfully\nOct 08 09:31:27 tuxos pulseaudio: INFO connection established\nOct 08 09:32:34 tuxos bluetoothd: INFO job completed\nOct 08 09:33:41 tuxos nginx: ERROR out of goblin repellent\nOct 08 09:34:48 tuxos NetworkManager: INFO configuration reloaded\nOct 08 09:35:55 tuxos systemd: ERROR failed to bind port 80\nOct 08 09:36:02 tuxos sshd: INFO connection established\nOct 08 09:37:09 tuxos cron: WARN disk usage above 80%\nOct 08 09:38:16 tuxos kernel: INFO device connected\nOct 08 09:39:23 tuxos pulseaudio: INFO configuration reloaded"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "savedAt": 1791676800000
+}

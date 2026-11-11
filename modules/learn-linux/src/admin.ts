@@ -21,7 +21,7 @@ export const adminCommands = [
   ['hostname', 'Show the training hostname'],
   ['id', 'Inspect a training account'], ['useradd', 'Create a training account'],
   ['groupadd', 'Create a training group'], ['usermod', 'Add a training account to a group'],
-  ['ps', 'List simulated processes'], ['kill', 'Signal a simulated process'],
+  ['ps', 'List simulated processes'], ['kill', 'Signal a simulated process'], ['killall', 'Signal one simulated process by name'],
   ['systemctl', 'Inspect and manage simulated services'], ['journalctl', 'Read the simulated service journal'],
   ['ip', 'Inspect training addresses and routes'], ['ss', 'Inspect simulated listening sockets'],
   ['ping', 'Test reachability inside the training network'],
@@ -72,7 +72,7 @@ export function activateAdmin(ctx: ModuleContext): void {
         lab: 'lab status | lab reset (resets only the administration sandbox)',
         hostname: 'hostname', id: 'id [USER]', useradd: 'sudo useradd -m USER',
         groupadd: 'sudo groupadd GROUP', usermod: 'sudo usermod -aG GROUP USER',
-        ps: 'ps [aux]', kill: 'kill [-TERM|-15|-KILL|-9] PID',
+        ps: 'ps [aux]', kill: 'kill [-TERM|-15|-KILL|-9] PID', killall: 'killall NAME (one simulated process)',
         systemctl: 'systemctl status|is-active|is-enabled UNIT; sudo systemctl start|stop|restart|enable|disable UNIT',
         journalctl: 'journalctl -u UNIT [-n NUMBER]', ip: 'ip addr | ip route', ss: 'ss -tln',
         ping: 'ping -c 1 192.0.2.1 (training gateway) or server.lab (training DNS)',
@@ -120,12 +120,16 @@ export function activateAdmin(ctx: ModuleContext): void {
           case 'ps': {
             if (args.length && args.join(' ') !== 'aux') return fail(usage[name]!);
             const serviceProcesses = Object.entries(machine.services).filter(([, s]) => s.active).map(([unit], i) => `root ${800 + i} ${unit}`);
-            return out(['USER PID COMMAND', ...machine.processes.map((p) => `${p.user} ${p.pid} ${p.command}`), ...serviceProcesses].join('\n'));
+            const exploration = shell.dispatch<{ achievements: Record<string, number> }>('exploration.status', {});
+            const daemon = exploration.ok && !exploration.value.achievements.daemon ? ['root 666 segfault-daemon --steal-crowns (fictional discovery)'] : [];
+            return out(['USER PID COMMAND', ...daemon, ...machine.processes.map((p) => `${p.user} ${p.pid} ${p.command}`), ...serviceProcesses].join('\n'));
           }
-          case 'kill': {
-            const signal = args.length === 2 ? args[0] : '-TERM';
-            const pid = Number(args.at(-1));
+          case 'kill': case 'killall': {
+            if (name === 'killall' && args.length !== 1) return fail(usage[name]!);
+            const signal = name === 'kill' && args.length === 2 ? args[0] : '-TERM';
+            const pid = name === 'killall' ? args[0] === 'segfault-daemon' ? 666 : machine.processes.find(p => p.command === args[0])?.pid : Number(args.at(-1));
             if (![1, 2].includes(args.length) || !['-TERM', '-15', '-KILL', '-9'].includes(signal!) || !Number.isInteger(pid)) return fail(usage[name]!);
+            if (pid === 666) { const result = shell.dispatch<string>('exploration.daemon', {}); if (!result.ok) return fail(result.error.message); return out(result.value.trim()); }
             const proc = machine.processes.find((p) => p.pid === pid);
             if (!proc) return fail('no such controllable process; use systemctl for services');
             if (pid === 1) return fail('PID 1 is protected in this sandbox');

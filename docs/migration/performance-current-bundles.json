@@ -1,0 +1,519 @@
+{
+  "root": "/home/akash/Documents/tuxos/apps/web/dist",
+  "compression": "gzip level 9, individual files",
+  "entry": {
+    "file": "index-FYs3p2AV.js",
+    "raw": 528908,
+    "gzip": 170631,
+    "staticImports": [],
+    "dynamicImports": [
+      "index-BvJRp55d.js",
+      "view-TJ_MVmeT.js",
+      "view-1FVyj2nw.js",
+      "view-BWWRLEYT.js",
+      "view-D_0yXrTb.js",
+      "view-D_0yXrTb.js",
+      "view-D_0yXrTb.js",
+      "view-CirRnWk8.js",
+      "view-D4LQ2GUq.js",
+      "view-CiLLas0W.js",
+      "view-DYD4cQ2g.js",
+      "view-Dsy8I8mR.js",
+      "view-B770iOIi.js",
+      "view-Cb75-eKx.js",
+      "view-CM3NE4QL.js",
+      "view-I5JAUd55.js",
+      "view-DEXBMy4S.js",
+      "PluginManager-BU09ed2y.js",
+      "PackagePractice-BWdtfjbh.js",
+      "SoftwareShop-BP6UigMg.js",
+      "PluginWindowFrame-D5Q3SGeu.js",
+      "Penguin3D-Cpdz_GXk.js",
+      "ImportAndBackups-OTbEwrA4.js",
+      "index-BvJRp55d.js",
+      "index-B38eMdQK.js",
+      "index-Da7xK8bS.js",
+      "index-CXmTmaSz.js",
+      "index-CMv96xYp.js",
+      "index-Chz1bELW.js",
+      "index-B1xKjMm3.js",
+      "index-ip8PDQUk.js",
+      "index-CRWhNhco.js",
+      "index-_-0w1kjf.js",
+      "index-D8WJ-vSg.js",
+      "index-ymQZgvtt.js",
+      "index-DMFd-Ucy.js",
+      "index-CgHTtch5.js",
+      "index-BBb5gRWj.js",
+      "index-YXcGC650.js",
+      "PluginWindowFrame-D5Q3SGeu.js"
+    ]
+  },
+  "initial": {
+    "files": [
+      "index-FYs3p2AV.js"
+    ],
+    "raw": 528908,
+    "gzip": 170631
+  },
+  "chunks": [
+    {
+      "file": "ImportAndBackups-OTbEwrA4.js",
+      "raw": 9954,
+      "gzip": 3436,
+      "staticImports": [
+        "index-FYs3p2AV.js",
+        "index-BvJRp55d.js",
+        "dpkg-DpdVOyN4.js",
+        "levels-CZVyCz7C.js",
+        "course-FpRp1C-U.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "PackagePractice-BWdtfjbh.js",
+      "raw": 2908,
+      "gzip": 1214,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "Penguin3D-Cpdz_GXk.js",
+      "raw": 527997,
+      "gzip": 132787,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "PluginManager-BU09ed2y.js",
+      "raw": 32215,
+      "gzip": 10822,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "PluginWindowFrame-D5Q3SGeu.js",
+      "raw": 9006,
+      "gzip": 3614,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "SoftwareShop-BP6UigMg.js",
+      "raw": 10301,
+      "gzip": 3813,
+      "staticImports": [
+        "index-FYs3p2AV.js",
+        "dpkg-DpdVOyN4.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "course-FpRp1C-U.js",
+      "raw": 5287,
+      "gzip": 2208,
+      "staticImports": [],
+      "dynamicImports": []
+    },
+    {
+      "file": "data-mV9L5L_x.js",
+      "raw": 4023,
+      "gzip": 1785,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "dpkg-DpdVOyN4.js",
+      "raw": 3340,
+      "gzip": 1526,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-B1xKjMm3.js",
+      "raw": 984,
+      "gzip": 580,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-B38eMdQK.js",
+      "raw": 2259,
+      "gzip": 1066,
+      "staticImports": [
+        "index-FYs3p2AV.js",
+        "model-Bvs3vbjW.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-BBb5gRWj.js",
+      "raw": 355,
+      "gzip": 287,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-BvJRp55d.js",
+      "raw": 21492,
+      "gzip": 7971,
+      "staticImports": [
+        "index-FYs3p2AV.js",
+        "dpkg-DpdVOyN4.js",
+        "levels-CZVyCz7C.js",
+        "course-FpRp1C-U.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-CMv96xYp.js",
+      "raw": 2942,
+      "gzip": 1295,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-CRWhNhco.js",
+      "raw": 122,
+      "gzip": 125,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-CXmTmaSz.js",
+      "raw": 19978,
+      "gzip": 7615,
+      "staticImports": [
+        "index-FYs3p2AV.js",
+        "course-FpRp1C-U.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-CgHTtch5.js",
+      "raw": 119,
+      "gzip": 124,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-Chz1bELW.js",
+      "raw": 734,
+      "gzip": 475,
+      "staticImports": [
+        "index-FYs3p2AV.js",
+        "levels-CZVyCz7C.js",
+        "puzzle-DmSsZvyr.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-D8WJ-vSg.js",
+      "raw": 131,
+      "gzip": 133,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-DMFd-Ucy.js",
+      "raw": 2046,
+      "gzip": 977,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-Da7xK8bS.js",
+      "raw": 577,
+      "gzip": 414,
+      "staticImports": [
+        "index-FYs3p2AV.js",
+        "data-mV9L5L_x.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-DprnLl5p.js",
+      "raw": 20455,
+      "gzip": 6336,
+      "staticImports": [
+        "index-FYs3p2AV.js",
+        "view-CiLLas0W.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-FYs3p2AV.js",
+      "raw": 528908,
+      "gzip": 170631,
+      "staticImports": [],
+      "dynamicImports": [
+        "index-BvJRp55d.js",
+        "view-TJ_MVmeT.js",
+        "view-1FVyj2nw.js",
+        "view-BWWRLEYT.js",
+        "view-D_0yXrTb.js",
+        "view-D_0yXrTb.js",
+        "view-D_0yXrTb.js",
+        "view-CirRnWk8.js",
+        "view-D4LQ2GUq.js",
+        "view-CiLLas0W.js",
+        "view-DYD4cQ2g.js",
+        "view-Dsy8I8mR.js",
+        "view-B770iOIi.js",
+        "view-Cb75-eKx.js",
+        "view-CM3NE4QL.js",
+        "view-I5JAUd55.js",
+        "view-DEXBMy4S.js",
+        "PluginManager-BU09ed2y.js",
+        "PackagePractice-BWdtfjbh.js",
+        "SoftwareShop-BP6UigMg.js",
+        "PluginWindowFrame-D5Q3SGeu.js",
+        "Penguin3D-Cpdz_GXk.js",
+        "ImportAndBackups-OTbEwrA4.js",
+        "index-BvJRp55d.js",
+        "index-B38eMdQK.js",
+        "index-Da7xK8bS.js",
+        "index-CXmTmaSz.js",
+        "index-CMv96xYp.js",
+        "index-Chz1bELW.js",
+        "index-B1xKjMm3.js",
+        "index-ip8PDQUk.js",
+        "index-CRWhNhco.js",
+        "index-_-0w1kjf.js",
+        "index-D8WJ-vSg.js",
+        "index-ymQZgvtt.js",
+        "index-DMFd-Ucy.js",
+        "index-CgHTtch5.js",
+        "index-BBb5gRWj.js",
+        "index-YXcGC650.js",
+        "PluginWindowFrame-D5Q3SGeu.js"
+      ]
+    },
+    {
+      "file": "index-YXcGC650.js",
+      "raw": 32625,
+      "gzip": 12325,
+      "staticImports": [
+        "index-FYs3p2AV.js",
+        "dpkg-DpdVOyN4.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-_-0w1kjf.js",
+      "raw": 115828,
+      "gzip": 22848,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-ip8PDQUk.js",
+      "raw": 121,
+      "gzip": 124,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-ymQZgvtt.js",
+      "raw": 23386,
+      "gzip": 8799,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "levels-CZVyCz7C.js",
+      "raw": 2812,
+      "gzip": 1179,
+      "staticImports": [],
+      "dynamicImports": []
+    },
+    {
+      "file": "model-Bvs3vbjW.js",
+      "raw": 6867,
+      "gzip": 3160,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "puzzle-DmSsZvyr.js",
+      "raw": 755,
+      "gzip": 495,
+      "staticImports": [
+        "index-FYs3p2AV.js",
+        "levels-CZVyCz7C.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-1FVyj2nw.js",
+      "raw": 6271,
+      "gzip": 2638,
+      "staticImports": [
+        "index-FYs3p2AV.js",
+        "data-mV9L5L_x.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-B770iOIi.js",
+      "raw": 28837,
+      "gzip": 10313,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-BWWRLEYT.js",
+      "raw": 21402,
+      "gzip": 7821,
+      "staticImports": [
+        "index-FYs3p2AV.js",
+        "model-Bvs3vbjW.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-CM3NE4QL.js",
+      "raw": 220,
+      "gzip": 182,
+      "staticImports": [
+        "index-FYs3p2AV.js",
+        "index-DprnLl5p.js",
+        "view-CiLLas0W.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-Cb75-eKx.js",
+      "raw": 1067,
+      "gzip": 549,
+      "staticImports": [
+        "index-FYs3p2AV.js",
+        "index-DprnLl5p.js",
+        "view-CiLLas0W.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-CiLLas0W.js",
+      "raw": 349105,
+      "gzip": 89494,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-CirRnWk8.js",
+      "raw": 3549,
+      "gzip": 1432,
+      "staticImports": [
+        "index-FYs3p2AV.js",
+        "levels-CZVyCz7C.js",
+        "puzzle-DmSsZvyr.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-D4LQ2GUq.js",
+      "raw": 941,
+      "gzip": 509,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-DEXBMy4S.js",
+      "raw": 12244,
+      "gzip": 4379,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-DYD4cQ2g.js",
+      "raw": 9295,
+      "gzip": 3446,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-D_0yXrTb.js",
+      "raw": 5160,
+      "gzip": 2325,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-Dsy8I8mR.js",
+      "raw": 2474,
+      "gzip": 1297,
+      "staticImports": [
+        "index-FYs3p2AV.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-I5JAUd55.js",
+      "raw": 6069,
+      "gzip": 2457,
+      "staticImports": [
+        "index-FYs3p2AV.js",
+        "index-DprnLl5p.js",
+        "view-CiLLas0W.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-TJ_MVmeT.js",
+      "raw": 5309,
+      "gzip": 2073,
+      "staticImports": [
+        "index-FYs3p2AV.js",
+        "course-FpRp1C-U.js"
+      ],
+      "dynamicImports": []
+    }
+  ]
+}

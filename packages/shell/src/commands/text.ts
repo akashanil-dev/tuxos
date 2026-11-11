@@ -1,11 +1,14 @@
-import type { CommandDefinition } from './types';
+import type { CommandContext, CommandDefinition } from './types';
 import { invalidOption, lines, options, read, readResult, recursiveFiles, strerror } from './helpers';
 
-export function textCommands(): CommandDefinition[] {
-  return [echo(), head(), tail(), wc(), grep(), sort(), uniq()];
+export type TextContext = Pick<CommandContext, 'args' | 'stdin' | 'stdout' | 'stderr' | 'dispatch' | 'resolve'>;
+type TextCommand = Omit<CommandDefinition, 'run'> & { run(ctx: TextContext): number };
+
+export function textCommands(): TextCommand[] {
+  return [echo(), head(), tail(), wc(), grep(), sort(), uniq(), tr(), cut(), rev()];
 }
 
-function echo(): CommandDefinition {
+function echo(): TextCommand {
   return {
     name: 'echo', summary: 'Write arguments to standard output', usage: 'echo [-n] [ARG ...]',
     run(ctx) {
@@ -27,25 +30,27 @@ function echo(): CommandDefinition {
   };
 }
 
-function head(): CommandDefinition {
+function head(): TextCommand {
   return {
     name: 'head', summary: 'Output the first part of files', usage: 'head [-n N] [FILE]',
     run: (ctx) => slice(ctx, true),
   };
 }
 
-function tail(): CommandDefinition {
+function tail(): TextCommand {
   return {
     name: 'tail', summary: 'Output the last part of files', usage: 'tail [-n N] [FILE]',
     run: (ctx) => slice(ctx, false),
   };
 }
 
-function slice(ctx: Parameters<CommandDefinition['run']>[0], first: boolean): number {
+function slice(ctx: TextContext, first: boolean): number {
   const name = first ? 'head' : 'tail';
-  const parsed = options(ctx, 'n');
+  const normalized = { ...ctx, args: ctx.args.flatMap(arg => /^-\d+$/.test(arg) ? ['-n', arg.slice(1)] : [arg]) };
+  const parsed = options(normalized, 'n');
   if (parsed.unknown) return invalidOption(ctx, name, `-${parsed.unknown}`);
   const count = parsed.flags.has('n') ? Number(parsed.args[0]) : 10;
+  if (!Number.isInteger(count) || count < 0) { ctx.stderr(`${name}: invalid line count\n`); return 1; }
   const files = parsed.flags.has('n') ? parsed.args.slice(1) : parsed.args;
   const inputs = files.length ? files : ['-'];
   let code = 0;
@@ -61,13 +66,13 @@ function slice(ctx: Parameters<CommandDefinition['run']>[0], first: boolean): nu
       if (index) ctx.stdout('\n');
       ctx.stdout(`==> ${file === '-' ? 'standard input' : file} <==\n`);
     }
-    const selected = lines(result.value).slice(first ? 0 : -count, first ? count : undefined);
+    const selected = count === 0 ? [] : lines(result.value).slice(first ? 0 : -count, first ? count : undefined);
     ctx.stdout(selected.length ? `${selected.join('\n')}\n` : '');
   }
   return code;
 }
 
-function wc(): CommandDefinition {
+function wc(): TextCommand {
   return {
     name: 'wc', summary: 'Print newline, word, and byte counts', usage: 'wc [-l] [-w] [-c] [FILE]',
     run(ctx) {
@@ -94,7 +99,7 @@ function wc(): CommandDefinition {
         ].filter((value): value is number => value !== undefined);
         rows.push({ file, counts });
       }
-      for (const row of rows) ctx.stdout(`${row.counts.join(' ')} ${row.file}\n`);
+      for (const row of rows) ctx.stdout(`${row.counts.join(' ')}${args.length ? ` ${row.file}` : ''}\n`);
       if (rows.length > 1) {
         const totals = rows[0]!.counts.map((_, index) => rows.reduce((sum, row) => sum + row.counts[index]!, 0));
         ctx.stdout(`${totals.join(' ')} total\n`);
@@ -104,7 +109,7 @@ function wc(): CommandDefinition {
   };
 }
 
-function grep(): CommandDefinition {
+function grep(): TextCommand {
   return {
     name: 'grep', summary: 'Search for matching lines', usage: 'grep [-i] [-n] [-v] [-r] [-c] PATTERN [FILE]',
     run(ctx) {
@@ -159,7 +164,7 @@ function grep(): CommandDefinition {
   };
 }
 
-function sort(): CommandDefinition {
+function sort(): TextCommand {
   return {
     name: 'sort', summary: 'Sort lines of text', usage: 'sort [-r] [-n] [-u] [FILE]',
     run(ctx) {
@@ -189,7 +194,7 @@ function sort(): CommandDefinition {
   };
 }
 
-function uniq(): CommandDefinition {
+function uniq(): TextCommand {
   return {
     name: 'uniq', summary: 'Report or omit repeated lines', usage: 'uniq [-c]',
     run(ctx) {
@@ -237,4 +242,50 @@ function interpretEcho(input: string): { text: string; stop: boolean } {
     } else text += escapes[next] ?? `\\${next}`;
   }
   return { text, stop: false };
+}
+
+function tr(): TextCommand {
+  return { name: 'tr', summary: 'Translate characters from standard input', usage: 'tr SET1 SET2', run(ctx) {
+    if (ctx.args.length !== 2 || ctx.args.some(arg => arg.startsWith('-'))) { ctx.stderr('tr: this teaching implementation supports tr SET1 SET2, including a-z and A-Z ranges.\n'); return 1; }
+    const expand = (set: string) => set.replace(/(.)-(.)/g, (_, a: string, b: string) => {
+      const start = a.charCodeAt(0), end = b.charCodeAt(0);
+      return end >= start && end - start <= 128 ? Array.from({ length: end - start + 1 }, (_, i) => String.fromCharCode(start + i)).join('') : a + '-' + b;
+    });
+    const from = expand(ctx.args[0]!), to = expand(ctx.args[1]!);
+    if (!to.length) { ctx.stderr('tr: SET2 must not be empty\n'); return 1; }
+    ctx.stdout([...ctx.stdin].map(char => { const i = from.indexOf(char); return i < 0 ? char : to[Math.min(i, to.length - 1)]; }).join(''));
+    return 0;
+  } };
+}
+function cut(): TextCommand {
+  return { name: 'cut', summary: 'Select delimited fields', usage: 'cut -d DELIMITER -f FIELD[,FIELD] [FILE]', run(ctx) {
+    let delimiter = '\t', fields: number[] = [], files: string[] = [];
+    for (let i = 0; i < ctx.args.length; i++) {
+      const arg = ctx.args[i]!;
+      if (arg.startsWith('-d')) delimiter = arg.length === 2 ? ctx.args[++i] ?? '' : arg.slice(2);
+      else if (arg.startsWith('-f')) { const spec = arg.length === 2 ? ctx.args[++i] ?? '' : arg.slice(2); fields = spec.split(',').map(Number); }
+      else if (arg.startsWith('-') && arg !== '-') return invalidOption(ctx, 'cut', arg);
+      else files.push(arg);
+    }
+    if (delimiter.length !== 1 || !fields.length || fields.some(n => !Number.isInteger(n) || n < 1)) { ctx.stderr('cut: use one delimiter and positive, comma-separated field numbers\n'); return 1; }
+    if (!files.length) files = ['-'];
+    for (const file of files) {
+      const result = file === '-' ? { ok: true as const, value: ctx.stdin } : readResult(ctx, ctx.resolve(file));
+      if (!result.ok) { ctx.stderr(`cut: ${file}: ${strerror(result.error.code)}\n`); return 1; }
+      const selected = lines(result.value).map(line => !line.includes(delimiter) ? line : [...new Set(fields)].sort((a,b) => a-b).filter(n => n <= line.split(delimiter).length).map(n => line.split(delimiter)[n - 1]).join(delimiter));
+      ctx.stdout(selected.length ? selected.join('\n') + '\n' : '');
+    }
+    return 0;
+  } };
+}
+function rev(): TextCommand {
+  return { name: 'rev', summary: 'Reverse the characters of each line', usage: 'rev [FILE]', run(ctx) {
+    for (const file of ctx.args.length ? ctx.args : ['-']) {
+      const result = file === '-' ? { ok: true as const, value: ctx.stdin } : readResult(ctx, ctx.resolve(file));
+      if (!result.ok) { ctx.stderr(`rev: ${file}: ${strerror(result.error.code)}\n`); return 1; }
+      const reversed = lines(result.value).map(line => [...line].reverse().join(''));
+      ctx.stdout(reversed.length ? reversed.join('\n') + '\n' : '');
+    }
+    return 0;
+  } };
 }

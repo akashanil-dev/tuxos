@@ -3,7 +3,9 @@ import type { SystemClient } from '@tuxos/system';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { PopupMenu, type MenuItem } from '../desktops/shared/Menu';
 import { usePointerDrag } from '../hooks/usePointerDrag';
-import { getLazyView } from '../views';
+import { getLazyView, retryView } from '../views';
+import { AppErrorBoundary } from './AppErrorBoundary';
+import { clampGeometry } from './geometry';
 
 export interface Insets {
   top: number;
@@ -36,6 +38,8 @@ interface WindowFrameProps {
   tiled?: Geometry;
   /** On another workspace: kept mounted, so apps keep their state, but not shown. */
   offWorkspace?: boolean;
+  active?: boolean;
+  closing?: boolean;
   /** Ask to close this window. The app may refuse (unsaved changes), so this goes through the desktop. */
   onClose(): void;
   /** Lets an app veto closing, e.g. to ask about unsaved changes. */
@@ -54,6 +58,7 @@ export function WindowFrame(props: WindowFrameProps) {
   const dragOrigin = useRef({ x: 0, y: 0 });
   const resizeOrigin = useRef({ width: 0, height: 0, x: 0, y: 0 });
   const View = getLazyView(window.appId);
+  const [, setAttempt] = useState(0);
   // Apps get one stable function for the window's whole life, whatever the desktop passes on each render.
   const guardTarget = useRef(setCloseGuard);
   guardTarget.current = setCloseGuard;
@@ -83,20 +88,20 @@ export function WindowFrame(props: WindowFrameProps) {
     setPreview((current) => ({ ...current, ...position }));
     void system.dispatch('session.move', { id: window.id, ...position });
   };
-  const drag = usePointerDrag(movePreview, finishMove);
+  const drag = usePointerDrag(movePreview, finishMove, () => setPreview(geometryOf(window)));
 
   const resizePreview = (event: React.PointerEvent) => {
-    const width = Math.max(MIN_WIDTH, resizeOrigin.current.width + pointerX(event) - resizeOrigin.current.x);
-    const height = Math.max(MIN_HEIGHT, resizeOrigin.current.height + pointerY(event) - resizeOrigin.current.y);
+    const width = Math.min(globalThis.innerWidth - preview.x, Math.max(MIN_WIDTH, resizeOrigin.current.width + pointerX(event) - resizeOrigin.current.x));
+    const height = Math.min(globalThis.innerHeight - insets.bottom - preview.y, Math.max(MIN_HEIGHT, resizeOrigin.current.height + pointerY(event) - resizeOrigin.current.y));
     setPreview((current) => ({ ...current, width, height }));
   };
   const finishResize = (event: React.PointerEvent) => {
-    const width = Math.max(MIN_WIDTH, resizeOrigin.current.width + pointerX(event) - resizeOrigin.current.x);
-    const height = Math.max(MIN_HEIGHT, resizeOrigin.current.height + pointerY(event) - resizeOrigin.current.y);
+    const width = Math.min(globalThis.innerWidth - preview.x, Math.max(MIN_WIDTH, resizeOrigin.current.width + pointerX(event) - resizeOrigin.current.x));
+    const height = Math.min(globalThis.innerHeight - insets.bottom - preview.y, Math.max(MIN_HEIGHT, resizeOrigin.current.height + pointerY(event) - resizeOrigin.current.y));
     setPreview((current) => ({ ...current, width, height }));
     void system.dispatch('session.resize', { id: window.id, width, height });
   };
-  const resize = usePointerDrag(resizePreview, finishResize);
+  const resize = usePointerDrag(resizePreview, finishResize, () => setPreview(geometryOf(window)));
 
   const focus = () => {
     if (!focused) void system.dispatch('session.focus', { id: window.id });
@@ -110,7 +115,7 @@ export function WindowFrame(props: WindowFrameProps) {
 
   return <section
     className={`app-window app-${window.appId} deco-${decoration} ${focused ? 'focused' : ''} `
-      + `${window.maximized ? 'maximized' : ''} ${tiled ? 'tiled' : ''}`}
+      + `${window.maximized ? 'maximized' : ''} ${tiled ? 'tiled' : ''} ${props.closing ? 'closing' : ''}`}
     style={{
       left: box.x,
       top: box.y,
@@ -123,6 +128,8 @@ export function WindowFrame(props: WindowFrameProps) {
     aria-label={window.title}
     data-tutor-target={`window:${window.id}`}
     onPointerDown={focus}
+    onClickCapture={focus}
+    onFocusCapture={focus}
   >
     <header
       onPointerDown={(event) => {
@@ -132,6 +139,7 @@ export function WindowFrame(props: WindowFrameProps) {
       }}
       onPointerMove={drag.onPointerMove}
       onPointerUp={drag.onPointerUp}
+      onPointerCancel={drag.onPointerCancel}
       onDoubleClick={(event) => { if (!(event.target as HTMLElement).closest('button')) toggleMaximize(); }}
     >
       {decoration === 'motif' && <button
@@ -161,10 +169,15 @@ export function WindowFrame(props: WindowFrameProps) {
           && <WindowButton label={`Close ${window.title}`} kind="close" onClick={onClose} onPointerDown={stopPointer} />}
       </div>
     </header>
+    {window.appId === 'learn-linux' && <nav className="learning-window-controls" aria-label="Learning view">
+      <button onClick={() => { toggleMaximize(); void system.dispatch('session.setPreferences', { resume: window.maximized ? 'desktop' : 'learn' }); }}>{window.maximized ? 'Return to window' : 'Focus view'}</button>
+      <button onClick={() => void system.openApp('files')}>Open Files</button>
+      <button onClick={() => { minimize(); void system.dispatch('session.setPreferences', { resume: 'desktop' }); }}>Explore desktop</button>
+    </nav>}
     <div className="window-content">
-      {View ? <Suspense fallback={<p className="window-loading">Loading app…</p>}>
-        <View system={system} windowId={window.id} args={window.args} setCloseGuard={guard} />
-      </Suspense> : <p className="window-loading">No view registered for {window.appId}</p>}
+      {View ? <AppErrorBoundary title={window.title} retry={() => { retryView(window.appId); setAttempt(value => value + 1); }}><Suspense fallback={<p className="window-loading" role="status">Opening {window.title}…</p>}>
+        <View active={focused && props.active !== false && !window.minimized && !offWorkspace} system={system} windowId={window.id} args={window.args} setCloseGuard={guard} />
+      </Suspense></AppErrorBoundary> : <p className="window-loading">This app is currently unavailable. Its saved records are kept. Re-enable it in Plugins or restore a compatible system backup.</p>}
     </div>
     {!fixed && <button
       className="resize-handle"
@@ -181,6 +194,7 @@ export function WindowFrame(props: WindowFrameProps) {
       }}
       onPointerMove={resize.onPointerMove}
       onPointerUp={resize.onPointerUp}
+      onPointerCancel={resize.onPointerCancel}
     />}
     {menu && <PopupMenu
       x={menu.x}
@@ -223,12 +237,8 @@ function geometryOf(window: SessionWindow): Geometry {
 
 /** Keep at least 40px of the title bar on screen, and never under a panel. */
 function clampPosition(x: number, y: number, width: number, insets: Insets) {
-  const desktopWidth = globalThis.innerWidth;
-  const bottom = globalThis.innerHeight - insets.bottom;
-  return {
-    x: Math.min(desktopWidth - 40, Math.max(40 - width, x)),
-    y: Math.min(bottom - 40, Math.max(insets.top, y)),
-  };
+  const box = clampGeometry({ x, y, width, height: 160 }, { width: globalThis.innerWidth, height: globalThis.innerHeight }, insets);
+  return { x: box.x, y: box.y };
 }
 
 function maximizedGeometry(insets: Insets): Geometry {

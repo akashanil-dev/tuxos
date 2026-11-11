@@ -7,6 +7,14 @@ export interface Area {
   height: number;
 }
 
+/** Show a readable group around the focused window; other groups stay mounted and are switchable. */
+export function tiledGroup(ids: readonly string[], focused: string | null | undefined, area: Area, gap = 12): string[] {
+  const capacity = area.width < 760 || area.height < 244 ? 1 : 1 + Math.max(1, Math.floor((area.height - gap) / (220 + gap)));
+  const index = Math.max(0, ids.indexOf(focused ?? ''));
+  const start = Math.floor(index / capacity) * capacity;
+  return ids.slice(start, start + capacity);
+}
+
 /**
  * Master and stack tiling, as Hyprland's master layout does: one window fills the area; with more, the
  * first takes the left 55% and the rest share the right side, one above the other, with gaps between.

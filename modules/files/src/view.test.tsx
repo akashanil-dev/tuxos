@@ -27,6 +27,22 @@ async function renderFiles(): Promise<SystemClient> {
 
 afterEach(() => cleanup());
 
+it('resumes a verified folder, hidden-file preference and icon view after a full boot', async () => {
+  const system = createLocalSystem({ storage: memory(), modules: [{ manifest: files.manifest, load: async () => files }] });
+  await system.boot('ada'); const opened = await system.openApp('files'); if (!opened.ok) throw new Error('Files did not open');
+  const view = render(<FilesView system={system} windowId={opened.value} />);
+  await screen.findByText('Documents'); fireEvent.click(screen.getByRole('button', { name: 'Temporary files' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Hidden files' })); fireEvent.click(screen.getByRole('button', { name: 'Icon view' }));
+  await waitFor(async () => expect((await system.session()).windows[0]?.args).toMatchObject({ path: '/tmp', hidden: 'true', view: 'icons' }));
+  await system.flush(); view.unmount(); await system.boot('ada');
+  const saved = (await system.session()).windows[0]!;
+  render(<FilesView system={system} windowId={saved.id} args={saved.args} />);
+  await waitFor(() => expect((screen.getByLabelText('Location') as HTMLInputElement).value).toBe('/tmp'));
+  expect(screen.getByRole('button', { name: 'Hidden files' }).getAttribute('aria-pressed')).toBe('true');
+  expect(screen.getByRole('button', { name: 'List view' }).getAttribute('aria-pressed')).toBe('true');
+  await system.reset();
+});
+
 describe('Files', () => {
   it('opens a requested system folder and provides a shortcut to the root', async () => {
     const system = createLocalSystem({ storage: memory(), modules: [{ manifest: files.manifest, load: async () => files }] });
@@ -89,11 +105,14 @@ describe('Files', () => {
     await waitFor(() => expect(screen.queryByText('Documents')).toBeNull());
   });
 
-  it('opens files in the Text Editor with their path', async () => {
+  it('previews files safely before opening the same path in Text Editor', async () => {
     const system = await renderFiles();
     const openApp = vi.spyOn(system, 'openApp').mockResolvedValue({ ok: true, value: 'window-2' });
     await act(async () => { await system.dispatch('fs.write', { path: '/home/ada/notes.txt', content: 'x' }); });
     fireEvent.doubleClick(await screen.findByText('notes.txt'));
+    expect((await screen.findByLabelText('File preview')).textContent).toContain("cat '/home/ada/notes.txt'");
+    expect(openApp).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit file' }));
     expect(openApp).toHaveBeenCalledWith('editor', { path: '/home/ada/notes.txt' });
   });
 

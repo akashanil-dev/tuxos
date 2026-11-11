@@ -73,12 +73,13 @@ export function CourseView({ system, courseId }: { system: SystemClient; courseI
 export type LabVariant = 'linux' | 'docker' | 'chmod';
 
 /** Terminal-first course window: the generated task is always visible above the learner's shell. */
-export function LearningLabView({ system, courseId, variant }: {
+export function LearningLabView({ system, courseId, variant, setCloseGuard }: {
   system: SystemClient;
   courseId: string;
   variant: LabVariant;
+  setCloseGuard?: (guard: (() => boolean) | null) => void;
 }) {
-  if (variant === 'linux') return <LinuxTerminalLab system={system} courseId={courseId} />;
+  if (variant === 'linux') return <LinuxTerminalLab system={system} courseId={courseId} setCloseGuard={setCloseGuard} />;
   const { status, error, call } = useLessonStatus(system, courseId);
   const [selected, setSelected] = useState<string | null>(null);
   const terminal = useRef<LabTerminalHandle>(null);
@@ -189,9 +190,17 @@ function LabProgress({ lessons }: { lessons: { steps: number; completed: number 
   </div>;
 }
 
-function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId: string }) {
+function LinuxTerminalLab({ system, courseId, setCloseGuard }: { system: SystemClient; courseId: string; setCloseGuard?: (guard: (() => boolean) | null) => void }) {
+  return <div className="linux-terminal-lab continuous-learning">
+    <div className="learning-instructions"><LinuxLessonPanel system={system} courseId={courseId} /></div>
+    <TerminalSurface system={system} setCloseGuard={setCloseGuard} learningModule={courseId} inputId={`${courseId}-lab`} />
+  </div>;
+}
+
+function LinuxLessonPanel({ system, courseId }: { system: SystemClient; courseId: string }) {
   const { status, error, call } = useLessonStatus(system, courseId);
   const [retrying, setRetrying] = useState(false);
+  const [browse, setBrowse] = useState(false);
   const active = status?.active;
   const task = active?.step;
   if (!status) return <div className="linux-terminal-loading">{error || 'Connecting to Linux trainer…'}</div>;
@@ -209,7 +218,7 @@ function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId
       <pre>{`# Starting the AI trainer…\n# ${status.lastExplain}`}<span className="linux-terminal-cursor" /></pre>
     </div>;
   }
-  if (status.builtIn && !task) return <BuiltInLessons system={system} status={status} error={error} onStart={(lesson) => void call('start', { lesson })} onPersonalize={() => void call('personalize')} />;
+  if (status.builtIn && (!task || browse)) return <><button hidden={!task} onClick={() => setBrowse(false)}>Return to current task</button><BuiltInLessons system={system} status={status} error={error} onStart={(lesson) => { setBrowse(false); void call('start', { lesson }); }} onPersonalize={() => void call('personalize')} /></>;
   if (!status.lessons.length || !task) return <div className="linux-terminal-unavailable">
     <div className="linux-terminal-unavailable-bar">linux-trainer.service</div>
     <pre>{`# AI trainer unavailable\n# No local question is loaded.\n# ${status.lastExplain ?? error ?? 'Check the learning API and retry.'}`}</pre>
@@ -226,7 +235,7 @@ function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId
   return <div className="linux-terminal-lab">
     <header className="linux-mission" aria-label="Current Linux mission">
       <div className="linux-mission-top">
-        <button type="button" className="linux-mission-retake" onClick={() => void call(status.builtIn ? 'quit' : 'curriculum')}>← Learning path</button>
+        <button type="button" className="linux-mission-retake" onClick={() => setBrowse(true)}>← Learning path</button>
         <span className="linux-mission-day">{active!.lesson.title}</span>
         <span className="linux-mission-count">Step {active!.stepIndex + 1} of {active!.steps.length}</span>
       </div>
@@ -250,7 +259,6 @@ function LinuxTerminalLab({ system, courseId }: { system: SystemClient; courseId
         {!status.builtIn && <button type="button" className="linux-mission-retake" onClick={() => void call('retakeSurvey')}>Adjust my practice level</button>}
       </details>
     </header>
-    <TerminalSurface system={system} learningModule={courseId} inputId={terminalId} />
   </div>;
 }
 

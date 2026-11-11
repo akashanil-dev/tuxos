@@ -77,6 +77,16 @@ describe('accounts', () => {
     expect((await accounts.handle('GET', '/api/auth/me', null, cookie)).status).toBe(401);
   });
 
+  it('rejects a snapshot downgrade even when the caller has the current save version', async () => {
+    accounts = new Accounts(':memory:');
+    const cookie = cookieFrom(await accounts.handle('POST', '/api/auth/register', { username: 'ada', password: 'pw' }, undefined));
+    const data = JSON.stringify({ username: 'ada', snapshot: { version: 2, state: {} } });
+    expect((await accounts.handle('PUT', '/api/save', { data, version: 0 }, cookie)).status).toBe(200);
+    const old = JSON.stringify({ username: 'ada', snapshot: { version: 1, state: {} } });
+    expect((await accounts.handle('PUT', '/api/save', { data: old, version: 1 }, cookie)).status).toBe(409);
+    expect(await accounts.handle('GET', '/api/save', null, cookie)).toEqual({ status: 200, body: { data, version: 1 } });
+  });
+
   it('expires sessions after 30 days', async () => {
     let now = 1_000;
     accounts = new Accounts(':memory:', true, () => now);

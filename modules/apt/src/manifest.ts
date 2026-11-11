@@ -9,8 +9,9 @@ export const manifest: ModuleManifest = {
   capabilities: ['fs:read', 'fs:write', 'user:switch'],
   activation: ['onStartup'],
   contributes: {
-    apps: [{ id: 'software', title: 'Software', icon: 'software', category: 'System', defaultGeometry: { width: 1040, height: 720 } }],
+    apps: [{ id: 'package-practice', title: 'Package Practice', icon: 'software', category: 'Education', description: 'Compare Fedora dnf and Arch pacman in separate teaching exercises.', defaultGeometry: { width: 820, height: 600 } }, { id: 'software', title: 'Software', icon: 'software', category: 'System', defaultGeometry: { width: 1040, height: 720 } }],
     commands: [
+      ...['pkg-lab', 'dnf', 'pacman'].map(name => ({ name, summary: 'Separate Fedora and Arch package exercises' })),
       { name: 'apt', summary: 'Install, remove and search for software packages' },
       { name: 'apt-get', summary: 'Install and remove packages (the older apt interface)' },
       { name: 'dpkg', summary: 'List installed packages and the files they own' },

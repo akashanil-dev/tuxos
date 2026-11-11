@@ -1,3 +1,6 @@
+import { createKonamiTracker } from '../desktop/konami';
+import { preloadTerminal } from '../views';
+import { DiscoveryNotice } from '../desktop/DiscoveryNotice';
 import { useWallpaper } from '../hooks/useWallpaper';
 import type { Window as SessionWindow } from '@tuxos/kernel';
 import type { SystemClient } from '@tuxos/system';
@@ -10,10 +13,11 @@ import { DesktopWidgets, desktopThemeStyle } from '../desktop/DesktopWidgets';
 import { FullscreenControl } from '../desktop/FullscreenControl';
 import { environmentFor } from '../desktops/registry';
 import { PopupMenu } from '../desktops/shared/Menu';
-import { tileLayout } from '../desktops/shared/tiling';
+import { tileLayout, tiledGroup } from '../desktops/shared/tiling';
 import type { PowerAction } from '../desktops/types';
 import { useSession } from '../hooks/useSession';
 import { TutorPanel } from '../tutor/TutorPanel';
+import { clampGeometry } from '../desktop/geometry';
 import { rememberAppearance } from './appearance-memory';
 
 /** Below this width every window fills the screen, so tiling and dragging are off. */
@@ -24,15 +28,13 @@ const NARROW = 720;
  * Switching environment (from Settings, or by the tutor) shows that environment's splash, then its shell.
  * Workspaces are part of the desktop, not the saved session, as on a real Linux desktop.
  */
-export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, verifySudo = null, active = true }: {
+export function Desktop({ system, tutor, onPower, onAchievements, verifySudo = null, active = true }: {
   system: SystemClient;
   /** Suspend desktop shortcuts while the learning view is in front. */
   active?: boolean;
   tutor?: Transport;
   onPower?(action: PowerAction): void;
   onAchievements?(): void;
-  /** Resume the account learning journey from any desktop launcher. */
-  onLearnLinux?(): void;
   /** Checks the account's password for Vasu's sudo request; null for guests, who have no password. */
   verifySudo?: ((password: string) => Promise<boolean>) | null;
 }) {
@@ -40,6 +42,16 @@ export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, 
   const wallpaper = useWallpaper(session.wallpaper);
   const environment = environmentFor(session.desktop);
   // The environment currently drawn; null until the first splash has played.
+  const [roll, setRoll] = useState(false);
+  useEffect(() => {
+    if (!active) return;
+    const track = createKonamiTracker(); let timer: ReturnType<typeof setTimeout> | undefined;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.repeat || event.ctrlKey || event.altKey || event.metaKey || (event.target as HTMLElement)?.closest?.('input, textarea, [contenteditable=true]')) return;
+      if (track(event.key, Date.now())) { void system.dispatch('exploration.discover', { id: 'konami' }); if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setRoll(true); clearTimeout(timer); timer = setTimeout(() => setRoll(false), 1200); } }
+    };
+    window.addEventListener('keydown', onKey); return () => { window.removeEventListener('keydown', onKey); clearTimeout(timer); };
+  }, [system, active]);
   const [shown, setShown] = useState<string | null>(null);
   const [launchError, setLaunchError] = useState('');
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
@@ -48,7 +60,11 @@ export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, 
   const [chosenWorkspace, setChosenWorkspace] = useState(1);
   const [placement, setPlacement] = useState<Record<string, number>>({});
   const viewport = useViewport();
+  const [closing, setClosing] = useState<string[]>([]);
+  const closeTimers = useRef(new Set<ReturnType<typeof setTimeout>>());
+  useEffect(() => () => { for (const timer of closeTimers.current) clearTimeout(timer); }, []);
   const closeGuards = useRef(new Map<string, () => boolean>());
+  useEffect(() => system.registerLeaveGuard?.('desktop', () => [...closeGuards.current.values()].every(guard => guard())), [system]);
 
   const workspaceCount = environment.workspaces?.length ?? 1;
   const workspace = Math.min(chosenWorkspace, workspaceCount);
@@ -59,15 +75,19 @@ export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, 
   const onWorkspace = (window: SessionWindow) => workspaceOf(window.id) === workspace;
 
   const open = useCallback((appId: string) => {
-    if (appId === 'learn-linux' && onLearnLinux) { onLearnLinux(); return; }
     void system.openApp(appId).then(result => { setLaunchError(result.ok ? '' : result.error.message); });
-  }, [system, onLearnLinux]);
+  }, [system]);
   const minimize = useCallback((id: string) => void system.dispatch('session.minimize', { id }), [system]);
   const power = useCallback((action: PowerAction) => onPower?.(action), [onPower]);
+  useEffect(() => system.subscribe(event => {
+    if (active && event.ok && event.action.type === 'session.power' && event.actor.kind === 'user') power((event.action.payload as { action: PowerAction }).action);
+  }), [system, active, power]);
   const close = useCallback((id: string) => {
     const guard = closeGuards.current.get(id);
     if (guard && !guard()) return;
-    void system.dispatch('session.close', { id });
+    setClosing(ids => [...ids, id]);
+    const timer = setTimeout(() => { void system.dispatch('session.close', { id }); closeTimers.current.delete(timer); setClosing(ids => ids.filter(item => item !== id)); }, globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : 100);
+    closeTimers.current.add(timer);
   }, [system]);
   const activate = useCallback((id: string) => {
     setChosenWorkspace(workspaceOf(id));
@@ -89,6 +109,9 @@ export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, 
   useEffect(() => rememberAppearance(session.desktop, session.wallpaper), [session.desktop, session.wallpaper]);
   // Switching desktop: fetch the new icon theme while its splash screen plays.
   useEffect(() => preloadIconTheme(session.desktop), [session.desktop]);
+  useEffect(() => {
+    if (loaded && (session.preferences?.fastBoot !== false || (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches))) setShown(session.desktop);
+  }, [loaded, session.desktop, session.preferences?.fastBoot]);
 
   // New windows open on the current workspace.
   useEffect(() => {
@@ -132,24 +155,36 @@ export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, 
     };
   }, [open, active]);
 
+  useEffect(() => {
+    if (!loaded || viewport.width < NARROW) return;
+    for (const win of session.windows) {
+      const box = clampGeometry(win, viewport, { top: environment.insets.top + 36, bottom: environment.insets.bottom });
+      if (box.x !== win.x || box.y !== win.y) void system.dispatch('session.move', { id: win.id, x: box.x, y: box.y });
+      if (box.width !== win.width || box.height !== win.height) void system.dispatch('session.resize', { id: win.id, width: box.width, height: box.height });
+    }
+  }, [system, loaded, viewport.width, viewport.height, environment.insets.top, environment.insets.bottom, session.windows]);
+  useEffect(() => { if (!welcome) return; const timer = setTimeout(() => setWelcome(null), 8000); return () => clearTimeout(timer); }, [welcome]);
+  const primaryApps = apps.filter(app => ['terminal', 'files', 'learn-linux', 'play'].includes(app.id));
   if (!loaded) return <main className="splash splash-gnome" />;
-  if (shown !== session.desktop) {
-    return <SessionSplash desktop={session.desktop} onDone={() => setShown(session.desktop)} />;
-  }
 
   const { Shell } = environment;
   const insets = { ...environment.insets, top: environment.insets.top + 36 };
   const tiles = new Map<string, Geometry>();
+  let tiledIds: Set<string> | undefined;
   if (environment.tiling && viewport.width >= NARROW) {
     const visible = session.windows.filter((window) => !window.minimized && onWorkspace(window));
     const area = { x: 0, y: insets.top, width: viewport.width, height: viewport.height - insets.top - insets.bottom };
-    tileLayout(visible.length, area).forEach((geometry, index) => tiles.set(visible[index]!.id, geometry));
+    const group = tiledGroup(visible.map(window => window.id), session.focusedId, area);
+    tiledIds = new Set(group);
+    tileLayout(group.length, area).forEach((geometry, index) => tiles.set(group[index]!, geometry));
   }
   const minimizedHere = session.windows.filter((window) => window.minimized && onWorkspace(window));
 
   return <IconThemeContext.Provider value={environment.id}>
     <main
-      className={`desktop-screen de-${environment.id}`}
+      className={`desktop-screen de-${environment.id}${roll ? ' konami-roll' : ''}`}
+      onPointerOverCapture={event => { if (active) preloadTerminal((event.target as HTMLElement).closest<HTMLElement>('[data-preload-app]')?.dataset.preloadApp ?? ''); }}
+      onFocusCapture={event => { if (active) preloadTerminal((event.target as HTMLElement).closest<HTMLElement>('[data-preload-app]')?.dataset.preloadApp ?? ''); }}
       style={{
         ...desktopThemeStyle(session.theme),
         background: wallpaper.background,
@@ -162,14 +197,17 @@ export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, 
         setMenu({ x: event.clientX, y: event.clientY });
       }}
     >
+      {shown !== session.desktop && session.preferences?.fastBoot === false && <div className="desktop-splash-overlay"><SessionSplash desktop={session.desktop} onDone={() => setShown(session.desktop)} /></div>}
       <FullscreenControl top={environment.insets.top} />
+      <DiscoveryNotice system={system} />
       {environment.desktopIcons === 'apps' && <div className="icon-grid icons-apps" style={iconGridStyle(insets)}>
-        {apps.map((app) => <button
+        {(primaryApps.length ? primaryApps : apps).map((app) => <button
           className="desktop-icon"
-          key={app.id}
+          key={app.id} data-preload-app={app.id}
           title={`Open ${app.title}`}
           data-tutor-target={`app:${app.id}`}
           onDoubleClick={() => open(app.id)}
+          onPointerUp={event => { if (event.pointerType === 'touch' || event.pointerType === 'pen') open(app.id); }}
           onKeyDown={(event) => { if (event.key === 'Enter') open(app.id); }}
         >
           <AppIcon name={app.icon} />
@@ -199,11 +237,13 @@ export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, 
           system={system}
           window={window}
           focused={session.focusedId === window.id}
+          active={active}
+          closing={closing.includes(window.id)}
           insets={insets}
           decoration={environment.decoration}
           icon={app && <AppIcon name={app.icon} />}
           tiled={tiles.get(window.id)}
-          offWorkspace={!onWorkspace(window)}
+          offWorkspace={!onWorkspace(window) || Boolean(tiledIds && !tiledIds.has(window.id))}
           onClose={() => close(window.id)}
           setCloseGuard={(guard) => {
             if (guard) closeGuards.current.set(window.id, guard);
@@ -238,17 +278,17 @@ export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, 
         items={environment.desktopMenu({ open, apps, power })}
         onClose={() => setMenu(null)}
       />}
-      {launchError && <div className="notification" role="alert" style={{ top: insets.top + 10 }}><strong>Keep learning</strong><p>{launchError}</p><button aria-label="Dismiss launch message" onClick={() => setLaunchError('')}>×</button></div>}
+      {launchError && <div className="notification" role="alert" style={{ top: 'auto', bottom: insets.bottom + 12, left: 12, right: 'auto' }}><strong>Keep learning</strong><p>{launchError}</p><button aria-label="Dismiss launch message" onClick={() => setLaunchError('')}>×</button></div>}
       {welcome && <div
         className={`notification notification-${environment.id}`}
-        style={{ top: insets.top + 10 }}
+        style={{ top: 'auto', bottom: insets.bottom + 12, left: 12, right: 'auto' }}
         role="status"
       >
         <strong>Welcome</strong>
         <p>{welcome}</p>
         <button aria-label="Dismiss" onClick={() => setWelcome(null)}>×</button>
       </div>}
-      {tutor && <TutorPanel system={system} transport={tutor} verifySudo={verifySudo} />}
+      {tutor && active && session.preferences?.showVasu !== false && <TutorPanel rich={session.preferences?.richVasu === true} system={system} transport={tutor} verifySudo={verifySudo} />}
     </main>
   </IconThemeContext.Provider>;
 }

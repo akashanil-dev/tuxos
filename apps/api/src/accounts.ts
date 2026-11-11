@@ -184,11 +184,20 @@ export class Accounts implements KeyStore {
       return { status: 400, body: { error: 'Expected { data, version }.' } };
     }
     if (Buffer.byteLength(data) > MAX_SAVE_BYTES) return { status: 413, body: { error: 'This save is too large.' } };
-    const current = (this.db.prepare('SELECT version FROM saves WHERE user_id = ?').get(userId) as
-      { version: number } | undefined)?.version ?? 0;
+    const existing = this.db.prepare('SELECT version, data FROM saves WHERE user_id = ?').get(userId) as
+      { version: number; data: string } | undefined;
+    const current = existing?.version ?? 0;
     // Another tab or device saved since this one loaded: refuse rather than overwrite newer progress.
     if (version !== current) {
       return { status: 409, body: { error: 'Your progress was saved from somewhere else. Reload to continue.', version: current } };
+    }
+    // A rollback or stale client must not downgrade a continuation snapshot after reading the current CAS version.
+    const schema = (raw: string): number => {
+      try { const value = JSON.parse(raw)?.snapshot?.version; return Number.isInteger(value) ? value : 0; }
+      catch { return 0; }
+    };
+    if (data && existing && schema(data) < schema(existing.data)) {
+      return { status: 409, body: { error: 'This save needs a newer TuxOS release. Reload before saving; your current progress is unchanged.', version: current } };
     }
     const next = current + 1;
     this.db.prepare(`INSERT INTO saves (user_id, data, version, updated_at) VALUES (?, ?, ?, ?)

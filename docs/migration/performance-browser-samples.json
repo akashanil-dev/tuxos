@@ -1,0 +1,357 @@
+[
+  {
+    "product": "current",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "viewport": [
+      1280,
+      720
+    ],
+    "hardwareConcurrency": 16,
+    "fcpMs": 244,
+    "lcpMs": 392,
+    "longTasks": [
+      {
+        "start": 209.59999999403954,
+        "duration": 78
+      }
+    ],
+    "entryToDesktopMs": null,
+    "openedWindows": [],
+    "navigation": {
+      "domContentLoadedMs": 287.19999998807907,
+      "loadMs": 414.5
+    },
+    "scriptCount": 1,
+    "scriptEncodedBytes": 170451,
+    "scriptTransferredBytes": 170751,
+    "capturedAt": "2026-11-11T11:13:25.578Z",
+    "run": "first navigation"
+  },
+  {
+    "product": "current",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "viewport": [
+      1280,
+      720
+    ],
+    "hardwareConcurrency": 16,
+    "fcpMs": 244,
+    "lcpMs": 392,
+    "longTasks": [
+      {
+        "start": 209.59999999403954,
+        "duration": 78
+      },
+      {
+        "start": 37703.59999999404,
+        "duration": 54
+      }
+    ],
+    "entryToDesktopMs": 139.2,
+    "openedWindows": [
+      {
+        "action": "Terminal",
+        "ms": 317
+      }
+    ],
+    "navigation": {
+      "domContentLoadedMs": 287.19999998807907,
+      "loadMs": 414.5
+    },
+    "scriptCount": 10,
+    "scriptEncodedBytes": 317143,
+    "scriptTransferredBytes": 320143,
+    "capturedAt": "2026-11-11T11:14:17.826Z",
+    "run": "guest entry and first Terminal"
+  },
+  {
+    "product": "baseline",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "viewport": [
+      1280,
+      720
+    ],
+    "hardwareConcurrency": 16,
+    "fcpMs": 252,
+    "lcpMs": 5552,
+    "longTasks": [
+      {
+        "start": 239.20000000298023,
+        "duration": 88
+      }
+    ],
+    "entryToDesktopMs": null,
+    "openedWindows": [],
+    "navigation": {
+      "domContentLoadedMs": 327.40000000596046,
+      "loadMs": 338.1000000089407
+    },
+    "scriptCount": 1,
+    "scriptEncodedBytes": 249804,
+    "scriptTransferredBytes": 250104,
+    "capturedAt": "2026-11-11T11:14:41.774Z",
+    "run": "first navigation; account API unavailable"
+  },
+  {
+    "product": "tuxplore",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "viewport": [
+      1280,
+      720
+    ],
+    "hardwareConcurrency": 16,
+    "fcpMs": 272,
+    "lcpMs": 7772,
+    "longTasks": [],
+    "entryToDesktopMs": null,
+    "openedWindows": [],
+    "navigation": {
+      "domContentLoadedMs": 322.8999999910593,
+      "loadMs": 406
+    },
+    "scriptCount": 20,
+    "scriptEncodedBytes": 103312,
+    "scriptTransferredBytes": 109312,
+    "capturedAt": "2026-11-11T11:15:57.490Z",
+    "run": "first navigation"
+  },
+  {
+    "product": "tuxplore",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "viewport": [
+      1280,
+      720
+    ],
+    "hardwareConcurrency": 16,
+    "fcpMs": 272,
+    "lcpMs": 75172,
+    "longTasks": [],
+    "entryToDesktopMs": 33.3,
+    "openedWindows": [
+      {
+        "action": "Log in",
+        "ms": 653.6
+      },
+      {
+        "action": "Open Terminal",
+        "ms": 13.2
+      }
+    ],
+    "navigation": {
+      "domContentLoadedMs": 322.8999999910593,
+      "loadMs": 406
+    },
+    "scriptCount": 20,
+    "scriptEncodedBytes": 103312,
+    "scriptTransferredBytes": 109312,
+    "capturedAt": "2026-11-11T11:17:53.601Z",
+    "run": "guest entry and first Terminal"
+  },
+  {
+    "product": "current",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "viewport": [
+      1280,
+      720
+    ],
+    "hardwareConcurrency": 16,
+    "fcpMs": 200,
+    "lcpMs": 216,
+    "longTasks": [],
+    "entryToDesktopMs": null,
+    "openedWindows": [],
+    "navigation": {
+      "domContentLoadedMs": 152.09999999403954,
+      "loadMs": 158
+    },
+    "scriptCount": 1,
+    "scriptEncodedBytes": 170593,
+    "scriptTransferredBytes": 170893,
+    "capturedAt": "2026-11-11T11:25:07.309Z",
+    "run": "repeat navigation 1"
+  },
+  {
+    "product": "baseline",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "viewport": [
+      1280,
+      720
+    ],
+    "hardwareConcurrency": 16,
+    "fcpMs": 192,
+    "lcpMs": 360,
+    "longTasks": [],
+    "entryToDesktopMs": null,
+    "openedWindows": [],
+    "navigation": {
+      "domContentLoadedMs": 273.90000000596046,
+      "loadMs": 277.40000000596046
+    },
+    "scriptCount": 1,
+    "scriptEncodedBytes": 249804,
+    "scriptTransferredBytes": 250104,
+    "capturedAt": "2026-11-11T11:25:08.603Z",
+    "run": "repeat navigation 1"
+  },
+  {
+    "product": "tuxplore",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "viewport": [
+      1280,
+      720
+    ],
+    "hardwareConcurrency": 16,
+    "fcpMs": 304,
+    "lcpMs": 336,
+    "longTasks": [],
+    "entryToDesktopMs": null,
+    "openedWindows": [],
+    "navigation": {
+      "domContentLoadedMs": 249.3999999910593,
+      "loadMs": 386.8999999910593
+    },
+    "scriptCount": 20,
+    "scriptEncodedBytes": 103312,
+    "scriptTransferredBytes": 109312,
+    "capturedAt": "2026-11-11T11:25:09.919Z",
+    "run": "repeat navigation 1"
+  },
+  {
+    "product": "current",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "viewport": [
+      1280,
+      720
+    ],
+    "hardwareConcurrency": 16,
+    "fcpMs": 176,
+    "lcpMs": 244,
+    "longTasks": [],
+    "entryToDesktopMs": null,
+    "openedWindows": [],
+    "navigation": {
+      "domContentLoadedMs": 176.5,
+      "loadMs": 178.70000000298023
+    },
+    "scriptCount": 1,
+    "scriptEncodedBytes": 170593,
+    "scriptTransferredBytes": 170893,
+    "capturedAt": "2026-11-11T11:25:11.030Z",
+    "run": "repeat navigation 2"
+  },
+  {
+    "product": "baseline",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "viewport": [
+      1280,
+      720
+    ],
+    "hardwareConcurrency": 16,
+    "fcpMs": 208,
+    "lcpMs": 292,
+    "longTasks": [],
+    "entryToDesktopMs": null,
+    "openedWindows": [],
+    "navigation": {
+      "domContentLoadedMs": 221.59999999403954,
+      "loadMs": 224.59999999403954
+    },
+    "scriptCount": 1,
+    "scriptEncodedBytes": 249804,
+    "scriptTransferredBytes": 250104,
+    "capturedAt": "2026-11-11T11:25:12.128Z",
+    "run": "repeat navigation 2"
+  },
+  {
+    "product": "tuxplore",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "viewport": [
+      1280,
+      720
+    ],
+    "hardwareConcurrency": 16,
+    "fcpMs": 340,
+    "lcpMs": 356,
+    "longTasks": [],
+    "entryToDesktopMs": null,
+    "openedWindows": [],
+    "navigation": {
+      "domContentLoadedMs": 303.20000000298023,
+      "loadMs": 450.5
+    },
+    "scriptCount": 20,
+    "scriptEncodedBytes": 103312,
+    "scriptTransferredBytes": 109312,
+    "capturedAt": "2026-11-11T11:25:13.595Z",
+    "run": "repeat navigation 2"
+  },
+  {
+    "product": "current",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "viewport": [
+      1280,
+      720
+    ],
+    "hardwareConcurrency": 16,
+    "fcpMs": 172,
+    "lcpMs": 240,
+    "longTasks": [],
+    "entryToDesktopMs": null,
+    "openedWindows": [],
+    "navigation": {
+      "domContentLoadedMs": 173.59999999403954,
+      "loadMs": 244.8999999910593
+    },
+    "scriptCount": 1,
+    "scriptEncodedBytes": 170593,
+    "scriptTransferredBytes": 170893,
+    "capturedAt": "2026-11-11T11:25:14.682Z",
+    "run": "repeat navigation 3"
+  },
+  {
+    "product": "baseline",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "viewport": [
+      1280,
+      720
+    ],
+    "hardwareConcurrency": 16,
+    "fcpMs": 236,
+    "lcpMs": 352,
+    "longTasks": [],
+    "entryToDesktopMs": null,
+    "openedWindows": [],
+    "navigation": {
+      "domContentLoadedMs": 295.8999999910593,
+      "loadMs": 298.8999999910593
+    },
+    "scriptCount": 1,
+    "scriptEncodedBytes": 249804,
+    "scriptTransferredBytes": 250104,
+    "capturedAt": "2026-11-11T11:25:15.816Z",
+    "run": "repeat navigation 3"
+  },
+  {
+    "product": "tuxplore",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "viewport": [
+      1280,
+      720
+    ],
+    "hardwareConcurrency": 16,
+    "fcpMs": 176,
+    "lcpMs": 212,
+    "longTasks": [],
+    "entryToDesktopMs": null,
+    "openedWindows": [],
+    "navigation": {
+      "domContentLoadedMs": 176.59999999403954,
+      "loadMs": 328.20000000298023
+    },
+    "scriptCount": 20,
+    "scriptEncodedBytes": 103312,
+    "scriptTransferredBytes": 109312,
+    "capturedAt": "2026-11-11T11:25:17.015Z",
+    "run": "repeat navigation 3"
+  }
+]

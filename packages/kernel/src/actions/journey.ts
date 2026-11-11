@@ -1,28 +1,20 @@
-import { JOURNEY_LESSONS, REWARDS, DESKTOP_PACKAGES, desktopReady, desktopsFromStatus, unlocked, desktopReward, type RewardId } from '@tuxos/sdk';
+import { JOURNEY_LESSONS, REWARDS, DESKTOP_PACKAGES, desktopsFromStatus, unlocked, featureAvailable, type RewardId } from '@tuxos/sdk';
 import { KernelError } from '../errors';
 import type { ActionDefinition } from '../kernel';
 import type { SessionState } from '../state';
 
 export function demandReward(session: SessionState, reward: RewardId): void {
-  if (!unlocked(session.journey, reward)) {
+  if (!featureAvailable(session.journey, reward, session.appearanceGrants)) {
     const milestone = REWARDS.find(r => r.id === reward)!;
     throw new KernelError('EACCES', `Locked: complete the first ${milestone.at} Learn Linux lessons to unlock ${milestone.title}.`);
   }
 }
 export function demandDesktop(session: SessionState, desktop = 'plasma'): void {
-  demandReward(session, desktopReward(desktop));
-  if (!desktopReady(session.journey, desktop)) {
-    const pkg = DESKTOP_PACKAGES.find(item => item.id === desktop);
-    throw new KernelError('EACCES', `Install ${pkg?.name ?? desktop} first: sudo apt update, then sudo apt install ${pkg?.package ?? desktop}.`);
-  }
+  if (!DESKTOP_PACKAGES.some(item => item.id === desktop)) throw new KernelError('EINVAL', 'Choose KDE Plasma, GNOME, Hyprland or CDE.');
 }
 export function reconcileJourney(session: SessionState): void {
-  if (!session.journey) return;
-  if (!desktopReady(session.journey, session.desktop)) session.desktop = 'plasma';
-  if (!unlocked(session.journey, 'wallpaper') || (session.wallpaper === 'kde-30th' && !unlocked(session.journey, 'anniversary'))) session.wallpaper = 'default';
-  if (!unlocked(session.journey, 'themes')) delete session.theme;
-  if (!unlocked(session.journey, 'plugins')) session.widgets = [];
-  // Old windows remain in the saved account but are hidden until the desktop is earned.
+  // Access and installed package state no longer rewrite the learner's appearance or windows.
+  if (!DESKTOP_PACKAGES.some(item => item.id === session.desktop)) session.desktop = 'plasma';
 }
 export const journeyActions: ActionDefinition[] = [
   { type: 'journey.terminal', capability: 'shell:exec', description: 'Remember the learning terminal for the current lesson.', mutates: true,

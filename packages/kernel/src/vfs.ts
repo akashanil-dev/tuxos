@@ -178,6 +178,13 @@ export function remove(root: DirNode, path: string, user: string, recursive = fa
   parent.mtime = now;
 }
 
+export function removeEmptyDirectory(root: DirNode, path: string, user: string, now = 0): void {
+  const node = lookup(root, path, user);
+  if (node.kind !== 'dir') throw new KernelError('ENOTDIR', `${path}: Not a directory`);
+  if (Object.keys(node.children).length) throw new KernelError('ENOTEMPTY', `${path}: Directory not empty`);
+  remove(root, path, user, true, now);
+}
+
 export function changeMode(root: DirNode, path: string, user: string, mode: number): void {
   if (!Number.isInteger(mode) || mode < 0 || mode > 0o777) throw new KernelError('EINVAL', `invalid mode: ${mode}`);
   const node = lookup(root, path, user);

@@ -537,3 +537,12 @@
   .curriculum-next { flex-wrap: wrap; padding: 16px; }
   .curriculum-details { padding-left: 0; }
 }
+
+.learning-entry { display:flex; flex-direction:column; height:100%; min-height:0; background:var(--window-bg); color:var(--window-fg); }
+.learning-entry > nav { display:flex; gap:6px; flex-wrap:wrap; padding:6px 12px; border-bottom:1px solid var(--line); }
+.learning-entry > nav button { color:var(--window-fg); background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius-small); padding:6px 10px; }
+.continuous-learning { flex:1; min-height:0; }
+.continuous-learning > .learning-instructions { flex:0 1 auto; max-height:55%; min-height:100px; overflow:auto; background:var(--window-bg); color:var(--window-fg); }
+.learning-instructions .linux-mission { max-height:none; }
+.learning-instructions .linux-terminal-lab { height:auto; }
+.continuous-learning > .terminal-view { flex:1 1 45%; min-height:130px; }

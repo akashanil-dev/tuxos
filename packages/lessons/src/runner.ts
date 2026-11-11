@@ -10,6 +10,7 @@ export interface LessonHost {
   home: string;
   onEvent(listener: (event: KernelEvent) => void): () => void;
   read(path: string): Entry | undefined;
+  fact?(name: string): boolean;
   mkdir(path: string): void;
   write(path: string, content: string): void;
   load(): Progress | undefined;
@@ -54,7 +55,7 @@ export class LessonRunner {
   private readonly listeners = new Set<(event: LessonEvent) => void>();
   private readonly stop: () => void;
 
-  constructor(private readonly course: Course, private readonly host: LessonHost) {
+  constructor(private readonly course: Course, private readonly host: LessonHost, private readonly options: { parallelObjectives?: boolean; resumeOnStart?: boolean } = {}) {
     this.progress = host.load() ?? { completed: {}, active: null };
     this.stop = host.onEvent((event) => this.observe(event));
   }
@@ -74,7 +75,8 @@ export class LessonRunner {
     for (const [path, content] of Object.entries(lesson.setup?.files ?? {})) {
       this.host.write(expand(path, this.host.home), content);
     }
-    this.progress.completed[lessonId] = [];
+    if (!this.options.resumeOnStart) this.progress.completed[lessonId] = [];
+    else this.progress.completed[lessonId] ??= [];
     this.progress.active = { lesson: lessonId, step: 0 };
     this.events = [];
     this.lastExplain = null;
@@ -120,6 +122,7 @@ export class LessonRunner {
   private observe(event: KernelEvent): void {
     if (!this.progress.active) return;
     this.events.push(event);
+    if (this.events.length > 500) this.events.splice(0, this.events.length - 500);
     this.advance();
   }
 
@@ -136,6 +139,7 @@ export class LessonRunner {
   }
 
   private advanceSteps(): void {
+    if (this.options.parallelObjectives) { this.advanceObjectives(); return; }
     for (;;) {
       const active = this.progress.active;
       if (!active) return;
@@ -146,8 +150,27 @@ export class LessonRunner {
     }
   }
 
+  /** Adventure objectives share the quest's event history and may finish in any order. */
+  private advanceObjectives(): void {
+    const active = this.progress.active;
+    if (!active) return;
+    const lesson = this.lesson(active.lesson);
+    const completed = this.progress.completed[lesson.id] ??= [];
+    const changed: Step[] = [];
+    for (const step of lesson.steps) {
+      if (!completed.includes(step.id) && this.isDone(step)) { completed.push(step.id); changed.push(step); }
+    }
+    const next = lesson.steps.findIndex(step => !completed.includes(step.id));
+    const finished = next < 0;
+    this.progress.active = finished ? null : { lesson: lesson.id, step: next };
+    if (!changed.length && !finished) return;
+    this.host.save(this.progress);
+    for (const step of changed) this.emit({ type: 'step-done', lesson: lesson.id, step: step.id });
+    if (finished) { this.events = []; this.emit({ type: 'lesson-done', lesson: lesson.id }); }
+  }
+
   private isDone(step: Step): boolean {
-    return satisfied(step.check, { events: this.events, home: this.host.home, read: (path) => this.host.read(path) });
+    return satisfied(step.check, { events: this.events, home: this.host.home, read: (path) => this.host.read(path), fact: (name) => this.host.fact?.(name) ?? false });
   }
 
   private complete(lesson: Lesson, step: Step, index: number): void {

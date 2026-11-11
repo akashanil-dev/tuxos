@@ -1,0 +1,32 @@
+{
+  "tuxplore_startup_js": {
+    "files": 20,
+    "raw_bytes": 315444,
+    "gzip_bytes": 102471
+  },
+  "tuxplore_startup_css": {
+    "files": 4,
+    "raw_bytes": 83722,
+    "gzip_bytes": 19596
+  },
+  "tuxos_entry_js": {
+    "files": 1,
+    "raw_bytes": 852971,
+    "gzip_bytes": 248989
+  },
+  "tuxos_entry_css": {
+    "files": 1,
+    "raw_bytes": 99410,
+    "gzip_bytes": 19433
+  },
+  "tuxos_all_js_chunks": {
+    "files": 24,
+    "raw_bytes": 1659669,
+    "gzip_bytes": 465821
+  },
+  "tuxos_penguin3d": {
+    "files": 1,
+    "raw_bytes": 527997,
+    "gzip_bytes": 132123
+  }
+}

@@ -62,7 +62,7 @@ export function Sddm(props: GreeterProps) {
       </button>
     </div>
     <div className="sddm-bottom">
-      <span className="sddm-session">Start in the terminal · Earn your desktop</span>
+      <span className="sddm-session">Your desktop, files and learning progress</span>
       <span className="sddm-kbd">Keyboard Layout: US</span>
     </div>
   </main>;

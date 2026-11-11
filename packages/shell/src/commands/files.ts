@@ -7,12 +7,14 @@ export function fileCommands(): CommandDefinition[] {
 
 function cat(): CommandDefinition {
   return {
-    name: 'cat', summary: 'Concatenate files', usage: 'cat [FILE ...]',
+    name: 'cat', summary: 'Concatenate files', usage: 'cat [-n] [FILE ...]',
     run(ctx) {
-      const parsed = options(ctx);
+      const parsed = options(ctx, 'n');
       if (parsed.unknown) return invalidOption(ctx, 'cat', `-${parsed.unknown}`);
+      let line = 0;
+      const print = (value: string) => ctx.stdout(parsed.flags.has('n') ? value.replace(/[^\n]*\n|[^\n]+$/g, part => `${String(++line).padStart(6)}\t${part}`) : value);
       if (!parsed.args.length) {
-        ctx.stdout(ctx.stdin);
+        print(ctx.stdin);
         return 0;
       }
       let code = 0;
@@ -22,7 +24,7 @@ function cat(): CommandDefinition {
           const result = ctx.dispatch('fs.read', { path: ctx.resolve(raw) });
           ctx.stderr(`cat: ${raw}: ${strerror(result.ok ? 'EINVAL' : result.error.code)}\n`);
           code = 1;
-        } else ctx.stdout(value);
+        } else print(value);
       }
       return code;
     },
@@ -89,10 +91,14 @@ function remove(): CommandDefinition {
         ctx.stderr('rm: missing operand\n');
         return 1;
       }
+      if (flags.has('r') && args.some(raw => ctx.resolve(raw) === '/')) {
+        ctx.activity?.('root-refused');
+        ctx.stderr('rm: refusing to remove the filesystem root. Your files are safe. Practise removal inside a named exercise folder.\n'); return 1;
+      }
       let code = 0;
       for (const raw of args) {
         const result = ctx.dispatch('fs.remove', { path: ctx.resolve(raw), recursive: flags.has('r') });
-        if (!result.ok && !flags.has('f')) {
+        if (!result.ok && !(flags.has('f') && result.error.code === 'ENOENT')) {
           ctx.stderr(`rm: cannot remove '${raw}': ${strerror(result.error.code)}\n`);
           code = 1;
         }

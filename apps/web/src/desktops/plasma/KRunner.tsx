@@ -29,7 +29,7 @@ export function KRunner({ apps, open, onClose }: { apps: App[]; open(appId: stri
           }}
         />
       </div>
-      {results.map((app) => <button key={app.id} className="krunner-result" onClick={() => launch(app)}>
+      {results.map((app) => <button key={app.id} data-preload-app={app.id} className="krunner-result" onClick={() => launch(app)}>
         <AppIcon name={app.icon} />
         <span><strong>{app.title}</strong><small>{app.description}</small></span>
       </button>)}

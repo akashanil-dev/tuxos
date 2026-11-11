@@ -1,5 +1,5 @@
 import { KernelError, resolvePath, type Kernel, type ActionContext, type Stat, type VNode } from '@tuxos/kernel';
-import { unlocked, approvePlugin, comparePluginVersions, pluginBytes, PLUGIN_LIMITS, validatePluginManifest, validatePluginPackage,
+import { approvePlugin, comparePluginVersions, pluginBytes, PLUGIN_LIMITS, validatePluginManifest, validatePluginPackage,
   validPluginId, type InstalledPlugin, type ModuleManifest, type PluginApproval, type PluginManager, type PluginPackage } from '@tuxos/sdk';
 import type { ModuleHost } from '@tuxos/module-host';
 import type { PluginLoaderHooks } from './plugin-loader';
@@ -54,7 +54,7 @@ export class ManagedPlugins implements PluginManager {
   isEnabled(id: string): boolean { return !this.disposed && this.entries.get(id)?.info.status === 'enabled' && this.registered.has(id); }
   generation(id: string): number | undefined { return this.isEnabled(id) ? this.generations.get(id) : undefined; }
   private requireUnlocked(): void {
-    if (!unlocked(this.kernel.getState().session.journey, 'plugins')) throw new Error('Plugins unlock after lesson 26: Open-source maker.');
+    if (this.disposed) throw new Error('This system session has ended. Reopen Plugins in the current session.');
   }
 
   async list(): Promise<InstalledPlugin[]> { return structuredClone([...this.entries.values()].map((entry) => entry.info)); }
@@ -169,8 +169,8 @@ export class ManagedPlugins implements PluginManager {
           }
           if (!metadata || !Array.isArray(metadata.approved) || !metadata.approved.every((cap) => typeof cap === 'string')) throw new Error('Invalid saved permission approval.');
           entry.approved = metadata.approved as string[];
-          approvePlugin(manifest, { approvedCapabilities: entry.approved });
           if (metadata.enabled === true) {
+            approvePlugin(manifest, { approvedCapabilities: entry.approved });
             if (JSON.stringify(this.registered.get(manifest.id)) !== JSON.stringify(pkg)) {
               await this.unregister(manifest.id);
               this.host.validate(this.moduleManifest(pkg));

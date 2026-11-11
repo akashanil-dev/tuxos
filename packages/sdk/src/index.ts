@@ -52,6 +52,8 @@ export interface AppContribution {
   /** Where launchers file it, like a .desktop file's Categories: e.g. "System", "Education", "Games". */
   category?: string;
   defaultGeometry?: { width: number; height: number };
+  /** Default: one window. Documents reuse the same path; untitled documents remain independent. */
+  instance?: 'singleton' | 'multiple' | 'document';
 }
 
 /** A program a module installs into the shell, e.g. "docker". */
@@ -188,5 +190,9 @@ export interface PluginRPCEvent {
 
 export * from './plugins';
 
-export { JOURNEY_LESSONS, REWARDS, JOURNEY_THEMES, journeyLevel, unlocked, desktopReward, desktopReady, desktopsFromStatus, DESKTOP_PACKAGES } from './journey';
+export { JOURNEY_LESSONS, REWARDS, JOURNEY_THEMES, journeyLevel, unlocked, featureAvailable, desktopReward, desktopReady, desktopsFromStatus, DESKTOP_PACKAGES } from './journey';
+export { emptyExploration, defaultPreferences } from './exploration';
+export type { ExplorationProgress, SessionPreferences } from './exploration';
 export type { JourneyProgress, RewardId } from './journey';
+
+export { EXPLORATION_ACHIEVEMENTS } from './achievements';

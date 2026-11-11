@@ -809,3 +809,7 @@
 .penguin-3d canvas {
   display: block;
 }
+
+.tutor-nudge p { margin:0 0 6px; }
+.tutor-nudge button, .tutor-shortcuts button { color:inherit; background:transparent; border:1px solid var(--line); border-radius:5px; padding:6px 8px; margin:3px; font:inherit; cursor:pointer; }
+.tutor-shortcuts { display:flex; flex-wrap:wrap; padding:5px 8px; border-top:1px solid var(--line); font-size:12px; }

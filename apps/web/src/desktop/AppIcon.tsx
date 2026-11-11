@@ -10,6 +10,7 @@ export const IconThemeContext = createContext<string | null>(null);
 
 const THEMED = new Set(['terminal', 'files', 'editor', 'settings', 'chmod-arcade', 'learn-docker']);
 const THEMES = new Set(['plasma', 'gnome', 'cde', 'hyprland']);
+const iconAliases: Record<string, string> = { 'know-your-distro': 'chmod-arcade', 'try-linux': 'software', 'learn-adventure': 'learn-linux', play: 'chmod-arcade', 'pipe-dream': 'terminal', 'command-reference': 'editor', 'exploration-achievements': 'learn-linux' };
 const iconUrl = (theme: string, name: string) => `/icons/${theme}/${name}.svg`;
 
 /**
@@ -83,6 +84,7 @@ const ICONS: Record<string, () => React.JSX.Element> = {
 };
 
 export function AppIcon({ name }: { name: string }) {
+  name = iconAliases[name] ?? name;
   const theme = useContext(IconThemeContext);
   if (theme && THEMES.has(theme) && THEMED.has(name)) {
     return <span className="app-icon"><img src={iconUrl(theme, name)} alt="" draggable={false} /></span>;

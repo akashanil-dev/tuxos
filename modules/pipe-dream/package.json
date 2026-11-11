@@ -1,0 +1,19 @@
+{
+  "name": "@tuxos/module-pipe-dream",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./manifest": "./src/manifest.ts",
+    "./view": "./src/view.tsx",
+    "./levels": "./src/levels.ts"
+  },
+  "dependencies": {
+    "@tuxos/kernel": "*",
+    "@tuxos/sdk": "*",
+    "@tuxos/system": "*",
+    "react": "^19.1.0",
+    "@tuxos/shell": "*"
+  }
+}

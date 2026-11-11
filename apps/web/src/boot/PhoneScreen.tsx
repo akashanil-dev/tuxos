@@ -39,14 +39,15 @@ export function PhoneScreen({ onBoot }: { onBoot(): void }) {
       <p className="phone-prompt"><span className="c-green">tux@rescue</span>:<span className="c-blue">~</span>$ cat /etc/motd</p>
       <div className="phone-motd"><div className="phone-tux"><Tux /></div><div>
         <h1>Whoa, that's a phone!</h1>
-        <p>TuxOS is a whole operating system: windows, a terminal, keyboard shortcuts and four desktops. Your phone tried its best, but Linux needs a real keyboard and a bigger screen.</p>
+        <p>That was a simulated panic. TuxOS is a browser playground with windows, a terminal and four desktop styles. It works best with a keyboard and a larger screen. You can still explore, play and recover your progress on this phone.</p>
       </div></div>
       <p className="phone-fix">Open <strong>{location.host || 'TuxOS'}</strong> on a laptop or desktop computer.</p>
       <div className="phone-menu" role="group" aria-label="What now?">
         <span className="phone-menu-title"> What now? </span>
         <button className={`phone-item sel ${copied === 'Copied!' ? 'done' : ''}`} onClick={() => void copy()}><span className="phone-item-label" aria-live="polite">{copied}</span><span className="phone-item-note">Paste it into a browser on your computer</span></button>
         {typeof navigator.share === 'function' && <button className="phone-item" onClick={() => void navigator.share({ title: 'TuxOS', text: 'Learn Linux by playing, in a desktop browser:', url }).catch(() => {})}><span className="phone-item-label">Send it to my computer</span><span className="phone-item-note">Share the link to yourself</span></button>}
-        <button className="phone-item" onClick={onBoot}><span className="phone-item-label">Boot anyway</span><span className="phone-item-note">It will be very cramped</span></button>
+        <button className="phone-item" onClick={onBoot}><span className="phone-item-label">Boot anyway</span><span className="phone-item-note">Continue on this phone; windows fill the screen</span></button>
+        <a className="phone-item" href="/migrate.html"><span className="phone-item-label">Bring your Tuxplore progress</span><span className="phone-item-note">Read the export, import and recovery guide</span></a>
       </div>
       <p className="phone-foot"><span className="c-dim">Tablets and computers boot straight in.</span></p>
     </section>}

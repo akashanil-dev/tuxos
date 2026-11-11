@@ -12,7 +12,9 @@ export interface ShellRan {
   stderr: string;
   /** Every command name that ran, in order, e.g. ['ls', 'grep'] for `ls | grep x`. */
   commands: string[];
+  successfulCommands?: string[];
   learningModule?: string;
+  activities?: ('vim-exit' | 'matrix' | 'root-refused' | 'sandwich' | 'daemon')[];
 }
 
 function valid(payload: unknown): payload is ShellRan {

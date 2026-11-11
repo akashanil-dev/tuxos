@@ -33,6 +33,7 @@ function system(): SystemClient {
 }
 
 async function logIn(name = 'ada') {
+  if (!screen.queryByLabelText('Password')) fireEvent.click(await screen.findByRole('button', { name: /^Sign in (or create an account|as)/ }));
   await screen.findByLabelText('Password');
   const username = screen.queryByLabelText('Username');
   if (username) fireEvent.change(username, { target: { value: name } });
@@ -57,7 +58,7 @@ describe('starting TuxOS', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(100); });
     expect(screen.getByText(/Linux version 6\.10\.0-tuxos/)).toBeTruthy();
     for (let tick = 0; tick < 40; tick += 1) await act(async () => { await vi.advanceTimersByTimeAsync(100); });
-    expect(screen.getByLabelText('Username')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Explore TuxOS' })).toBeTruthy();
   });
 
   it('opens GRUB\'s advanced options and comes back', () => {

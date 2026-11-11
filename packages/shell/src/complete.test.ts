@@ -36,7 +36,7 @@ describe('completion', () => {
     const { shell } = await setup();
     expect(shell.complete('mk', 2)).toEqual({ start: 0, candidates: ['mkdir'] });
     expect(shell.complete('ls | so', 7)).toEqual({ start: 5, candidates: ['sort'] });
-    expect(shell.complete('sudo wh', 7)).toEqual({ start: 5, candidates: ['whoami'] });
+    expect(shell.complete('sudo wh', 7)).toEqual({ start: 5, candidates: ['whatis', 'whoami'] });
   });
 
   it('completes paths everywhere else, marking directories with a slash', async () => {
@@ -94,6 +94,9 @@ describe('shell.ran record', () => {
       stdout: 'hi\n',
       stderr: 'cat: nope: No such file or directory\n',
       commands: ['cd', 'echo', 'sort', 'sudo', 'cat', 'cat'],
+      successfulCommands: ['cd', 'echo', 'sort', 'cat', 'sudo'],
+      learningModule: undefined,
+      activities: [],
     });
   });
 

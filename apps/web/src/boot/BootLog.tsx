@@ -23,7 +23,7 @@ export function bootLines(recovery: boolean): Line[] {
       'Started Network Manager', 'Started Bluetooth service', 'Started OpenSSH server daemon', 'Started Regular background program processing daemon',
       recovery ? 'Started Recovery Mode Menu' : 'Started Penguin Hint Service', 'Started Segfault Daemon (suspicious)', 'Reached target Graphical Interface', 'Started Display Manager',
   ].map(text => ({ kind: text.includes('suspicious') ? 'warn' : 'ok', text: `${text}.` }));
-  return [...kernel, ...services, ...(recovery ? [{ kind: 'plain' as const, text: 'Recovery Menu: nothing is broken, so resuming normal boot. 🩹' }] : [])];
+  return [...kernel, ...services, ...(recovery ? [{ kind: 'plain' as const, text: 'Simulated Recovery Menu: continuing normal boot. To repair adventure files, use Recover practice files in Tux’s Adventure. 🩹' }] : [])];
 }
 
 /** Prints the boot log line by line. Any key or click skips to the end. */
