@@ -45,7 +45,7 @@ export interface TerminalTypeDetail {
 
 export default function TerminalView(props: AppViewProps) {
   const desktop = DESKTOP_PACKAGES.find(item => item.id === props.args?.installDesktop);
-  return <div className="terminal-install-window">{desktop && <section className="terminal-install-guide"><strong>Install {desktop.name}</strong><p>Run these commands, then return to Settings to select the installed desktop.</p><pre>sudo apt update{'\n'}sudo apt install {desktop.package}</pre><small>TuxOS practice packages · simulated installation</small></section>}<TerminalSurface system={props.system} windowId={props.windowId} args={props.args} learningModule={desktop ? "desktop-installation" : undefined} colourOutput={Boolean(desktop)} /></div>;
+  return <div className="terminal-install-window">{desktop && <section className="terminal-install-guide"><strong>Install {desktop.name}</strong><p>Practice installing these simulated packages. Desktop styles are already available in Settings.</p><pre>sudo apt update{'\n'}sudo apt install {desktop.package}</pre><small>TuxOS practice packages · simulated installation</small></section>}<TerminalSurface system={props.system} windowId={props.windowId} args={props.args} learningModule={desktop ? "desktop-installation" : undefined} colourOutput={Boolean(desktop)} /></div>;
 }
 
 /** Reusable real xterm surface for terminal-first learning labs. */
@@ -121,7 +121,7 @@ export function TerminalSurface({ system, windowId, args, learningModule, inputI
     void (async () => {
       const session = owner === 'vasu'
         ? await system.tutor().createTerminal()
-        : await system.createTerminal(learningModule ? { learningModule } : undefined);
+        : await system.createTerminal({ learningModule, resumeKey: windowId, cwd: args?.cwd });
       if (disposed) return;
       const motd = learningModule ? await system.dispatch<string>('fs.read', { path: '/etc/motd' }) : { ok: true as const, value: '' };
       if (disposed) return;

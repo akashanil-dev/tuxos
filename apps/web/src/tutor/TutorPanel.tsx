@@ -10,8 +10,9 @@ import { useStuckNudge } from './useStuckNudge';
 import { useTutor, type CursorState, type Entry } from './useTutor';
 import { hasMetVasu, rememberMetVasu, VasuIntro } from './VasuIntro';
 
-export function TutorPanel({ system, transport, verifySudo = null }: {
+export function TutorPanel({ system, transport, verifySudo = null, rich = false }: {
   system: SystemClient;
+  rich?: boolean;
   transport: Transport;
   /** Checks the signed-in account's password; null for guests. */
   verifySudo?: ((password: string) => Promise<boolean>) | null;
@@ -146,7 +147,7 @@ export function TutorPanel({ system, transport, verifySudo = null }: {
         aria-expanded={open}
         onClick={() => { if (intro) closeIntro(); setOpen(!open); }}
       >
-        <Penguin
+        <Penguin rich={rich}
           facing={stroll.facing}
           walking={stroll.walking}
           mood={tutor.pointer ? 'pointing' : tutor.busy ? (tutor.acting ? 'acting' : 'thinking') : 'idle'}

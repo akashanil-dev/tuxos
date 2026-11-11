@@ -9,7 +9,7 @@ The accepted [implementation plan](../research/tuxplore-comparison-2026-11-11/im
 | 0 Baseline | In progress | Existing typecheck passes; baseline 539/540 tests pass. One shell listing assertion hard-coded October against the real clock. Production build succeeds. Freeze source/feature inventory and save fixtures. |
 | 1 Contracts and export | Implemented; integration verification | Version 2 snapshots read v1 and preserve appearance. Desktop/theme/plugin access is independent of mastery; anniversary entitlement is retained. Storage transitions drain original writes; API refuses schema downgrade. Original-origin export bridge is prepared, not deployed. |
 | 2 Convenient entry | Core implemented | Guest/account entry, safe same-name transfer with conflict preview and backup, fast boot/resume, clipboard, canonical wallpaper, non-blocking milestones. Cross-name transfer and backup management continue with Phase 5. Curated Play/Journal entry follows feature modules. |
-| 3 Continuous desktop learning | Pending | Windowed learning/focus, terminal continuity, Files, window policies, touch. |
+| 3 Continuous desktop learning | Core implemented and verified | One learning window with focus/desktop views; terminal context; Files preview/places/terminal-here; atomic instance policies; geometry and pointer cancellation. Full integration: 551 tests pass. |
 | 4 Signature features | Pending | Adventure, both games, reference, achievements, guide, shell teaching, local help. |
 | 5 Import | Pending | Validated preview, conflict handling, backup, atomic/idempotent transfer, recovery. |
 | 6 Validation | Pending | Tests/build, browser verification, comparable measurements, formative user feedback. |
@@ -38,9 +38,13 @@ Record each meaningful implementation batch with its verification here as the wo
 ## Current local verification environment
 
 - API: port 8791, disposable `/tmp/tuxos-continuation-test-20261111.db`, AI off; exec session 59932.
-- Web: port 5178, localhost only, proxy to the disposable API; exec session 29749.
+- Web: port 5178, localhost only, proxy to the disposable API; exec session 9239.
 - These are local testing services. No production account or save has been changed.
 
 ## External release gates
 
 Keep Tuxplore accessible until compatible saves import successfully, original-origin export is deployed, and existing users have tested the continuation. Do not manufacture user feedback or equate a local passing build with a production deployment. No migration deadline has been announced.
+
+- `eca85c0`: committed guest exploration and everyday convenience.
+- Continuous-desktop batch: removed the duplicate full-screen mission; Learn Linux now uses the same module window in focus and desktop views. Terminal stays mounted through curriculum/lesson switches, while bounded cwd/environment/history resume after reload. Desktop changes retain mounted app contents even during an optional splash. Singleton launches are atomic, Terminal permits multiple sessions, and Editor reuses document paths. Files gains Places, breadcrumbs, permissions, preview, icon/list views, and terminal-here. Windows re-clamp to panels/viewport; pointer cancellation restores the committed geometry; touch can launch shortcuts. Vasu uses the lightweight drawing by default with explicit hide/3D settings.
+- Validation for this batch: `npm run check` passes all 551 tests (59 files); production build passes. Browser verified a real command completing a lesson step, an unsubmitted command surviving focus-to-window switching, file preview with its equivalent command, and a terminal opening at `/etc`. Saved controls were moved to the reserved top strip after browser inspection exposed an overlap. Browser also showed the narrow layout with reachable title-bar controls. Full touch/physical-device testing remains in Phase 6.

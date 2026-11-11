@@ -1,13 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { JOURNEY_LESSONS, REWARDS, desktopReady, journeyLevel, unlocked, type JourneyProgress } from '@tuxos/sdk';
-import type { LessonStatus } from '@tuxos/lessons';
-import { useLessonStatus } from '@tuxos/course-view';
-import { TerminalSurface } from '@tuxos/module-terminal/view';
+import { JOURNEY_LESSONS, REWARDS, journeyLevel, unlocked } from '@tuxos/sdk';
 import type { SystemClient } from '@tuxos/system';
 import type { Transport } from '@tuxos/tutor';
 import type { PowerAction } from '../desktops/types';
 import { Desktop } from '../screens/Desktop';
-import { FullscreenControl } from '../desktop/FullscreenControl';
 import { useJourney } from './useJourney';
 import { AppIcon, IconThemeContext } from '../desktop/AppIcon';
 import { PlasmaMark } from '../desktop/PlasmaMark';
@@ -28,35 +24,28 @@ function JourneySession({ system, tutor, onPower, verifySudo }: {
   verifySudo: ((password: string) => Promise<boolean>) | null;
 }) {
   const { progress, loaded } = useJourney(system);
-  const [installer, setInstaller] = useState(false);
-  const [mode, setMode] = useState<'learn' | 'desktop'>('desktop');
-  const [visitedDesktop, setVisitedDesktop] = useState(true);
-  const [visitedLearning, setVisitedLearning] = useState(false);
-  useEffect(() => {
-    let active = true;
-    void system.session().then(session => { if (active) { setMode(session.preferences?.resume ?? 'desktop'); setVisitedLearning(session.preferences?.resume === 'learn'); } });
-    return () => { active = false; };
-  }, [system]);
   const [map, setMap] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
-  const [saveState, setSaveState] = useState('Progress saves with your system');
-  useEffect(() => system.onSaveError(cause => { setError(cause.message); setSaveState('Changes need saving'); }), [system]);
+  const opened = useRef(false);
   useEffect(() => {
-    if (!progress) return;
-    let active = true;
-    setSaveState('Saving progress…');
-    void system.flush().then(() => { if (active) setSaveState('Progress saved'); }).catch(cause => { if (active) { setError(String(cause)); setSaveState('Changes need saving'); } });
-    return () => { active = false; };
-  }, [system, progress]);
-  if (!loaded) return <div className="journey-loading">Opening your learning journey…</div>;
-  // Embedded/offline development harnesses without progression keep the regular desktop.
+    void system.session().then(async session => {
+      if (opened.current || session.preferences?.resume !== 'learn') return;
+      opened.current = true;
+      const result = await system.openApp('learn-linux', { guided: 'true' });
+      if (result.ok) {
+        const current = await system.session();
+        if (!current.windows.find(w => w.id === result.value)?.maximized) await system.dispatch('session.toggleMaximize', { id: result.value });
+      }
+    });
+  }, [system]);
+  useEffect(() => system.onSaveError(cause => setError(cause.message)), [system]);
+  if (!loaded) return <div className="journey-loading">Opening your desktop…</div>;
   if (!progress) return <Desktop system={system} tutor={tutor} onPower={onPower} verifySudo={verifySudo} />;
   const level = journeyLevel(progress);
   const next = REWARDS.find(r => !unlocked(progress, r.id));
   const reward = [...REWARDS].reverse().find(r => unlocked(progress, r.id) && !progress.acknowledged.includes(r.id));
-  const resumeLearning = () => { setMap(false); setInstaller(false); setVisitedLearning(true); setMode('learn'); void system.dispatch('session.setPreferences', { resume: 'learn' }); };
-  const explore = () => { setVisitedDesktop(true); setMode('desktop'); void system.dispatch('session.setPreferences', { resume: 'desktop' }); };
+  const resumeLearning = () => { setMap(false); void system.openApp('learn-linux'); };
   const acknowledge = async () => {
     if (!reward) return;
     setSaving(true);
@@ -68,31 +57,22 @@ function JourneySession({ system, tutor, onPower, verifySudo }: {
     finally { setSaving(false); }
   };
   return <div className="journey-shell">
-    <div className="journey-learning" inert={Boolean(map)} hidden={mode !== 'learn'}>
-      <FullscreenControl />
-      <header className="journey-header"><div className="journey-brand"><span aria-hidden="true">&gt;_</span><div><strong>TuxOS</strong><small>Learn at your pace.</small></div></div><div className="journey-stats"><strong>{progress.steps.length * 10} XP</strong><span>{level}/{JOURNEY_LESSONS.length} lessons</span></div>
-        <div className="journey-top-actions"><button onClick={() => setMap(true)}>Your rewards</button><button onClick={explore}>Explore desktop ↗</button><button onClick={() => onPower('logout')}>Leave session</button></div>
-      </header>
-      <section className="journey-next-reward" aria-label="Next reward"><span>{next ? `Next: ${next.title}` : 'Everything unlocked. Keep exploring!'}</span><progress max={next?.at ?? 34} value={level} aria-label="Progress to next reward" /><small>{next ? `${next.at - level} more ${next.at - level === 1 ? 'lesson' : 'lessons'}` : 'Learning path complete'}</small></section>
-      {installer ? <DesktopInstallation system={system} ready={desktopReady(progress)} /> : visitedLearning && <Mission system={system} progress={progress} visible={mode === 'learn'} onExplore={explore} />}
-      <footer className="journey-save"><span>{saveState}</span><span>No timers. No lost lives. Hints are always welcome.</span></footer>
-    </div>
-    {visitedDesktop && <div className="journey-desktop" inert={Boolean(map)} hidden={mode !== 'desktop'}><Desktop system={system} tutor={tutor} onPower={onPower} verifySudo={verifySudo} active={mode === 'desktop' && !map} onAchievements={() => setMap(true)} /></div>}
-    {error && <div role="alert" className="journey-save-error">{error}<button onClick={() => void system.flush().then(() => { setError(''); setSaveState('Progress saved'); }).catch(cause => setError(String(cause)))}>Retry saving</button></div>}
+    <div className="journey-desktop" inert={map}><Desktop system={system} tutor={tutor} onPower={onPower} verifySudo={verifySudo} active={!map} onAchievements={() => setMap(true)} /></div>
+    {error && <div role="alert" className="journey-save-error">{error}<button onClick={() => void system.flush().then(() => { setError(''); }).catch(cause => setError(String(cause)))}>Retry saving</button></div>}
     {map && <JourneyDialog className="journey-map" label="Your reward map" onClose={() => setMap(false)}>
       <header><div><small>YOUR LINUX JOURNEY</small><h2>Your achievements</h2></div><button onClick={() => setMap(false)}>Close rewards</button></header>
       <div className="journey-achievement-summary" aria-label="Achievement progress">
         <strong>{REWARDS.filter(r => unlocked(progress, r.id)).length}/{REWARDS.length} achievements earned</strong>
         <span>{progress.steps.length * 10} XP</span><span>{level}/{JOURNEY_LESSONS.length} lessons complete</span>
       </div>
-      <p>{next ? `Next unlock: ${next.title} · ${next.at - level} more ${next.at - level === 1 ? 'lesson' : 'lessons'}.` : 'Every achievement earned. Your whole desktop is unlocked!'} Hints and answers cost nothing.</p>
+      <p>{next ? `Next achievement: ${next.title} · ${next.at - level} more ${next.at - level === 1 ? 'lesson' : 'lessons'}.` : 'Every achievement earned. Keep exploring!'} Hints and answers cost nothing.</p>
       <button className="journey-resume" onClick={resumeLearning}>Continue learning →</button>
-      <button onClick={() => { setMap(false); setInstaller(true); setMode('learn'); }}>Practice installing a desktop</button>
+      <button onClick={() => { setMap(false); void system.openApp('terminal', { installDesktop: 'plasma' }); }}>Practice installing a desktop</button>
       <ol>{REWARDS.map(r => {
         const earned = unlocked(progress, r.id);
         return <li key={r.id} className={earned ? 'earned' : ''}>
           <span className="journey-reward-icon" aria-hidden="true">{r.icon}</span>
-          <div className="journey-achievement-detail"><small>{earned ? '✓ Unlocked' : `After lesson ${r.at}`}</small><h3>{r.title}</h3><p>{r.description}</p>
+          <div className="journey-achievement-detail"><small>{earned ? '✓ Earned' : `After lesson ${r.at}`}</small><h3>{r.title}</h3><p>{r.description}</p>
             <progress aria-label={`Progress toward ${r.title}`} value={Math.min(level, r.at)} max={r.at} />
             <small>{Math.min(level, r.at)}/{r.at} lessons{earned ? ' · Complete' : ` · ${r.at - level} to go`}</small>
           </div>
@@ -113,78 +93,6 @@ export function RewardReveal({ reward, saving, onContinue }: { reward: typeof RE
     </div>
     <footer className="journey-reveal-actions"><span>Learn Linux · Achievement earned</span><button data-dialog-default className="journey-reveal-continue" disabled={saving} onClick={onContinue}>{reward.id === 'desktop' ? 'Set up KDE Plasma' : 'Continue'}</button></footer>
   </JourneyDialog>;
-}
-
-function Mission({ system, progress, visible, onExplore }: { system: SystemClient; progress: JourneyProgress; visible: boolean; onExplore(): void }) {
-  const { status, error, call } = useLessonStatus(system, 'learn-linux');
-  const [initialized, setInitialized] = useState(false);
-  const [initialError, setInitialError] = useState('');
-  const [help, setHelp] = useState('');
-  const [hints, setHints] = useState(0);
-  const [busy, setBusy] = useState(false);
-  const stepId = status?.active?.step.id;
-  const starting = useRef(false);
-  const initialProgress = useRef(progress);
-  useEffect(() => {
-    if (starting.current) return;
-    starting.current = true;
-    void (async () => {
-      const curriculum = await system.dispatch<LessonStatus>('learn-linux.curriculum', {});
-      if (!curriculum.ok) throw new Error(curriculum.error.message);
-      const next = JOURNEY_LESSONS.find(id => !initialProgress.current.lessons.includes(id));
-      const active = curriculum.value.active;
-      // Resume in order; earlier earned lessons stay available for review in the desktop app.
-      if (next && active?.lesson.id !== next) {
-        const start = await system.dispatch('learn-linux.start', { lesson: next });
-        if (!start.ok) throw new Error(start.error.message);
-      }
-      setInitialized(true);
-    })().catch(cause => { setInitialError(String(cause)); starting.current = false; });
-  }, [system]);
-  // The desktop can open optional AI practice. Returning here restores the reviewed path.
-  useEffect(() => {
-    if (visible && initialized && status && !status.builtIn) void call('curriculum', {});
-  }, [visible, initialized, Boolean(status?.builtIn), call]);
-  useEffect(() => { setHelp(''); setHints(0); }, [stepId]);
-  const currentStep = useRef(stepId);
-  currentStep.current = stepId;
-  async function answer() {
-    const requested = stepId;
-    const result = await system.dispatch<string>('learn-linux.solution', {});
-    if (currentStep.current === requested) setHelp(result.ok ? `Try this: ${result.value}\nType it yourself below to complete the task.` : result.error.message);
-  }
-  const next = status?.lessons.find(l => !progress.lessons.includes(l.id));
-  const active = status?.active;
-  const lessonIndex = active ? JOURNEY_LESSONS.indexOf(active.lesson.id as typeof JOURNEY_LESSONS[number]) : -1;
-  const terminalLesson = active?.lesson.id ?? 'completed';
-  if (!initialized || !status) return <div className="journey-loading" role="status">{initialError || error || 'Preparing your first question…'}{initialError && <button onClick={() => location.reload()}>Reload and retry</button>}</div>;
-  return <main className="journey-mission">
-    <section className="journey-question" aria-label="Current question">
-      {(error || initialError) && <p role="alert">{error || initialError}</p>}
-      {active ? <><div className="journey-question-meta"><span>LESSON {lessonIndex + 1} · {active.lesson.title}</span><span>Question {active.stepIndex + 1}/{active.steps.length}</span></div><h1>{active.step.task}</h1>
-        <div className="journey-help-actions"><button onClick={() => { setHelp(active.step.hints[Math.min(hints, active.step.hints.length - 1)] ?? 'Try one command at a time.'); setHints(n => n + 1); }}>Hint</button><button onClick={() => void answer()}>Show answer</button><details key={stepId}><summary>Explain this</summary><p>{active.step.teach || active.lesson.story}</p></details></div>
-        {help && <pre className="journey-help" role="status">{help}</pre>}
-        {active.steps.slice(0, active.stepIndex).length > 0 && <small className="journey-encouragement">✓ {active.stepIndex} {active.stepIndex === 1 ? 'question' : 'questions'} done. You’re making progress.</small>}
-      </> : <div className="journey-lesson-done"><span>✓</span><div><h1>{next ? 'Lesson complete. Nicely done.' : 'You built your Linux foundation.'}</h1><p>{next ? `Up next: ${next.title}` : 'Every reward is yours. Explore your desktop or review a lesson anytime.'}</p></div>{next ? <button disabled={busy} onClick={() => { setBusy(true); void call('start', { lesson: next.id }).finally(() => setBusy(false)); }}>Continue to next lesson →</button> : <button onClick={onExplore}>Explore your unlocked desktop ↗</button>}</div>}
-      {active && lessonIndex >= 2 && <button className="journey-open-files" onClick={onExplore}>Need a desktop app? Open your desktop ↗</button>}
-    </section>
-    <div className="journey-terminal"><div className="journey-terminal-label"><span>● Terminal</span><small>Type a command, then press Enter</small></div><TerminalSurface system={system} learningModule="learn-linux" inputId="journey-terminal" /></div>
-  </main>;
-}
-
-function DesktopInstallation({ system, ready }: { system: SystemClient; ready: boolean }) {
-  return <main className="journey-mission">
-    <section className="journey-question journey-install" aria-label="Install KDE Plasma">
-      <div className="journey-question-meta">DESKTOP UNLOCKED · INSTALLATION</div>
-      <h1>{ready ? 'Starting KDE Plasma…' : 'Install your first desktop: KDE Plasma'}</h1>
-      {!ready && <>
-        <p>Type these commands one at a time. The first refreshes the package list; the second installs your desktop. Press Enter or type Y when apt asks to continue. KDE opens automatically when installation finishes.</p>
-        <pre>sudo apt update{'\n'}sudo apt install kde-plasma-desktop</pre>
-        <small>This installs the TuxOS simulation. Downloads and package sizes are practice examples.</small>
-      </>}
-    </section>
-    <div className="journey-terminal"><TerminalSurface system={system} inputId="desktop-installation" learningModule="desktop-installation" colourOutput /></div>
-  </main>;
 }
 
 /** Keep keyboard users inside the open dialog and restore their previous focus. */

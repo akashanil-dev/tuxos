@@ -149,7 +149,9 @@ describe('web desktop', () => {
     render(<Desktop system={system} />);
     await system.openApp('about');
     const title = await findWindowTitle();
-    dispatchPointer(title, 'pointerdown', 30, 30, 1);
+    await waitFor(() => expect((title.closest('.app-window') as HTMLElement).style.top).toBe('36px'));
+    system.dispatch.mockClear();
+    dispatchPointer(title, 'pointerdown', 30, 46, 1);
     dispatchPointer(title, 'pointermove', 80, 90, 1);
     dispatchPointer(title, 'pointerup', 100, 110, 1);
     const moves = system.dispatch.mock.calls.filter((call: [string, unknown]) => call[0] === 'session.move');

@@ -9,6 +9,7 @@ export const manifest: ModuleManifest = {
   contributes: {
     apps: [{
       id: 'editor',
+      instance: 'document',
       title: 'Text Editor',
       icon: 'editor',
       category: 'Utilities',

@@ -14,6 +14,7 @@ import { tileLayout } from '../desktops/shared/tiling';
 import type { PowerAction } from '../desktops/types';
 import { useSession } from '../hooks/useSession';
 import { TutorPanel } from '../tutor/TutorPanel';
+import { clampGeometry } from '../desktop/geometry';
 import { rememberAppearance } from './appearance-memory';
 
 /** Below this width every window fills the screen, so tiling and dragging are off. */
@@ -24,15 +25,13 @@ const NARROW = 720;
  * Switching environment (from Settings, or by the tutor) shows that environment's splash, then its shell.
  * Workspaces are part of the desktop, not the saved session, as on a real Linux desktop.
  */
-export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, verifySudo = null, active = true }: {
+export function Desktop({ system, tutor, onPower, onAchievements, verifySudo = null, active = true }: {
   system: SystemClient;
   /** Suspend desktop shortcuts while the learning view is in front. */
   active?: boolean;
   tutor?: Transport;
   onPower?(action: PowerAction): void;
   onAchievements?(): void;
-  /** Resume the account learning journey from any desktop launcher. */
-  onLearnLinux?(): void;
   /** Checks the account's password for Vasu's sudo request; null for guests, who have no password. */
   verifySudo?: ((password: string) => Promise<boolean>) | null;
 }) {
@@ -48,6 +47,9 @@ export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, 
   const [chosenWorkspace, setChosenWorkspace] = useState(1);
   const [placement, setPlacement] = useState<Record<string, number>>({});
   const viewport = useViewport();
+  const [closing, setClosing] = useState<string[]>([]);
+  const closeTimers = useRef(new Set<ReturnType<typeof setTimeout>>());
+  useEffect(() => () => { for (const timer of closeTimers.current) clearTimeout(timer); }, []);
   const closeGuards = useRef(new Map<string, () => boolean>());
   useEffect(() => system.registerLeaveGuard?.('desktop', () => [...closeGuards.current.values()].every(guard => guard())), [system]);
 
@@ -60,15 +62,16 @@ export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, 
   const onWorkspace = (window: SessionWindow) => workspaceOf(window.id) === workspace;
 
   const open = useCallback((appId: string) => {
-    if (appId === 'learn-linux' && onLearnLinux) { onLearnLinux(); return; }
     void system.openApp(appId).then(result => { setLaunchError(result.ok ? '' : result.error.message); });
-  }, [system, onLearnLinux]);
+  }, [system]);
   const minimize = useCallback((id: string) => void system.dispatch('session.minimize', { id }), [system]);
   const power = useCallback((action: PowerAction) => onPower?.(action), [onPower]);
   const close = useCallback((id: string) => {
     const guard = closeGuards.current.get(id);
     if (guard && !guard()) return;
-    void system.dispatch('session.close', { id });
+    setClosing(ids => [...ids, id]);
+    const timer = setTimeout(() => { void system.dispatch('session.close', { id }); closeTimers.current.delete(timer); setClosing(ids => ids.filter(item => item !== id)); }, globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : 100);
+    closeTimers.current.add(timer);
   }, [system]);
   const activate = useCallback((id: string) => {
     setChosenWorkspace(workspaceOf(id));
@@ -136,10 +139,17 @@ export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, 
     };
   }, [open, active]);
 
+  useEffect(() => {
+    if (!loaded || viewport.width < NARROW) return;
+    for (const win of session.windows) {
+      const box = clampGeometry(win, viewport, { top: environment.insets.top + 36, bottom: environment.insets.bottom });
+      if (box.x !== win.x || box.y !== win.y) void system.dispatch('session.move', { id: win.id, x: box.x, y: box.y });
+      if (box.width !== win.width || box.height !== win.height) void system.dispatch('session.resize', { id: win.id, width: box.width, height: box.height });
+    }
+  }, [system, loaded, viewport.width, viewport.height, environment.insets.top, environment.insets.bottom, session.windows]);
+  useEffect(() => { if (!welcome) return; const timer = setTimeout(() => setWelcome(null), 8000); return () => clearTimeout(timer); }, [welcome]);
+  const primaryApps = apps.filter(app => ['terminal', 'files', 'learn-linux', 'play'].includes(app.id));
   if (!loaded) return <main className="splash splash-gnome" />;
-  if (shown !== session.desktop) {
-    return <SessionSplash desktop={session.desktop} onDone={() => setShown(session.desktop)} />;
-  }
 
   const { Shell } = environment;
   const insets = { ...environment.insets, top: environment.insets.top + 36 };
@@ -166,14 +176,16 @@ export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, 
         setMenu({ x: event.clientX, y: event.clientY });
       }}
     >
+      {shown !== session.desktop && session.preferences?.fastBoot === false && <div className="desktop-splash-overlay"><SessionSplash desktop={session.desktop} onDone={() => setShown(session.desktop)} /></div>}
       <FullscreenControl top={environment.insets.top} />
       {environment.desktopIcons === 'apps' && <div className="icon-grid icons-apps" style={iconGridStyle(insets)}>
-        {apps.map((app) => <button
+        {(primaryApps.length ? primaryApps : apps).map((app) => <button
           className="desktop-icon"
           key={app.id}
           title={`Open ${app.title}`}
           data-tutor-target={`app:${app.id}`}
           onDoubleClick={() => open(app.id)}
+          onPointerUp={event => { if (event.pointerType === 'touch' || event.pointerType === 'pen') open(app.id); }}
           onKeyDown={(event) => { if (event.key === 'Enter') open(app.id); }}
         >
           <AppIcon name={app.icon} />
@@ -203,6 +215,8 @@ export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, 
           system={system}
           window={window}
           focused={session.focusedId === window.id}
+          active={active}
+          closing={closing.includes(window.id)}
           insets={insets}
           decoration={environment.decoration}
           icon={app && <AppIcon name={app.icon} />}
@@ -242,17 +256,17 @@ export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, 
         items={environment.desktopMenu({ open, apps, power })}
         onClose={() => setMenu(null)}
       />}
-      {launchError && <div className="notification" role="alert" style={{ top: insets.top + 10 }}><strong>Keep learning</strong><p>{launchError}</p><button aria-label="Dismiss launch message" onClick={() => setLaunchError('')}>×</button></div>}
+      {launchError && <div className="notification" role="alert" style={{ top: 'auto', bottom: insets.bottom + 12, left: 12, right: 'auto' }}><strong>Keep learning</strong><p>{launchError}</p><button aria-label="Dismiss launch message" onClick={() => setLaunchError('')}>×</button></div>}
       {welcome && <div
         className={`notification notification-${environment.id}`}
-        style={{ top: insets.top + 10 }}
+        style={{ top: 'auto', bottom: insets.bottom + 12, left: 12, right: 'auto' }}
         role="status"
       >
         <strong>Welcome</strong>
         <p>{welcome}</p>
         <button aria-label="Dismiss" onClick={() => setWelcome(null)}>×</button>
       </div>}
-      {tutor && <TutorPanel system={system} transport={tutor} verifySudo={verifySudo} />}
+      {tutor && active && session.preferences?.showVasu !== false && <TutorPanel rich={session.preferences?.richVasu === true} system={system} transport={tutor} verifySudo={verifySudo} />}
     </main>
   </IconThemeContext.Provider>;
 }

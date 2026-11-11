@@ -42,6 +42,8 @@ export interface TerminalSession {
 export interface TerminalOptions {
   /** Route learning slash commands and assessments to the course that owns this terminal. */
   learningModule?: string;
+  resumeKey?: string;
+  cwd?: string;
 }
 
 /**
@@ -317,13 +319,22 @@ export function createLocalSystem(options: {
       if (current().host !== host || !app) return { ok: false, error: { code: 'ENOENT', message: 'This app is no longer available in the current session.' } };
       const geometry = app.defaultGeometry;
       return kernel.dispatch<string>({ type: 'session.open', payload: {
-        appId, title: app?.title ?? appId, width: geometry?.width ?? 720, height: geometry?.height ?? 480, ...(args ? { args } : {}),
+        appId, instance: app.instance ?? 'singleton', title: app.title, width: geometry?.width ?? 720, height: geometry?.height ?? 480, ...(args ? { args } : {}),
       } });
     },
     async createTerminal(options = {}) {
       const { kernel, registry } = current();
-      const shell = createShell(kernel, { registry, plugins: current().plugins, learningModule: options.learningModule });
-      if (options.learningModule === 'learn-linux') {
+      const key = options.resumeKey ?? (options.learningModule ? `course:${options.learningModule}` : undefined);
+      const context = key ? kernel.getState().session.terminals?.[key] : undefined;
+      const shell = createShell(kernel, { registry, plugins: current().plugins, learningModule: options.learningModule, history: context?.history });
+      const cwd = context?.cwd ?? options.cwd;
+      if (cwd) {
+        const stat = kernel.dispatch<{ kind: string }>({ type: 'fs.stat', payload: { path: cwd } });
+        if (stat.ok && stat.value.kind === 'dir') shell.cwd = cwd;
+      }
+      if (context) shell.env = { ...shell.env, ...context.env };
+      shell.env.PWD = shell.cwd;
+      if (!context && !options.cwd && options.learningModule === 'learn-linux') {
         const saved = kernel.getState().session.journey?.terminal;
         const active = learningRuntime.get('learn-linux')?.status().active?.lesson.id;
         if (saved && saved.lesson === active) {
@@ -332,7 +343,7 @@ export function createLocalSystem(options: {
         }
       }
       if (options.learningModule) shell.env.TUXOS_LEARNING_MODULE = options.learningModule;
-      return terminalSession(kernel, shell, options.learningModule);
+      return terminalSession(kernel, shell, options.learningModule, key);
     },
     commands() {
       return current().registry.list().filter((command) => command.available?.() !== false)
@@ -350,15 +361,18 @@ export function createLocalSystem(options: {
           type, description, capability, mutates, ...(params ? { params } : {}),
         })),
         async openApp(appId, args) {
+          const host = current().host;
+          if (current().kernel !== kernel) return { ok: false, error: { code: 'ESTALE', message: 'The session changed.' } };
           try {
-            await current().host.openApp(appId);
+            await host.openApp(appId);
           } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             return { ok: false, error: { code: 'EIO', message } };
           }
-          const app = current().host.apps().find((candidate) => candidate.id === appId);
+          const app = host.apps().find((candidate) => candidate.id === appId);
+          if (current().host !== host || !app) return { ok: false, error: { code: 'ENOENT', message: 'This app is no longer available.' } };
           return kernel.dispatch<string>({ type: 'session.open', payload: {
-            appId, title: app?.title ?? appId, width: 720, height: 480, ...(args ? { args } : {}),
+            appId, instance: app.instance ?? 'singleton', title: app.title, width: app.defaultGeometry?.width ?? 720, height: app.defaultGeometry?.height ?? 480, ...(args ? { args } : {}),
           } }, { actor: TUTOR });
         },
         recentEvents: (limit) => kernel.events().slice(-limit),
@@ -448,11 +462,12 @@ async function savedSnapshot(storage: KeyValueStorage, username: string): Promis
   return parsed.username === username ? parsed.snapshot : undefined;
 }
 
-function terminalSession(kernel: Kernel, shell: Shell, learningModule?: string): TerminalSession {
+function terminalSession(kernel: Kernel, shell: Shell, learningModule?: string, resumeKey?: string): TerminalSession {
   return {
     run: async (line, io) => {
       const previousLesson = learningModule === 'learn-linux' ? learningRuntime.get(learningModule)?.status().active?.lesson.id : undefined;
       const result = await shell.run(line, io);
+      if (resumeKey && (resumeKey.startsWith('course:') || kernel.getState().session.windows.some(w => w.id === resumeKey))) kernel.dispatch({ type: 'session.terminal', payload: { key: resumeKey, cwd: shell.cwd, env: shell.env, history: shell.history().slice(-100).map(line => line.slice(0, 4096)) } });
       if (previousLesson && kernel.getState().session.journey) kernel.dispatch({ type: 'journey.terminal', payload: { lesson: previousLesson, cwd: shell.cwd, env: shell.env } });
       const runner = learningModule ? learningRuntime.get(learningModule) : undefined;
       const assessment = await runner?.waitForAssessment();
@@ -476,6 +491,7 @@ export function bashPrompt(user: string, hostname: string, cwd: string, home: st
 export interface AppViewProps {
   system: SystemClient;
   windowId: string;
+  active?: boolean;
   args?: Record<string, string>;
   /**
    * Ask before the learner closes this window from its title bar. The guard returns false to keep it open,

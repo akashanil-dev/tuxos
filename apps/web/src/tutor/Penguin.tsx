@@ -19,12 +19,12 @@ function webglAvailable(): boolean {
 let supported: boolean | undefined;
 
 /** Vasu: the 3D penguin where WebGL works, the drawn one otherwise (and while the 3D one loads). */
-export function Penguin(pose: Partial<PenguinPose>) {
+export function Penguin(pose: Partial<PenguinPose> & { rich?: boolean }) {
   const full: PenguinPose = { facing: pose.facing ?? 'front', walking: pose.walking ?? false, mood: pose.mood ?? 'idle' };
-  const [failed, setFailed] = useState(() => !(supported ??= webglAvailable()));
+  const [failed, setFailed] = useState(false);
   const fail = useCallback(() => setFailed(true), []);
   const drawn = <Puppet facing={full.facing} />;
-  if (failed) return drawn;
+  if (!pose.rich || failed || !(supported ??= webglAvailable())) return drawn;
   return <Suspense fallback={drawn}><Penguin3D pose={full} onFail={fail} /></Suspense>;
 }
 

@@ -169,3 +169,15 @@
   background: #4b6a8c;
   color: #fff;
 }
+
+.files-preview { max-height:45%; overflow:auto; border-top:1px solid var(--line); padding:12px; background:var(--surface); }
+.files-preview header { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.files-preview strong { flex:1; overflow-wrap:anywhere; }
+.files-preview pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+.files-breadcrumbs { gap:4px; }
+.files-breadcrumbs small { color:var(--muted); margin-left:auto; overflow-wrap:anywhere; }
+.files-icons { display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); align-content:start; gap:10px; padding:12px; }
+.files-icons button { display:flex; flex-direction:column; align-items:center; gap:8px; color:var(--window-fg); background:transparent; border:1px solid transparent; padding:12px; border-radius:var(--radius-small); overflow-wrap:anywhere; }
+.files-icons button span { font-size:30px; }
+.files-icons button.selected { border-color:var(--accent); background:var(--surface-2); }
+.files-preview button { color:var(--window-fg); background:var(--surface-2); border:1px solid var(--line); padding:6px; border-radius:var(--radius-small); }

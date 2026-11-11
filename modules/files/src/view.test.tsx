@@ -89,11 +89,14 @@ describe('Files', () => {
     await waitFor(() => expect(screen.queryByText('Documents')).toBeNull());
   });
 
-  it('opens files in the Text Editor with their path', async () => {
+  it('previews files safely before opening the same path in Text Editor', async () => {
     const system = await renderFiles();
     const openApp = vi.spyOn(system, 'openApp').mockResolvedValue({ ok: true, value: 'window-2' });
     await act(async () => { await system.dispatch('fs.write', { path: '/home/ada/notes.txt', content: 'x' }); });
     fireEvent.doubleClick(await screen.findByText('notes.txt'));
+    expect((await screen.findByLabelText('File preview')).textContent).toContain("cat '/home/ada/notes.txt'");
+    expect(openApp).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit file' }));
     expect(openApp).toHaveBeenCalledWith('editor', { path: '/home/ada/notes.txt' });
   });
 

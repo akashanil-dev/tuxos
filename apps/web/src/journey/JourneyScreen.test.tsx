@@ -33,38 +33,39 @@ it('opens the desktop without starting a course or requiring installation', asyn
   await screen.findByRole('button', { name: 'Close Files' });
 });
 
-it('offers focused learning with free help, clipboard access and an immediate desktop exit', async () => {
+it('uses the same learning window and terminal in focus and desktop views', async () => {
   await setup('learn');
-  await screen.findByRole('heading', { name: course.lessons[0]!.steps[0]!.task });
-  expect((screen.getByRole('button', { name: 'Explore desktop ↗' }) as HTMLButtonElement).disabled).toBe(false);
-  fireEvent.click(screen.getByRole('button', { name: 'Show answer' }));
-  await screen.findByText(/Try this: whoami/);
+  await screen.findByText(course.lessons[0]!.steps[0]!.task);
+  const surface = screen.getByLabelText('Learning terminal');
+  expect(surface.getAttribute('data-clipboard-disabled')).toBe('false');
+  fireEvent.click(screen.getByRole('button', { name: 'Return to window' }));
+  expect(screen.getByLabelText('Learning terminal')).toBe(surface);
   expect((await system.session()).journey!.steps).toEqual([]);
-  expect(screen.getByLabelText('Learning terminal').getAttribute('data-clipboard-disabled')).toBe('false');
-  fireEvent.click(screen.getByRole('button', { name: 'Explore desktop ↗' }));
-  await screen.findByRole('button', { name: 'Application Launcher' }, { timeout: 4000 });
+  fireEvent.click(screen.getByRole('button', { name: 'Explore desktop' }));
   await waitFor(async () => expect((await system.session()).preferences?.resume).toBe('desktop'));
+  await act(async () => { await system.openApp('learn-linux'); });
+  expect(screen.getByLabelText('Learning terminal')).toBe(surface);
+  expect((await system.session()).windows.filter(w => w.appId === 'learn-linux')).toHaveLength(1);
 });
 
-it('keeps the terminal mounted through milestones and makes the rewards gallery optional', async () => {
+it('keeps the terminal mounted across lessons, milestones and the rewards gallery', async () => {
   const saves = await setup('learn');
-  await screen.findByRole('heading', { name: course.lessons[0]!.steps[0]!.task });
+  await screen.findByText(course.lessons[0]!.steps[0]!.task);
   const surface = screen.getByLabelText('Learning terminal');
   const shell = await system.createTerminal({ learningModule: 'learn-linux' });
   await act(async () => { for (const line of ['whoami', 'pwd', 'ls']) await shell.run(line); });
   await screen.findByText('Terminal Explorer');
   expect(screen.queryByRole('dialog', { name: 'Reward unlocked' })).toBeNull();
   expect(screen.getByLabelText('Learning terminal')).toBe(surface);
-  fireEvent.click(screen.getByRole('button', { name: 'Dismiss milestone' }));
-  await waitFor(() => expect(screen.queryByRole('button', { name: 'Dismiss milestone' })).toBeNull());
-  fireEvent.click(screen.getByRole('button', { name: 'Continue to next lesson →' }));
-  await screen.findByRole('heading', { name: course.lessons[1]!.steps[0]!.task });
-  expect(screen.getByLabelText('Learning terminal')).toBe(surface);
-  fireEvent.click(screen.getByRole('button', { name: 'Your rewards' }));
+  fireEvent.click(screen.getByRole('button', { name: 'View rewards' }));
   const gallery = screen.getByRole('dialog', { name: 'Your reward map' });
   expect(gallery.textContent).toContain('1/10 achievements earned');
   fireEvent.keyDown(gallery, { key: 'Escape' });
-  expect(screen.queryByRole('dialog')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Dismiss milestone' }));
+  await waitFor(() => expect(screen.queryByRole('button', { name: 'Dismiss milestone' })).toBeNull());
+  fireEvent.click(screen.getByRole('button', { name: /Let’s begin/ }));
+  await screen.findByText(course.lessons[1]!.steps[0]!.task);
+  expect(screen.getByLabelText('Learning terminal')).toBe(surface);
   await system.flush();
   expect(JSON.parse(saves.get('tuxos.save')!).snapshot.state.session.journey.lessons).toEqual(['first-words']);
 });

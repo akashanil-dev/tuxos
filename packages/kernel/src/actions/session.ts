@@ -59,6 +59,18 @@ function focus(session: SessionState, window: Window): void {
 
 export const sessionActions: ActionDefinition[] = [
   {
+    type: 'session.terminal', capability: 'shell:exec', description: 'Remember a bounded terminal context, without restoring running processes.', mutates: true,
+    run: ({ state }, raw) => {
+      const p = raw as { key?: unknown; cwd?: unknown; env?: unknown; history?: unknown };
+      if (!p || typeof p.key !== 'string' || !/^(window-[0-9]+|course:[a-z0-9-]+)$/.test(p.key) || typeof p.cwd !== 'string' || !p.cwd.startsWith('/') || p.cwd.length > 4096 || !p.env || typeof p.env !== 'object' || Array.isArray(p.env) || !Array.isArray(p.history)) throw new KernelError('EINVAL', 'Invalid terminal context.');
+      const entries = Object.entries(p.env);
+      if (entries.length > 100 || entries.some(([key, value]) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(key) || typeof value !== 'string' || value.length > 4096) || p.history.length > 100 || p.history.some(line => typeof line !== 'string' || line.length > 4096)) throw new KernelError('EINVAL', 'Terminal context is too large.');
+      const contexts = state.session.terminals ??= {};
+      if (!contexts[p.key] && Object.keys(contexts).length >= 64) delete contexts[Object.keys(contexts)[0]!];
+      contexts[p.key] = { cwd: p.cwd, env: Object.fromEntries(entries), history: p.history as string[] };
+    },
+  },
+  {
     type: 'session.setPreferences', capability: 'session:control', description: 'Choose startup, learning view and companion preferences.', mutates: true,
     run: ({ state }, payload) => {
       if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new KernelError('EINVAL', 'Preferences must be an object.');
@@ -115,6 +127,16 @@ export const sessionActions: ActionDefinition[] = [
       const appId = field(payload, 'appId', 'string') as string;
       if (!['terminal', 'learn-linux'].includes(appId)) demandDesktop(state.session, state.session.desktop);
       if (appId === 'plugins') demandReward(state.session, 'plugins');
+      const policy = field(payload, 'instance', 'string', true);
+      const windowArgs = args(payload);
+      const existing = state.session.windows.find(window => window.appId === appId &&
+        (policy === 'singleton' || (policy === 'document' && windowArgs?.path && window.args?.path === windowArgs.path)));
+      if (existing) {
+        // A document's live editor owns its state. Never replace it on a repeated launch.
+        if (policy === 'singleton' && windowArgs) existing.args = windowArgs;
+        focus(state.session, existing);
+        return existing.id;
+      }
       const title = field(payload, 'title', 'string') as string;
       const width = Math.max(MIN_WIDTH, field(payload, 'width', 'number', true) as number | undefined ?? 720);
       const height = Math.max(MIN_HEIGHT, field(payload, 'height', 'number', true) as number | undefined ?? 480);
@@ -124,7 +146,6 @@ export const sessionActions: ActionDefinition[] = [
         appId, title, width, height, x: 48 + index * 24, y: 40 + index * 24,
         minimized: false, maximized: false, z: topZ(state.session),
       };
-      const windowArgs = args(payload);
       if (windowArgs) window.args = windowArgs;
       state.session.windows.push(window);
       state.session.focusedId = window.id;
@@ -136,6 +157,7 @@ export const sessionActions: ActionDefinition[] = [
     run: ({ state }, payload) => {
       const windowId = id(payload);
       find(state.session, windowId);
+      if (state.session.terminals) delete state.session.terminals[windowId];
       state.session.windows = state.session.windows.filter((window) => window.id !== windowId);
       if (state.session.focusedId === windowId) {
         const next = [...state.session.windows].sort((a, b) => b.z - a.z)[0];

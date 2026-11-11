@@ -31,6 +31,7 @@ export class ShellImpl implements ShellInternals {
 
   constructor(readonly kernel: Kernel, options: ShellOptions = {}) {
     this.actor = options.actor;
+    this.lines.push(...(options.history ?? []).slice(-100));
     this.learningModule = options.learningModule;
     this.plugins = options.plugins;
     this.registry = options.registry ?? createCommandRegistry();

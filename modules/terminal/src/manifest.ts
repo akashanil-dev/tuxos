@@ -9,6 +9,7 @@ export const manifest: ModuleManifest = {
   contributes: {
     apps: [{
       id: 'terminal',
+      instance: 'multiple',
       title: 'Terminal',
       icon: 'terminal',
       category: 'System',

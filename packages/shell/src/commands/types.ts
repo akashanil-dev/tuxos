@@ -58,4 +58,4 @@ export interface ShellInternals extends Shell {
   runAsCommand(args: string[], stdin: string, user: string, io?: ShellIO): Promise<RunResult>;
 }
 
-export type ShellOptions = { learningModule?: string; actor?: Actor; registry?: CommandRegistry; plugins?: PluginManager };
+export type ShellOptions = { history?: string[]; learningModule?: string; actor?: Actor; registry?: CommandRegistry; plugins?: PluginManager };

@@ -30,6 +30,7 @@ export interface DesktopWidget { appId: string; x: number; y: number; width: num
 export interface SessionState {
   journey?: JourneyProgress;
   preferences?: SessionPreferences;
+  terminals?: Record<string, { cwd: string; env: Record<string, string>; history: string[] }>;
   /** Existing/imported cosmetics stay available without awarding course mastery. */
   appearanceGrants?: RewardId[];
   widgets?: DesktopWidget[];

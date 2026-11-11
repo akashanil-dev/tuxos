@@ -163,3 +163,39 @@ describe('restart learning', () => {
     await client.reset();
   });
 });
+
+it('focuses concurrent singleton launches and preserves separate terminals and document identities', async () => {
+  const { terminal } = await import('../../../modules/terminal/src/index');
+  const { editor } = await import('../../../modules/editor/src/index');
+  const client = createLocalSystem({ storage: storage(), modules: [about, terminal, editor].map(m => ({ manifest: m.manifest, load: async () => m })) });
+  await client.boot('ada');
+  client.tutor().setCapabilities(['session:control']);
+  const launches = await Promise.all([client.openApp('about'), client.openApp('about'), client.tutor().openApp('about')]);
+  expect(launches).toEqual(Array(3).fill({ ok: true, value: 'window-1' }));
+  await client.openApp('terminal'); await client.openApp('terminal');
+  await client.openApp('editor', { path: '/tmp/a' }); await client.openApp('editor', { path: '/tmp/a' });
+  await client.openApp('editor', { path: '/tmp/b' }); await client.openApp('editor'); await client.openApp('editor');
+  const windows = (await client.session()).windows;
+  expect(windows.filter(w => w.appId === 'terminal')).toHaveLength(2);
+  expect(windows.filter(w => w.appId === 'editor')).toHaveLength(4);
+  await client.reset();
+});
+
+it('resumes bounded cwd, environment and history without awarding lesson progress', async () => {
+  const store = storage();
+  const client = system(store);
+  await client.boot('ada');
+  const one = await client.createTerminal({ learningModule: 'learn-linux', cwd: '/tmp' });
+  await one.run('export PROJECT=hello');
+  await one.run('touch saved-note');
+  await client.flush();
+  await client.boot('ada');
+  const resumed = await client.createTerminal({ learningModule: 'learn-linux' });
+  expect(await resumed.cwd()).toBe('/tmp');
+  expect(await resumed.history()).toEqual(['export PROJECT=hello', 'touch saved-note']);
+  expect(await resumed.run('echo $PROJECT; ls')).toMatchObject({ code: 0, stdout: expect.stringContaining('hello\nsaved-note') });
+  const independent = await client.createTerminal();
+  expect(await independent.cwd()).toBe('/home/ada');
+  expect(await independent.history()).toEqual([]);
+  await client.reset();
+});

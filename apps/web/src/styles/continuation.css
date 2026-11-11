@@ -20,3 +20,16 @@
 .milestone-toast { position:fixed; z-index:1500; right:16px; bottom:110px; width:min(350px,calc(100vw - 32px)); padding:16px; border:1px solid var(--accent,#3daee9); border-radius:8px; color:var(--window-fg,#eff0f1); background:var(--window-bg,#232629); box-shadow:0 8px 28px #0005; }
 .milestone-toast strong,.milestone-toast span { display:block; margin-bottom:8px; }.milestone-toast span { font-size:13px; line-height:1.5; }.milestone-toast button { margin:4px 6px 0 0; }
 .settings-preference { display:flex; gap:9px; align-items:center; padding:8px 0; line-height:1.5; }
+
+.learning-window-controls { display:flex; flex-wrap:wrap; gap:8px; padding:6px 10px; border-bottom:1px solid var(--line); background:var(--surface); }
+.learning-window-controls button { background:var(--surface-2); color:var(--window-fg); border:1px solid var(--line); border-radius:var(--radius-small); padding:5px 10px; }
+.app-window.closing { animation: window-exit 100ms ease-in forwards; pointer-events:none; }
+@keyframes window-exit { to { opacity:0; transform:scale(.98); } }
+.app-window > header, .resize-handle { touch-action:none; }
+@media(prefers-reduced-motion:reduce) { .app-window.closing { animation:none; } }
+
+.session-save-status { top:4px; bottom:auto; padding:4px 8px; height:28px; max-width:calc(100% - 170px); font-size:11px; }
+body:has(.de-gnome) .session-save-status { top:38px; }
+body:has(.de-hyprland) .session-save-status { top:48px; }
+
+.desktop-splash-overlay { position:fixed; inset:0; z-index:100000; }

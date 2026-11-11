@@ -34,6 +34,8 @@ export default function SettingsView({ system }: AppViewProps) {
     {error && <p role="alert">{error}</p>}
     <h3>Coming back to TuxOS</h3>
     <label className="settings-preference"><input type="checkbox" checked={preferences.fastBoot} onChange={event => void apply('session.setPreferences', { fastBoot: event.target.checked })} />Fast boot · skip GRUB and startup messages</label>
+    <label className="settings-preference"><input type="checkbox" checked={preferences.showVasu} onChange={event => void apply('session.setPreferences', { showVasu: event.target.checked })} />Show Vasu · local help is available without AI</label>
+    <label className="settings-preference"><input type="checkbox" checked={preferences.richVasu} onChange={event => void apply('session.setPreferences', { richVasu: event.target.checked })} />Use the optional 3D Vasu</label>
     <p className="settings-intro">Your desktop choices are available while you explore. Learning achievements keep their own progress.</p>
     <h3>Desktop environment</h3>
     <p className="settings-intro">

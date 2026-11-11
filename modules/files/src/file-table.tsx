@@ -3,13 +3,15 @@ import { formatSize, formatTime } from './model';
 
 interface FileTableProps {
   entries: Stat[];
+  presentation?: 'table' | 'icons';
   selected: string | null;
   onSelect(name: string): void;
   onOpen(entry: Stat): void;
 }
 
-export function FileTable({ entries, selected, onSelect, onOpen }: FileTableProps) {
+export function FileTable({ entries, selected, onSelect, onOpen, presentation }: FileTableProps) {
   if (!entries.length) return <p className="files-empty">This folder is empty.</p>;
+  if (presentation === 'icons') return <div className="files-scroll files-icons">{entries.map(entry => <button key={entry.name} className={selected === entry.name ? 'selected' : ''} aria-pressed={selected === entry.name} onClick={() => onSelect(entry.name)} onDoubleClick={() => onOpen(entry)} onKeyDown={event => { if (event.key === 'Enter') onOpen(entry); }}><span aria-hidden="true">{entry.kind === 'dir' ? '📁' : '📄'}</span>{entry.name}</button>)}</div>;
   return <div className="files-scroll"><table className="files-table">
     <thead>
       <tr><th>Name</th><th>Size</th><th>Modified</th></tr>
