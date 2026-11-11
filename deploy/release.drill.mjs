@@ -47,3 +47,42 @@ test('invalid release identifiers cannot escape the releases directory',async t=
 test('a rejected restart also restores the compatible release',async t=>{
   const f=await fixture(t);const restart=join(f.work,'restart.sh');await writeFile(restart,`#!/usr/bin/env bash\n[[ "$(readlink "$TUXOS_ROOT/current")" != */next ]]\n`,{mode:0o700});await assert.rejects(f.run('next',{TUXOS_RESTART:restart}),/Restoring compatible release prior/);assert.equal(await readlink(join(f.root,'current')),f.previous);await f.unchanged();
 });
+
+async function bootstrap(f, source, name='next', recoveryId='recovery') {
+  return exec('bash',[join(f.candidate,'deploy/activate.sh'),name,source,recoveryId],{env:f.env});
+}
+test('CI bootstrap installs recovery without activating it and retains the legacy release',async t=>{
+  const f=await fixture(t,{legacy:true}), source=join(f.work,'recovery-bundle');await f.release(source);
+  await bootstrap(f,source);
+  assert.equal(await readlink(join(f.root,'current')),join(f.root,'releases/next'));
+  assert.equal(await readFile(join(f.previous,'web/index.html'),'utf8'),'fictional release');
+  await readFile(join(f.root,'releases/recovery/release.json'));await f.unchanged();
+  // Later deployments choose their actual compatible predecessor even without a bootstrap bundle.
+  await bootstrap(f,join(f.work,'absent-bundle'),'later');
+  assert.equal(await readlink(join(f.root,'current')),join(f.root,'releases/later'));await f.unchanged();
+});
+test('failed first upgrade rolls back to the installed recovery, never the legacy reader',async t=>{
+  const f=await fixture(t,{legacy:true,broken:true}), source=join(f.work,'recovery-bundle');await f.release(source);
+  await assert.rejects(bootstrap(f,source),/Restoring compatible release recovery/);
+  assert.equal(await readlink(join(f.root,'current')),join(f.root,'releases/recovery'));await f.unchanged();
+});
+test('bootstrap rejects missing and incompatible recovery before touching the live release',async t=>{
+  const f=await fixture(t,{legacy:true}), source=join(f.work,'recovery-bundle');
+  await assert.rejects(bootstrap(f,source),/compatibility check failed/);
+  await f.release(source,false);await assert.rejects(bootstrap(f,source),/compatibility check failed/);
+  assert.equal(await readlink(join(f.root,'current')),f.previous);await f.unchanged();
+});
+test('bootstrap reuses identical recovery but never overwrites different recovery files',async t=>{
+  const f=await fixture(t,{legacy:true}), source=join(f.work,'recovery-bundle'), target=join(f.root,'releases/recovery');
+  await f.release(source);await f.release(target);await writeFile(join(target,'web/index.html'),'different immutable recovery');
+  await assert.rejects(bootstrap(f,source),/refusing to overwrite/);
+  assert.equal(await readlink(join(f.root,'current')),f.previous);
+  assert.equal(await readFile(join(target,'web/index.html'),'utf8'),'different immutable recovery');
+  await writeFile(join(target,'web/index.html'),'fictional release');await bootstrap(f,source);await f.unchanged();
+});
+test('bootstrap validates identifiers before writing release directories',async t=>{
+  const f=await fixture(t,{legacy:true}), source=join(f.work,'recovery-bundle');await f.release(source);
+  for(const id of ['../escape','.','/tmp/escape','name with spaces','next'])await assert.rejects(bootstrap(f,source,'next',id),/Invalid or overlapping/);
+  await assert.rejects(bootstrap(f,source,'../escape'),/Invalid or overlapping/);
+  assert.equal(await readlink(join(f.root,'current')),f.previous);await f.unchanged();
+});

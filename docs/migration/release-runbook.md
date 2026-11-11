@@ -55,8 +55,15 @@ production backups. Verify their exact files/hashes and rehearse on the host bef
 
 On the deployment host, install the verified recovery bundle under `/opt/tuxos/releases/<recovery-id>` without
 activating it. For the first rollout only, pass `TUXOS_ROLLBACK_RELEASE=<recovery-id>` to `deploy/deploy.sh`.
-The CI deploy workflow does not automatically invent this identifier; arrange the compatibility release before
-merging into production. Later releases can use the previous compatible release automatically. Release names
+The CI deploy workflow now builds and tests pinned checkpoint `e80d3a168f802e1a20b47ae5823f741ea439b265`
+in a separate job, including its API startup. It uploads that independently packaged recovery alongside the
+candidate. `deploy/activate.sh` installs it without activation as
+`recovery-e80d3a168f802e1a20b47ae5823f741ea439b265` when the current release cannot read schema 2,
+and explicitly selects it for rollback. The old release and account database are retained. Existing recovery
+files must match exactly; mismatches fail rather than overwrite an immutable release. This repairs the missing
+first-deployment wiring that stopped the first main rollout before activation. The original `deploy.sh` guard
+remains in place. For manual deployments, prepare the recovery and use the explicit command below.
+Later releases use the actual previous compatible release automatically. Release names
 are validated and immutable, and no release is automatically pruned during migration.
 
 ```sh
