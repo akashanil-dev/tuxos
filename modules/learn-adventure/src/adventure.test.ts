@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { createLocalSystem } from '@tuxos/system';
 import { createKernel } from '@tuxos/kernel';
-import type { ModuleDefinition } from '@tuxos/sdk';
+import { tryLinux } from '../../try-linux/src';
 import { exploration } from '../../exploration/src';
 import { pipeDream } from '../../pipe-dream/src';
 import { apt } from '../../apt/src';
@@ -10,11 +10,9 @@ import { learnAdventure, type AdventureStatus } from './index';
 import { course } from './course';
 import { GATE, preview, seed } from './assets';
 
-// The guide's window-open event is the graduation contract; its content has its own module checks.
-const guide: ModuleDefinition = { manifest: { id: 'try-linux', title: 'Guide', version: '1.0.0', capabilities: [], activation: [], contributes: { apps: [{ id: 'try-linux', title: 'Try Linux', icon: 'linux' }] } }, activate() {} };
 async function setup(saved?: string) {
   let value = saved ?? null;
-  const system = createLocalSystem({ journey: true, storage: { get: async () => value, set: async (_, next) => { value = next; }, remove: async () => { value = null; } }, modules: [exploration, learnAdventure, pipeDream, apt, guide].map(m => ({ manifest: m.manifest, load: async () => m })) });
+  const system = createLocalSystem({ journey: true, storage: { get: async () => value, set: async (_, next) => { value = next; }, remove: async () => { value = null; } }, modules: [exploration, learnAdventure, pipeDream, apt, tryLinux].map(m => ({ manifest: m.manifest, load: async () => m })) });
   await system.boot('ada');
   const status = async () => { const result = await system.dispatch<AdventureStatus>('learn-adventure.status', {}); if (!result.ok) throw new Error(result.error.message); return result.value; };
   const run = async (type: string, payload: unknown = {}) => { const result = await system.dispatch(type, payload); expect(result.ok, !result.ok ? result.error.message : '').toBe(true); };

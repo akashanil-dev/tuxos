@@ -19,7 +19,7 @@ export default function ExplorationView({ system, windowId }: AppViewProps) {
     void system.user().then(value => { if (active) setUser(value); });
     const refresh = () => { void system.dispatch<ExplorationProgress>('exploration.status', {}).then(result => { if (active && result.ok) { setProgress(result.value); setCommands(system.commands?.() ?? []); } }); };
     refresh();
-    const stop = system.onChange(event => { if (/^(exploration|pipe-dream|learn-adventure|know-your-distro)\./.test(event.action.type)) refresh(); });
+    const stop = system.onChange(event => { if (/^(try-linux|exploration|pipe-dream|learn-adventure|know-your-distro)\./.test(event.action.type)) refresh(); });
     return () => { active = false; stop(); };
   }, [system, windowId]);
   const launch = (id: string) => void system.openApp(id).then(result => { if (!result.ok) setError(result.error.message); });

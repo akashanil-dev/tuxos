@@ -19,7 +19,7 @@ export function DiscoveryNotice({ system }: { system: SystemClient }) {
       known.current = new Set(ids);
     };
     void refresh();
-    const stop = system.onChange(event => { if (/^(exploration|pipe-dream|know-your-distro|learn-adventure)\./.test(event.action.type)) void refresh(); });
+    const stop = system.onChange(event => { if (/^(try-linux|exploration|pipe-dream|know-your-distro|learn-adventure)\./.test(event.action.type)) void refresh(); });
     return () => { active = false; stop(); known.current = null; };
   }, [system]);
   useEffect(() => { if (!notice) return; const timer = setTimeout(() => setNotice(''), 6500); return () => clearTimeout(timer); }, [notice]);

@@ -1,0 +1,35 @@
+import { expect, it } from 'vitest';
+import { createLocalSystem } from '@tuxos/system';
+import { exploration } from '../../exploration/src';
+import { tryLinux } from './index';
+import { recommendation, QUESTIONS, DISTROS } from './data';
+it('keeps four questions and all six possible recommendations with stable matching', () => {
+  expect(QUESTIONS).toHaveLength(4);
+  const matches = new Set();
+  for (let a = 0; a < 3; a++) for (let b = 0; b < 4; b++) for (let c = 0; c < 3; c++) for (let d = 0; d < 3; d++) matches.add(recommendation([a,b,c,d]).recommendation);
+  expect([...matches].sort()).toEqual(Object.keys(DISTROS).sort());
+  expect(recommendation([0,0,0,2]).recommendation).toBe('mint');
+  expect(recommendation([1,2,1,0]).recommendation).toBe('fedora');
+  expect(recommendation([2,2,2,0]).recommendation).toBe('endeavour');
+  expect(recommendation([0,1])).toEqual({ answers: [0,1] });
+  for (const value of [null, {}, [1,2,3], [9], [0,0,0,0,0], new Array(4), ['0']]) expect(() => recommendation(value)).toThrow();
+});
+it('resumes a partial quiz, awards completion once and retains history after retaking', async () => {
+  let value: string | null = null;
+  const system = createLocalSystem({ modules: [exploration, tryLinux].map(m => ({ manifest: m.manifest, load: async () => m })), storage: { get: async () => value, set: async (_, next) => { value = next; }, remove: async () => { value = null; } } });
+  await system.boot('ada'); await system.openApp('try-linux');
+  await system.dispatch('try-linux.answer', { answers: [0,0] });
+  await system.flush(); await system.boot('ada'); await system.openApp('try-linux');
+  const status = async () => { const result = await system.dispatch<any>('exploration.status', {}); if (!result.ok) throw new Error(result.error.message); return result.value; };
+  expect((await status()).guide.answers).toEqual([0,0]);
+  expect((await status()).achievements.installer).toBeUndefined();
+  await system.dispatch('try-linux.answer', { answers: [0,0,0,2] });
+  const stamp = (await status()).achievements.installer;
+  expect(stamp).toBeGreaterThan(0);
+  expect((await status()).guide.recommendation).toBe('mint');
+  await system.dispatch('try-linux.answer', { answers: [] });
+  expect((await status()).achievements.installer).toBe(stamp);
+  const tutor = system.tutor(); tutor.setCapabilities(['exploration:write']);
+  expect((await tutor.dispatch('try-linux.answer', { answers: [0,0,0,2] })).ok).toBe(false);
+  await system.reset();
+});

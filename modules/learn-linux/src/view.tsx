@@ -16,7 +16,7 @@ export default function LearnLinuxView({ system, args }: AppViewProps) {
     })();
   }, [system, args?.guided]);
   return <div className="learning-entry">
-    <nav aria-label="Learning activities"><button aria-current="page">Linux course</button><button onClick={() => void system.openApp('learn-docker')}>Docker</button><button onClick={() => void system.openApp('learn-filesystem')}>Filesystem guide</button></nav>
+    <nav aria-label="Learning activities"><button onClick={() => void system.openApp('learn-adventure')}>Tux’s Adventure</button><button onClick={() => void system.openApp('play')}>Play</button><button aria-current="page">Linux course</button><button onClick={() => void system.openApp('learn-docker')}>Docker</button><button onClick={() => void system.openApp('learn-filesystem')}>Filesystem guide</button></nav>
     <LearningLabView system={system} courseId="learn-linux" variant="linux" />
   </div>;
 }
