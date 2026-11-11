@@ -42,7 +42,7 @@ jobs:
           cp -a apps/web/dist/. release/web/
           cp -a apps/api/package.json apps/api/src release/api/
           find release/api -name '*.test.ts' -delete
-          cp deploy/deploy.sh deploy/rollback.sh deploy/check-release.mjs release/deploy/
+          cp deploy/activate.sh deploy/deploy.sh deploy/rollback.sh deploy/check-release.mjs release/deploy/
           cp deploy/release.json release/
           tar -czf release.tar.gz -C release .
       - uses: actions/upload-artifact@v4
@@ -51,9 +51,52 @@ jobs:
           path: release.tar.gz
           retention-days: 7
 
+  recovery:
+    name: Verify compatible recovery checkpoint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Independent, schema-2-compatible checkpoint from before the continuation release UI changes.
+      # Pin the full revision: never relabel the old production binary as schema-2 compatible.
+      - uses: actions/checkout@v4
+        with:
+          ref: e80d3a168f802e1a20b47ae5823f741ea439b265
+          path: recovery-source
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: recovery-source/package-lock.json
+      - run: npm ci && npm run check && npm run build --workspace @tuxos/web
+        working-directory: recovery-source
+      - name: Check the recovery API with Node
+        working-directory: recovery-source/apps/api
+        run: |
+          DATABASE_PATH="$RUNNER_TEMP/recovery.db" PORT=8792 node src/server.ts &
+          api_pid=$!
+          trap 'kill "$api_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 20); do curl -fsS http://127.0.0.1:8792/api/health && exit 0; sleep 0.5; done
+          echo "The recovery API did not start." >&2
+          exit 1
+      - name: Package the verified recovery
+        run: |
+          mkdir -p recovery/web recovery/api
+          cp -a recovery-source/apps/web/dist/. recovery/web/
+          cp -a recovery-source/apps/api/package.json recovery-source/apps/api/src recovery/api/
+          find recovery/api -name '*.test.ts' -delete
+          cp deploy/release.json recovery/
+          printf '%s\n' e80d3a168f802e1a20b47ae5823f741ea439b265 > recovery/source-revision
+          node deploy/check-release.mjs recovery
+          tar -czf recovery.tar.gz -C recovery .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: compatible-recovery
+          path: recovery.tar.gz
+          retention-days: 7
+
   deploy:
     name: Deploy to production
-    needs: check
+    needs: [check, recovery]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
@@ -67,6 +110,9 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: release
+      - uses: actions/download-artifact@v4
+        with:
+          name: compatible-recovery
       - name: Set up SSH
         env:
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
@@ -83,13 +129,16 @@ jobs:
         run: |
           ssh_opts=(-i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -o BatchMode=yes)
           scp "${ssh_opts[@]}" release.tar.gz "tuxos-deploy@$HOST:/tmp/tuxos-$RELEASE.tar.gz"
+          scp "${ssh_opts[@]}" recovery.tar.gz "tuxos-deploy@$HOST:/tmp/tuxos-recovery-$RELEASE.tar.gz"
           ssh "${ssh_opts[@]}" "tuxos-deploy@$HOST" bash -s -- "$RELEASE" <<'REMOTE'
           set -euo pipefail
           release="$1"
           work="$(mktemp -d)"
-          trap 'rm -rf "$work" "/tmp/tuxos-$release.tar.gz"' EXIT
-          tar -xzf "/tmp/tuxos-$release.tar.gz" -C "$work"
-          bash "$work/deploy/deploy.sh" "$release"
+          trap 'rm -rf "$work" "/tmp/tuxos-$release.tar.gz" "/tmp/tuxos-recovery-$release.tar.gz"' EXIT
+          mkdir -p "$work/candidate" "$work/recovery"
+          tar -xzf "/tmp/tuxos-$release.tar.gz" -C "$work/candidate"
+          tar -xzf "/tmp/tuxos-recovery-$release.tar.gz" -C "$work/recovery"
+          bash "$work/candidate/deploy/activate.sh" "$release" "$work/recovery" recovery-e80d3a168f802e1a20b47ae5823f741ea439b265
           REMOTE
       - name: Check the live site
         run: |
