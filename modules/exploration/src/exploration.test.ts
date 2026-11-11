@@ -1,0 +1,25 @@
+import { expect, it } from 'vitest';
+import { createLocalSystem } from '@tuxos/system';
+import type { ExplorationProgress } from '@tuxos/sdk';
+import { exploration } from './index';
+it('tracks successful learner commands only, retains timestamps, and never turns discovery into course mastery', async () => {
+  let save: string | null = null;
+  const system = createLocalSystem({ journey: true, storage: { get: async () => save, set: async (_, value) => { save = value; }, remove: async () => { save = null; } }, modules: [{ manifest: exploration.manifest, load: async () => exploration }] });
+  await system.boot('ada');
+  const user = await system.createTerminal();
+  await user.run('cat missing; whoami');
+  await user.run('ls missing');
+  const tutor = system.tutor(); tutor.setCapabilities(['*']);
+  await (await tutor.createTerminal()).run('pwd');
+  let result = await system.dispatch<ExplorationProgress>('exploration.status', {});
+  expect(result.ok && Object.keys(result.value.learned)).toEqual(['whoami']);
+  expect(result.ok && result.value.achievements.first_cmd).toBeGreaterThan(0);
+  const original = result.ok && result.value.learned.whoami;
+  await user.run('whoami');
+  await system.flush(); await system.boot('ada');
+  result = await system.dispatch<ExplorationProgress>('exploration.status', {});
+  expect(result.ok && result.value.learned.whoami).toBe(original);
+  expect((await system.session()).journey?.lessons).toEqual([]);
+  expect((await system.dispatch('exploration.observe', null)).ok).toBe(false);
+  await system.reset();
+});

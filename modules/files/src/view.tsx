@@ -122,7 +122,7 @@ export default function FilesView({ system, args }: AppViewProps) {
       <button onClick={() => void system.user().then(user => go(`/home/${user}`))}>Home</button>
       <button onClick={() => void system.user().then(user => go(`/home/${user}/Documents`))}>Documents folder</button>
       <button onClick={() => go('/tmp')}>Temporary files</button>
-      <button disabled={!path} onClick={() => void system.openApp('terminal', { cwd: path }).then(result => { if (!result.ok) setNotice(result.error.message); })}>Open terminal here</button>
+      <button disabled={!path} onClick={() => void system.openApp('terminal', { cwd: path, from: 'files' }).then(result => { if (!result.ok) setNotice(result.error.message); })}>Open terminal here</button>
       <button aria-pressed={presentation === 'icons'} onClick={() => setPresentation(value => value === 'icons' ? 'table' : 'icons')}>{presentation === 'icons' ? 'List view' : 'Icon view'}</button>
       <button onClick={() => setShowHidden(value => !value)} aria-pressed={showHidden}>Hidden files</button>
       <button onClick={() => void system.openApp('learn-filesystem').then(result => { if (!result.ok) setNotice(result.error.message); })}>Learn this filesystem ↗</button>

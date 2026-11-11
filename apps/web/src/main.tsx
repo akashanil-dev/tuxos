@@ -1,3 +1,5 @@
+import { manifest as explorationManifest } from '@tuxos/module-exploration/manifest';
+import { manifest as pipeManifest } from '@tuxos/module-pipe-dream/manifest';
 import { isPhone } from './boot/PhoneScreen';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -66,6 +68,8 @@ const system = createLocalSystem({
   journey: true,
   ai,
   modules: [
+    { manifest: explorationManifest, load: () => import('@tuxos/module-exploration').then(m => m.exploration) },
+    { manifest: pipeManifest, load: () => import('@tuxos/module-pipe-dream').then(m => m.pipeDream) },
     // Apps appear on the desktop in this order: the Terminal first, then Plugins.
     { manifest: terminalManifest, load: () => import('@tuxos/module-terminal').then((module) => module.terminal) },
     { manifest: pluginManagerModule.manifest, load: async () => pluginManagerModule },

@@ -1,3 +1,4 @@
+import { DiscoveryNotice } from '../desktop/DiscoveryNotice';
 import { useWallpaper } from '../hooks/useWallpaper';
 import type { Window as SessionWindow } from '@tuxos/kernel';
 import type { SystemClient } from '@tuxos/system';
@@ -178,6 +179,7 @@ export function Desktop({ system, tutor, onPower, onAchievements, verifySudo = n
     >
       {shown !== session.desktop && session.preferences?.fastBoot === false && <div className="desktop-splash-overlay"><SessionSplash desktop={session.desktop} onDone={() => setShown(session.desktop)} /></div>}
       <FullscreenControl top={environment.insets.top} />
+      <DiscoveryNotice system={system} />
       {environment.desktopIcons === 'apps' && <div className="icon-grid icons-apps" style={iconGridStyle(insets)}>
         {(primaryApps.length ? primaryApps : apps).map((app) => <button
           className="desktop-icon"

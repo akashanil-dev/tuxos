@@ -1,0 +1,27 @@
+.pipe-dream { display:flex; height:100%; background:var(--window-bg); color:var(--window-fg); font:14px var(--font); }
+.pipe-dream nav { width:200px; flex-shrink:0; padding:16px; border-right:1px solid var(--line); overflow:auto; background:var(--surface); }
+.pipe-dream nav button { width:100%; text-align:left; margin-bottom:6px; }
+.pipe-dream main { flex:1; min-width:0; overflow:auto; padding:20px; }
+.pipe-dream button { background:var(--surface-2); color:var(--window-fg); border:1px solid var(--line); border-radius:var(--radius-small); padding:8px 12px; cursor:pointer; }
+.pipe-dream button[aria-current] { border-color:var(--accent); background:color-mix(in srgb,var(--accent) 20%,var(--surface)); }
+.pipe-dream button:disabled { opacity:.45; cursor:default; }
+.pipe-dream button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.pipe-comparison { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.pipe-comparison section,.pipe-stages section { border:1px solid var(--line); border-radius:var(--radius); padding:12px; background:var(--surface); }
+.pipe-dream h3 { font-size:13px; }
+.pipe-dream pre { font:12px/1.5 var(--font-mono); white-space:pre-wrap; overflow-wrap:anywhere; }
+.pipe-stages { display:flex; gap:12px; overflow-x:auto; padding-bottom:10px; }
+.pipe-stages section { flex:0 0 180px; }
+.pipe-stages strong { display:block; margin-bottom:8px; }
+.pipe-stages button { font-size:11px; padding:4px 8px; }
+.pipe-command { display:block; white-space:pre-wrap; padding:12px; background:var(--surface); border-left:3px solid var(--accent); }
+.pipe-palette { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+@media(max-width:600px) { .pipe-dream { flex-direction:column; } .pipe-dream nav { width:auto; max-height:110px; flex-shrink:0; display:flex; gap:6px; flex-wrap:wrap; padding:8px; } .pipe-dream nav h2,.pipe-dream nav p { margin:4px; } .pipe-dream nav button { width:auto; } .pipe-dream main { padding:12px; } }
+
+.pipe-dream main { display:flex; flex-direction:column; overflow:hidden; padding:0; }
+.pipe-work { min-height:0; flex:1; overflow:auto; padding:16px 20px; }
+.pipe-work h2 { margin:0 0 8px; }.pipe-work > p { margin:0 0 12px; }
+.pipe-comparison pre,.pipe-stages pre { max-height:100px; overflow:auto; margin:6px 0; }
+.pipe-controls { padding:10px 20px; border-top:1px solid var(--line); background:var(--window-bg); flex-shrink:0; }
+.pipe-controls h3 { margin:0 0 8px; }.pipe-controls p { margin:8px 0 0; }
+@media(max-width:600px) { .pipe-work { padding:12px; }.pipe-controls { padding:8px 12px; } }

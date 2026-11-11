@@ -94,6 +94,8 @@ describe('shell.ran record', () => {
       stdout: 'hi\n',
       stderr: 'cat: nope: No such file or directory\n',
       commands: ['cd', 'echo', 'sort', 'sudo', 'cat', 'cat'],
+      successfulCommands: ['cd', 'echo', 'sort', 'cat', 'sudo'],
+      learningModule: undefined,
     });
   });
 

@@ -7,3 +7,5 @@ export { createCommandRegistry, type CommandRegistry } from './registry';
 export function createShell(kernel: Kernel, options: ShellOptions = {}): Shell {
   return new ShellImpl(kernel, options);
 }
+
+export { runTextStage, runTextPipeline, type TextStageResult } from './text-pipeline';

@@ -28,6 +28,7 @@ export class ShellImpl implements ShellInternals {
   private lastStatus = 0;
   /** Command names run by the current line, for the shell.ran record. */
   private ran: string[] = [];
+  private succeeded: string[] = [];
 
   constructor(readonly kernel: Kernel, options: ShellOptions = {}) {
     this.actor = options.actor;
@@ -52,6 +53,7 @@ export class ShellImpl implements ShellInternals {
   async run(line: string, io: ShellIO = {}): Promise<RunResult> {
     this.remember(line);
     this.ran = [];
+    this.succeeded = [];
     // Slash commands are terminal-native learning controls. Ordinary absolute paths such as /etc/passwd
     // remain untouched; only the explicitly supported learning commands lose their leading slash.
     const executableLine = this.learningModule ? line.replace(/^(\s*)\/(hint|answer|task|next)(?=\s|$)/, '$1$2') : line;
@@ -218,6 +220,7 @@ export class ShellImpl implements ShellInternals {
         stdout = '';
       }
     }
+    if (code === 0) this.succeeded.push(definition.name);
     return { stdout, stderr, code };
   }
 
@@ -231,6 +234,7 @@ export class ShellImpl implements ShellInternals {
       stdout: cap(result.stdout),
       stderr: cap(result.stderr),
       commands: this.ran,
+      successfulCommands: [...new Set(this.succeeded)],
       learningModule: this.learningModule,
     }, this.kernel.user);
   }

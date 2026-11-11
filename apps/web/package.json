@@ -26,7 +26,9 @@
     "three": "^0.186.1",
     "@tuxos/module-learn-filesystem": "*",
     "@tuxos/course-view": "*",
-    "@tuxos/lessons": "*"
+    "@tuxos/lessons": "*",
+    "@tuxos/module-exploration": "*",
+    "@tuxos/module-pipe-dream": "*"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.0",

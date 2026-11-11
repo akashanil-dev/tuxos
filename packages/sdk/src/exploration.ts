@@ -4,7 +4,7 @@ export interface ExplorationProgress {
   learned: Record<string, number>;
   achievements: Record<string, number>;
   adventure: { done: Record<string, number>; progress: Record<string, boolean[]>; seen: Record<string, boolean> };
-  pipe: { solved: Record<string, number> };
+  pipe: { solved: Record<string, number>; drafts?: Record<string, number[]>; current?: string };
   runner: { mode: 'Rapid' | 'Infinite'; rapidBest: number; infiniteHigh: number; sound: boolean; family?: string; legacyBest?: number };
   imports: { id: string; importedAt: number; source: string }[];
 }

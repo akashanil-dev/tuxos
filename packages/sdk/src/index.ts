@@ -194,3 +194,5 @@ export { JOURNEY_LESSONS, REWARDS, JOURNEY_THEMES, journeyLevel, unlocked, featu
 export { emptyExploration, defaultPreferences } from './exploration';
 export type { ExplorationProgress, SessionPreferences } from './exploration';
 export type { JourneyProgress, RewardId } from './journey';
+
+export { EXPLORATION_ACHIEVEMENTS } from './achievements';

@@ -6,6 +6,10 @@ type ViewModule = { default: ComponentType<AppViewProps> };
 
 // Each app's window content, loaded only when its first window opens.
 export const views: Record<string, () => Promise<ViewModule>> = {
+  play: () => import('@tuxos/module-exploration/view'),
+  'command-reference': () => import('@tuxos/module-exploration/view'),
+  'exploration-achievements': () => import('@tuxos/module-exploration/view'),
+  'pipe-dream': () => import('@tuxos/module-pipe-dream/view'),
   about: () => import('@tuxos/module-about/view'),
   terminal: () => import('@tuxos/module-terminal/view'),
   files: () => import('@tuxos/module-files/view'),
