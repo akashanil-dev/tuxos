@@ -1,4 +1,4 @@
-.exploration-view { padding:24px; background:var(--window-bg); color:var(--window-fg); min-height:100%; font:14px/1.5 var(--font); }
+.exploration-view { padding:24px; background:var(--window-bg); color:var(--window-fg); min-height:100%; font:14px/1.5 var(--font-ui); }
 .exploration-view h1 { margin:0 0 8px; font-size:24px; }.exploration-view p { color:var(--muted); }
 .activity-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin-top:24px; }
 .activity-grid button { text-align:left; display:flex; flex-direction:column; gap:10px; padding:18px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); color:var(--window-fg); cursor:pointer; }

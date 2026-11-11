@@ -1,9 +1,9 @@
-.package-practice { height:100%; overflow:auto; padding:22px; background:var(--surface, #16202b); color:var(--text, #e6edf3); font:14px/1.6 system-ui,sans-serif; }
+.package-practice { height:100%; overflow:auto; padding:22px; background:var(--window-bg, #16202b); color:var(--window-fg, #e6edf3); font:14px/1.6 var(--font-ui,system-ui,sans-serif); }
 .package-practice h1 { margin:0 0 10px; font-size:25px; }
 .package-practice-choices { display:flex; flex-wrap:wrap; gap:10px; margin:18px 0; }
-.package-practice button { padding:10px 14px; color:inherit; background:var(--surface-raised,#24384a); border:1px solid var(--border,#586c7d); border-radius:6px; cursor:pointer; }
+.package-practice button { padding:10px 14px; color:inherit; background:var(--surface-2,#24384a); border:1px solid var(--line,#586c7d); border-radius:var(--radius,6px); cursor:pointer; }
 .package-practice table { width:100%; border-collapse:collapse; }
-.package-practice th, .package-practice td { padding:8px; text-align:left; border-bottom:1px solid var(--border,#586c7d); overflow-wrap:anywhere; }
+.package-practice th, .package-practice td { padding:8px; text-align:left; border-bottom:1px solid var(--line,#586c7d); overflow-wrap:anywhere; }
 .package-practice code { font-size:.92em; }
 .package-practice a { color:var(--accent,#83d3f4); }
 @media(max-width:650px) { .package-practice { padding:12px; } .package-practice th, .package-practice td { padding:5px; } }

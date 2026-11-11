@@ -58,6 +58,9 @@ function focus(session: SessionState, window: Window): void {
 }
 
 export const sessionActions: ActionDefinition[] = [
+  { type: 'session.power', capability: 'session:control', description: 'Request a user-selected power action through the desktop’s unsaved-work checks.', mutates: false,
+    run: ({ actor }, raw) => { if (actor.kind !== 'user') throw new KernelError('EPERM', 'Only the learner can request session power actions.'); const action = (raw as { action?: unknown })?.action; if (!['restart', 'shutdown', 'logout'].includes(action as string)) throw new KernelError('EINVAL', 'Unsupported power action.'); return action; },
+  },
   {
     type: 'session.terminal', capability: 'shell:exec', description: 'Remember a bounded terminal context, without restoring running processes.', mutates: true,
     run: ({ state }, raw) => {

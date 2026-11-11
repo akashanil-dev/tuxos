@@ -331,7 +331,7 @@ export function createLocalSystem(options: {
       const { kernel, registry } = current();
       const key = options.resumeKey ?? (options.learningModule ? `course:${options.learningModule}` : undefined);
       const context = key ? kernel.getState().session.terminals?.[key] : undefined;
-      const shell = createShell(kernel, { registry, plugins: current().plugins, learningModule: options.learningModule, history: context?.history });
+      const shell = createShell(kernel, { registry, openApp: (id, args) => client.openApp(id, args), plugins: current().plugins, learningModule: options.learningModule, history: context?.history });
       const cwd = context?.cwd ?? options.cwd;
       if (cwd) {
         const stat = kernel.dispatch<{ kind: string }>({ type: 'fs.stat', payload: { path: cwd } });

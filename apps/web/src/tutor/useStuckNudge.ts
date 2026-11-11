@@ -1,35 +1,37 @@
 import type { SystemClient } from '@tuxos/system';
-import { useEffect, useState } from 'react';
-
-export interface Nudge {
-  text: string;
-  question: string;
+import type { KernelEvent } from '@tuxos/sdk';
+import { useCallback, useEffect, useRef, useState } from 'react';
+export interface Nudge { text: string; question: string }
+export const NUDGE_COOLDOWN = 90_000;
+export function createNudgePolicy(now = Date.now) {
+  let failures=0,next=0;
+  return {
+    dismiss() { failures=0; next=now()+NUDGE_COOLDOWN; },
+    observe(event: KernelEvent): Nudge | null | undefined {
+      if(event.action.type!=='shell.ran'||event.actor.kind!=='user'||!event.ok)return undefined;
+      const run=event.action.payload as {code:number;line:string};
+      if(run.code===0||run.code===130){failures=0;return null;}
+      failures++;
+      if(failures<2||now()<next)return undefined;
+      failures=0;next=now()+NUDGE_COOLDOWN;
+      return { text:`“${run.line.slice(0,100)}” did not work. I can explain the error.`, question:'My last commands failed. What went wrong, and what should I try?' };
+    },
+  };
 }
-
-const FAILURES_BEFORE_NUDGE = 2;
-
-/**
- * Notices when the learner's commands fail twice in a row and offers help. It only offers: nothing is
- * sent to the AI until the learner clicks, so the tutor costs nothing while it isn't being used.
- */
+/** Local observation only. Dismissible, expires after 12 seconds, and never sends an AI request itself. */
 export function useStuckNudge(system: SystemClient) {
-  const [nudge, setNudge] = useState<Nudge | null>(null);
-
-  useEffect(() => {
-    let failures = 0;
-    return system.subscribe((event) => {
-      if (event.action.type !== 'shell.ran' || event.actor.kind !== 'user' || !event.ok) return;
-      const { code, line } = event.action.payload as { code: number; line: string };
-      failures = code === 0 ? 0 : failures + 1;
-      if (code === 0) setNudge(null);
-      else if (failures >= FAILURES_BEFORE_NUDGE) {
-        setNudge({
-          text: `“${line}” didn't work either.`,
-          question: 'My last commands failed. What went wrong, and what should I try?',
-        });
-      }
+  const [nudge,setNudge]=useState<Nudge|null>(null);
+  const policy=useRef(createNudgePolicy());
+  const expiry=useRef<ReturnType<typeof setTimeout>|undefined>(undefined);
+  const dismiss=useCallback(()=>{policy.current.dismiss();clearTimeout(expiry.current);setNudge(null);},[]);
+  useEffect(()=>{
+    policy.current=createNudgePolicy();
+    const stop=system.subscribe(event=>{
+      const suggestion=policy.current.observe(event);if(suggestion===undefined)return;
+      clearTimeout(expiry.current);setNudge(suggestion);
+      if(suggestion)expiry.current=setTimeout(()=>setNudge(null),12_000);
     });
-  }, [system]);
-
-  return { nudge, dismiss: () => setNudge(null) };
+    return ()=>{stop();clearTimeout(expiry.current);};
+  },[system]);
+  return {nudge,dismiss};
 }

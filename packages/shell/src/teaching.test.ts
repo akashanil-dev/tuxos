@@ -6,6 +6,7 @@ it('gives teaching help and suggestions without substituting commands', async ()
   const kernel = createKernel({ username: 'ada' });
   const shell = createShell(kernel);
   expect((await shell.run('man grep')).stdout).toContain('grep ERROR server.log');
+  expect((await shell.run('help grep')).stdout).toContain('grep ERROR server.log');
   expect((await shell.run('whatis chmod nope')).code).toBe(1);
   expect((await shell.run('man vim')).stdout).toContain(':q!');
   await shell.run('echo keep > note');
@@ -57,4 +58,19 @@ it('keeps interrupted buffers and failed opens from changing files', async () =>
     abort.abort(); expect(request.save('late')).toMatchObject({ ok: false }); return false;
   } });
   expect((await shell.run('cat notes.txt')).stdout).toBe('keep\n');
+});
+
+it('retains small exploration commands, protected empty-directory removal and quoted name search', async () => {
+  const kernel = createKernel({ username: 'ada' }); const shell = createShell(kernel);
+  await shell.run('mkdir -p notes/empty; echo first > notes/a.txt; echo second >> notes/a.txt');
+  expect((await shell.run('find notes -name "*.txt" -type f')).stdout).toBe('notes/a.txt\n');
+  expect((await shell.run('cat -n notes/a.txt')).stdout).toBe('     1\tfirst\n     2\tsecond\n');
+  expect((await shell.run('rmdir notes/a.txt')).code).toBe(1);
+  expect((await shell.run('rmdir notes')).code).toBe(1);
+  expect((await shell.run('rmdir notes/empty')).code).toBe(0);
+  expect((await shell.run('less notes/a.txt')).stdout).toBe('first\nsecond\n');
+  expect((await shell.run('printenv HOME')).stdout).toBe('/home/ada\n');
+  expect((await shell.run('history')).stdout).toContain('find notes');
+  expect((await shell.run('make me a sandwich')).code).toBe(1);
+  expect((await shell.run('sudo make me a sandwich')).stdout).toContain('Okay.');
 });

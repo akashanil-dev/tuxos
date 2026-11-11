@@ -62,6 +62,9 @@ export const fsActions: ActionDefinition[] = [
       parents: field(payload, 'parents', 'boolean', true),
     }),
   },
+  { type: 'fs.rmdir', capability: 'fs:write', description: 'Remove only an empty directory.', mutates: true,
+    run: ({ state, user, now }, payload) => vfs.removeEmptyDirectory(state.fs, path(payload), user, now),
+  },
   {
     type: 'fs.remove',
     capability: 'fs:write',

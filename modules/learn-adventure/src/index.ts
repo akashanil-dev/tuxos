@@ -100,14 +100,14 @@ export const learnAdventure: ModuleDefinition = { manifest, activate(ctx) {
     },
   });
   ctx.registerAction({ type: 'learn-adventure.script', capability: 'fs:write', mutates: true, description: 'Run one of the two known adventure practice scripts; never evaluate saved code.',
-    run: ({ state, actor, fs, user, now }: ActionContext, input: { path?: unknown; args?: unknown }) => {
+    run: ({ state, actor, fs, user, now }: ActionContext, input: { path?: unknown; args?: unknown; readScript?: unknown }) => {
       learner(actor);
       if (typeof input?.path !== 'string' || !Array.isArray(input.args) || input.args.some(arg => typeof arg !== 'string')) throw new KernelError('EINVAL', 'Expected a script path and arguments.');
       const path = resolvePath(input.path), gate = `${home}/dungeon/gate.sh`, stairs = `${home}/dungeon/crypt/stairs.sh`;
       if (path !== gate && path !== stairs) throw new KernelError('ENOSYS', 'This practice shell runs only the adventure gate and stairs scripts.');
       const stat = fs.stat(path), content = fs.read(path);
       const executable = user === 'root' ? stat.mode & 0o111 : stat.mode & (stat.owner === user ? 0o100 : 0o1);
-      if (!executable) throw new KernelError('EACCES', `${path}: Permission denied. Use chmod +x to make this practice script executable.`);
+      if (!executable && input.readScript !== true) throw new KernelError('EACCES', `${path}: Permission denied. Use chmod +x to make this practice script executable.`);
       if (content !== (path === gate ? GATE : STAIRS)) throw new KernelError('EINVAL', 'This practice script has changed. Use Adventure → Recover practice files to restore it. Saved script contents are never executed.');
       if (path === gate) {
         if (!input.args[0]) return '“Speak the secret word, traveller.”\nUsage: ./gate.sh <secret-word>\n';

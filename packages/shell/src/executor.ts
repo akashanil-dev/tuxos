@@ -20,6 +20,7 @@ const OUTPUT_LIMIT = 4000;
 
 export class ShellImpl implements ShellInternals {
   readonly plugins;
+  readonly openApp;
   readonly learningModule?: string;
   cwd: string;
   env: Record<string, string>;
@@ -37,6 +38,7 @@ export class ShellImpl implements ShellInternals {
     this.lines.push(...(options.history ?? []).slice(-100));
     this.learningModule = options.learningModule;
     this.plugins = options.plugins;
+    this.openApp = options.openApp;
     this.registry = options.registry ?? createCommandRegistry();
     this.cwd = `/home/${kernel.user}`;
     this.env = { HOME: this.cwd, USER: kernel.user, PWD: this.cwd, PATH: '/bin:/usr/bin' };

@@ -63,7 +63,8 @@ const TOPICS: { pattern: RegExp; text: string }[] = [
 ];
 
 /** Vasu's offline answer to a question, from the commands' help and the learner's recent commands. */
-export function offlineAnswer(question: string, commands: GuideCommand[], recent: KernelEvent[]): string {
+export interface OfflineContext { adventure?: { title: string; task: string; hints: string[] }; adventureComplete?: boolean }
+export function offlineAnswer(question: string, commands: GuideCommand[], recent: KernelEvent[], context: OfflineContext = {}): string {
   const asked = question.trim();
   const byName = new Map(commands.map((command) => [command.name, command]));
 
@@ -71,6 +72,14 @@ export function offlineAnswer(question: string, commands: GuideCommand[], recent
     const failure = lastFailure(recent);
     if (failure) return explainFailure(failure, byName);
   }
+
+  if (/\b(quest|adventure|hint|what next|next step)\b/i.test(asked)) {
+    if (context.adventure) return `**${context.adventure.title}**\n\n${context.adventure.task}\n\n${context.adventure.hints[0] ?? 'Open the adventure journal to review the checklist.'}\n\nType \`hint\` in a desktop Terminal, or open Tux’s Adventure for the full checklist.`;
+    return context.adventureComplete ? 'You have finished all ten adventure quests. Open Try Linux for your next step, or Play for more puzzles and courses.' : 'Open **Tux’s Adventure** from Play and prepare its files. In a course terminal, \`/hint\` refers to that course; in an ordinary Terminal, \`hint\` refers to the adventure.';
+  }
+  if (/\b(copy|paste|clipboard|shortcuts?|switch window|terminal here)\b/i.test(asked)) return 'Copy selected terminal output with Ctrl+C or the browser copy action; Ctrl+C without a selection interrupts a running command. Paste normally, use Tab to complete file names, and Up/Down to recall commands. In Files, **Open terminal here** keeps the current folder. Learning windows have **Focus view** and **Explore desktop** controls. Settings can hide me or change the desktop.';
+  if (/\b(vim|nano|editor|quit vim)\b/i.test(asked)) return 'The teaching editors use the same files as Text Editor. In nano, edit normally, then Ctrl+O saves and Ctrl+X exits; visible buttons work too. In Vim, press i to insert, Esc for normal mode, then :wq and Enter to save and exit. :q! discards changes. Unsaved buffers ask before closing the window.';
+  if (/\b(dnf|pacman|fedora|arch|package practice)\b/i.test(asked)) return 'Open **Package Practice**, or type \`pkg-lab fedora\` / \`pkg-lab arch\` to choose a separate exercise. Try \`sudo dnf install cowsay\` or \`sudo pacman -S cowsay\`, then \`pkg-lab run cowsay hello\`. The desktop keeps using apt; each exercise has its own package record. \`pkg-lab leave\` exits the exercise.';
 
   const quoted = [...asked.matchAll(/[`'"“‘]([a-z][\w.-]*)[`'"”’]/gi)].map((match) => match[1]!.toLowerCase());
   const words = asked.toLowerCase().match(/[a-z][\w.-]*/g) ?? [];
@@ -110,10 +119,9 @@ function explainFailure(run: ShellRun, byName: Map<string, GuideCommand>): strin
   const said = error ? ` It said: \`${error.slice(0, 160)}\`.` : '';
   const usage = byName.get(program)?.usage;
   const how = usage ? ` Its usage is \`${usage}\`.` : '';
-  if (/command not found/i.test(error)) {
-    return `\`${run.line}\` failed because there is no \`${program}\` command.${said} Check the spelling, or type `
-      + '`help` to see the commands. If it is a program you can install, run `sudo apt update` and then '
-      + `\`sudo apt install ${program}\`.`;
+  if (/command .*not found|command not found/i.test(error) || run.code === 127) {
+    const suggestion = (run.stderr ?? '').split('\n').find(line => /^(Windows habit|Did you mean|sudo apt install)/.test(line));
+    return `\`${run.line}\` could not find that command.${said} ${suggestion ? `The shell suggests: ${suggestion}. ` : ''}Read \`man COMMAND\`, check spelling with Tab, or type \`help\`. Suggestions are not run automatically.`;
   }
   if (/permission denied|operation not permitted/i.test(error)) {
     return `\`${run.line}\` was refused: your user isn't allowed to do that.${said} Run \`ls -l\` on the file to `

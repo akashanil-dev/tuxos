@@ -1,7 +1,7 @@
 import type { AiStatus, SystemClient } from '@tuxos/system';
 import type { Transport } from '@tuxos/tutor';
 import { useEffect, useRef, useState } from 'react';
-import { offlineAnswer } from './offline';
+import { offlineAnswer, type OfflineContext } from './offline';
 import { PointerOverlay } from './PointerOverlay';
 import { Penguin } from './Penguin';
 import { SudoDialog } from './SudoDialog';
@@ -31,7 +31,7 @@ export function TutorPanel({ system, transport, verifySudo = null, rich = false 
   const entries = aiOn ? tutor.entries : offline;
 
   // The first time a learner meets Vasu with AI on, he introduces himself once the desktop has settled. Without
-  // AI he stays quietly in his corner: no introduction, no strolls, no nudges, until he is clicked.
+  // AI he stays quietly in his corner: no introduction or strolls; error help remains local and optional.
   useEffect(() => {
     let active = true;
     void system.user().then((name) => {
@@ -62,15 +62,20 @@ export function TutorPanel({ system, transport, verifySudo = null, rich = false 
     return () => window.removeEventListener('keydown', onKey, true);
   }, [busy, stop]);
 
-  const ask = (question: string) => {
+  const ask = async (question: string) => {
     setOpen(true);
     dismiss();
     if (aiOn) {
       tutor.ask(question);
       return;
     }
-    const answer = offlineAnswer(question, system.commands?.() ?? [], system.tutor().recentEvents(50));
-    setOffline((entries) => [...entries, { kind: 'message', role: 'user', text: question }, { kind: 'message', role: 'assistant', text: answer }]);
+    const context: OfflineContext = {};
+    if (/\b(quest|adventure|hint|what next|next step)\b/i.test(question)) {
+      const result = await system.dispatch<{ lesson: { active?: { lesson: { title: string }; step: { task: string; hints: string[] } } }; progress: { done: Record<string, number> } }>('learn-adventure.status', {});
+      if (result.ok) { const active = result.value.lesson.active; if (active) context.adventure = { title: active.lesson.title, ...active.step }; context.adventureComplete = Object.keys(result.value.progress.done).length >= 10; }
+    }
+    const answer = offlineAnswer(question, system.commands?.() ?? [], system.tutor().recentEvents(50), context);
+    setOffline((entries) => [...entries.slice(-58), { kind: 'message', role: 'user', text: question }, { kind: 'message', role: 'assistant', text: answer }]);
   };
 
   return <>
@@ -92,6 +97,7 @@ export function TutorPanel({ system, transport, verifySudo = null, rich = false 
           onClick={tutor.revokeSudo}
         >sudo · Revoke</button>}
         <button className="tutor-about" title="What can Vasu do?" onClick={() => { setOpen(false); setIntro(true); }}>About me</button>
+        <button className="tutor-about" onClick={() => { tutor.stop(); void system.dispatch('session.setPreferences', { showVasu: false }); }} title="Show Vasu again in Settings">Hide Vasu</button>
         <button aria-label="Close tutor" onClick={() => setOpen(false)}>×</button>
       </header>
       <ol className="tutor-log" ref={log}>
@@ -113,6 +119,10 @@ export function TutorPanel({ system, transport, verifySudo = null, rich = false 
         {entries.map((entry, index) => <EntryView key={index} entry={entry} />)}
         {tutor.busy && <li className="tutor-thinking" role="status">Vasu is thinking…</li>}
       </ol>
+      <nav className="tutor-shortcuts" aria-label="Vasu shortcuts">
+        {!aiOn && <><button onClick={() => void ask('Give me my adventure hint')}>Adventure hint</button><button onClick={() => void ask('Why did my last command fail?')}>Explain error</button><button onClick={() => void ask('Show desktop shortcuts')}>Shortcuts</button></>}
+        <button onClick={() => void system.openApp('learn-adventure')}>Adventure</button><button onClick={() => void system.openApp('command-reference')}>Command reference</button><button onClick={() => void system.openApp('files')}>Files</button>
+      </nav>
       <form onSubmit={(event) => {
         event.preventDefault();
         if (!draft.trim() || tutor.busy) return;
@@ -128,9 +138,9 @@ export function TutorPanel({ system, transport, verifySudo = null, rich = false 
         <button type="submit" disabled={tutor.busy || !draft.trim()}>Ask</button>
       </form>
     </section>}
-    {nudge && !open && aiOn && <button className="tutor-nudge" onClick={() => ask(nudge.question)}>
-      {nudge.text} <span>Ask Vasu</span>
-    </button>}
+    {nudge && !open && <aside className="tutor-nudge" aria-label="Optional command help">
+      <p>{nudge.text}</p><button onClick={() => void ask(nudge.question)}>Ask Vasu{!aiOn && ' · offline'}</button><button aria-label="Dismiss Vasu hint" onClick={dismiss}>Dismiss</button>
+    </aside>}
     <div
       className={`vasu-actor ${stroll.walking ? 'walking' : ''} ${stroll.x < globalThis.innerWidth / 2 ? 'on-left' : ''}`}
       style={{ transform: `translateX(${stroll.x}px)`, transitionDuration: `${stroll.durationMs}ms` }}

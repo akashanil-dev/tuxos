@@ -4,7 +4,7 @@ import { desktopById, wallpaperById } from '@tuxos/appearance';
 import { useWallpaper } from './hooks/useWallpaper';
 import type { SystemClient } from '@tuxos/system';
 import type { Transport } from '@tuxos/tutor';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { BootLog } from './boot/BootLog';
 import { PhoneScreen } from './boot/PhoneScreen';
 import { Grub } from './boot/Grub';
@@ -52,6 +52,7 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
 }) {
   const [screen, setScreen] = useState<Screen>(start);
   const [recovery, setRecovery] = useState(false);
+  const bootDiscoveries = useRef(new Set<'memtest' | 'recovery'>());
   // undefined while we still look for a saved guest and a signed-in account: the login screen waits for both.
   const [savedUser, setSavedUser] = useState<string | null | undefined>(undefined);
   const [account, setAccount] = useState<string | null | undefined>(undefined);
@@ -74,6 +75,12 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
     remember();
     return system.onChange(event => { if (event.action.type === 'session.setPreferences') remember(); });
   }, [system, booted]);
+
+  useEffect(() => {
+    if (!booted || screen !== 'desktop') return;
+    const pending = [...bootDiscoveries.current]; bootDiscoveries.current.clear();
+    for (const id of pending) void system.dispatch('exploration.discover', { id });
+  }, [system, booted, screen]);
 
   // Warm the cache for the desktop that will start, so its icons and wallpaper are ready at login.
   useEffect(() => {
@@ -184,6 +191,7 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
   }, [system, booted, accounts]);
 
   const onBoot = useCallback((mode: 'normal' | 'recovery') => {
+    if (mode === 'recovery') bootDiscoveries.current.add('recovery');
     setRecovery(mode === 'recovery');
     setScreen('boot');
   }, []);
@@ -192,7 +200,7 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
 
   switch (screen) {
     case 'phone': return <PhoneScreen onBoot={powerOn} />;
-    case 'grub': return <Grub onBoot={onBoot} />;
+    case 'grub': return <Grub onBoot={onBoot} onMemoryTest={() => bootDiscoveries.current.add('memtest')} />;
     case 'boot': return <BootLog recovery={recovery} onDone={toGreeter} />;
     case 'off': return <PowerOff onPowerOn={powerOn} />;
     case 'desktop': return <>{powerError && <div className="journey-save-error" role="alert">{powerError}<button onClick={download}>Download backup</button></div>}<JourneyScreen key={booted} system={system} tutor={tutor} onPower={power} verifySudo={verifySudo} />

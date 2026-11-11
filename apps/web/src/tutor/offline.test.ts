@@ -32,8 +32,8 @@ describe("Vasu's offline guide", () => {
     const answer = offlineAnswer('My last commands failed. What went wrong, and what should I try?', commands, recent);
     expect(answer).toContain('was refused');
     expect(answer).toContain('Permission denied');
-    expect(offlineAnswer('why did it fail?', commands, [ran('tree', 127, 'tree: command not found')]))
-      .toContain('`sudo apt install tree`');
+    expect(offlineAnswer('why did it fail?', commands, [ran('tree', 127, "Command 'tree' not found, but can be installed with:\nsudo apt install tree")]))
+      .toContain('sudo apt install tree');
     expect(offlineAnswer('why error?', commands, [ran('cd nope', 1, 'cd: nope: No such file or directory')]))
       .toContain('`pwd`');
     expect(offlineAnswer('it failed', commands, [ran('chmod', 1, 'chmod: missing operand')]))
@@ -46,4 +46,12 @@ describe("Vasu's offline guide", () => {
     expect(offlineAnswer('which commands are there', commands, [])).toContain('`chmod`');
     expect(offlineAnswer('tell me a joke', commands, [])).toContain('offline');
   });
+});
+
+it('uses the active adventure hint and actual shell suggestions without guessing installations',()=>{
+  expect(offlineAnswer('adventure hint',commands,[],{adventure:{title:'The Library',task:'Find the secret word',hints:['Try grep -r secret library']}})).toContain('grep -r secret library');
+  expect(offlineAnswer('why failed?',commands,[ran('grpe',127,"grpe: command not found\nDid you mean 'grep'? Use man COMMAND for help.")])).toContain("Did you mean 'grep'");
+  expect(offlineAnswer('why failed?',commands,[ran('nonsense',127,'nonsense: command not found')])).not.toContain('apt install nonsense');
+  expect(offlineAnswer('how do I paste?',commands,[])).toContain('without a selection interrupts');
+  expect(offlineAnswer('pacman',commands,[])).toContain('pkg-lab arch');
 });

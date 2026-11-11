@@ -75,7 +75,7 @@ describe('tutor panel', () => {
     expect(transport.requests).toHaveLength(0);
   });
 
-  it('without AI, stays quietly in his corner: no introduction, no stroll, no nudges', async () => {
+  it('without AI, offers dismissible local error help without introduction or strolling', async () => {
     const off: AiStatus = { available: true, enabled: false, on: false, source: null, signedIn: false };
     const ai: AiKeyStore = {
       status: () => off, onChange: () => () => undefined, headers: () => ({}), providers: () => ({ providers: [], custom: false }),
@@ -95,7 +95,9 @@ describe('tutor panel', () => {
     // Past the introduction's delay (1.2 s) and his first stroll (2.5 s).
     await new Promise((resolve) => setTimeout(resolve, 3000));
     expect(screen.queryByRole('dialog', { name: 'Vasu introduces himself' })).toBeNull();
-    expect(screen.queryByText(/didn't work either/)).toBeNull();
+    expect(screen.getByRole('complementary', { name: 'Optional command help' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss Vasu hint' }));
+    expect(screen.queryByRole('complementary', { name: 'Optional command help' })).toBeNull();
     expect(document.querySelector('.vasu-actor.walking')).toBeNull();
   }, 10_000);
 
@@ -250,7 +252,7 @@ describe('tutor panel', () => {
       await terminal.run('cat /etc/shadow');
       await terminal.run('cat /etc/shadow');
     });
-    const nudge = await screen.findByRole('button', { name: /didn't work either/ }, { timeout: 8000 });
+    const nudge = await screen.findByRole('button', { name: 'Ask Vasu' }, { timeout: 8000 });
     expect(transport.requests).toHaveLength(0);
     fireEvent.click(nudge);
     expect(await screen.findByText('You need sudo for that file.')).toBeTruthy();

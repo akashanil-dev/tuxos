@@ -38,3 +38,7 @@ body:has(.de-hyprland) .session-save-status { top:48px; }
 .discovery-notice button { border:0; background:transparent; color:inherit; font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:4px 8px; }
 .de-gnome .discovery-notice { top:38px; }.de-hyprland .discovery-notice { top:48px; }
 @media(max-width:700px) { .discovery-notice { top:76px; right:12px; max-width:90%; } }
+
+.desktop-screen.konami-roll { animation:tuxos-konami-roll 1.2s ease-in-out; }
+@keyframes tuxos-konami-roll { 0%,100% { transform:rotate(0) scale(1); } 50% { transform:rotate(180deg) scale(.65); } 99% { transform:rotate(360deg) scale(1); } }
+@media(prefers-reduced-motion:reduce) { .desktop-screen.konami-roll { animation:none; } }

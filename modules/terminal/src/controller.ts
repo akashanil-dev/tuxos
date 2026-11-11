@@ -19,7 +19,7 @@ export interface WindowActions {
   runningChanged?(running: boolean): void;
 }
 
-const EXIT = /^\s*exit(\s+\d+)?\s*$/;
+const EXIT = /^\s*(?:exit|logout)(\s+\d+)?\s*$/;
 
 export class TerminalController {
   private readonly editor = new LineEditor();

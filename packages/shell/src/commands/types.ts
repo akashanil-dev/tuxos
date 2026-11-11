@@ -34,6 +34,7 @@ export interface Shell {
   register(command: CommandDefinition): void;
   unregister(name: string): void;
   readonly plugins?: PluginManager;
+  openApp?(id: string, args?: Record<string, string>): Promise<DispatchResult<string>>;
   commands(): CommandDefinition[];
   /** Tab completion for the word ending at `cursor`: where it starts, and what it could become. */
   complete(line: string, cursor: number): Completion;
@@ -69,4 +70,4 @@ export interface ShellInternals extends Shell {
   runAsCommand(args: string[], stdin: string, user: string, io?: ShellIO): Promise<RunResult>;
 }
 
-export type ShellOptions = { history?: string[]; learningModule?: string; actor?: Actor; registry?: CommandRegistry; plugins?: PluginManager };
+export type ShellOptions = { openApp?: Shell['openApp']; history?: string[]; learningModule?: string; actor?: Actor; registry?: CommandRegistry; plugins?: PluginManager };

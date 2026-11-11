@@ -83,7 +83,10 @@ export function TerminalSurface({ system, windowId, args, learningModule, inputI
     if (editing) hadEditor.current = true;
     else if (hadEditor.current) { hadEditor.current = false; terminal.current?.focus(); }
   }, [editing]);
-  useEffect(() => system.registerLeaveGuard?.(`terminal-editor:${inputId}`, () => editorGuard.current?.() ?? true), [system, inputId]);
+  useEffect(() => {
+    if (setCloseGuard) return; // Desktop already includes its window guards in canLeave.
+    return system.registerLeaveGuard?.(`terminal-editor:${inputId}`, () => editorGuard.current?.() ?? true);
+  }, [system, inputId, setCloseGuard]);
   useEffect(() => {
     const beforeUnload = (event: BeforeUnloadEvent) => { if (editorGuard.current) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', beforeUnload);
@@ -167,6 +170,7 @@ export function TerminalSurface({ system, windowId, args, learningModule, inputI
       // Embedded browsers may deliver Ctrl+C without the numeric keyCode xterm expects.
       term.attachCustomKeyEventHandler((event) => {
         if (event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey && event.key.toLowerCase() === 'c') {
+          if (term.hasSelection()) return false; // Leave native copy available; no interrupt when copying selected output.
           if (event.type === 'keydown') {
             event.preventDefault();
             void activeController.input('\x03').catch((cause: unknown) => { if (!disposed) setError(String(cause)); });

@@ -7,12 +7,14 @@ export function fileCommands(): CommandDefinition[] {
 
 function cat(): CommandDefinition {
   return {
-    name: 'cat', summary: 'Concatenate files', usage: 'cat [FILE ...]',
+    name: 'cat', summary: 'Concatenate files', usage: 'cat [-n] [FILE ...]',
     run(ctx) {
-      const parsed = options(ctx);
+      const parsed = options(ctx, 'n');
       if (parsed.unknown) return invalidOption(ctx, 'cat', `-${parsed.unknown}`);
+      let line = 0;
+      const print = (value: string) => ctx.stdout(parsed.flags.has('n') ? value.replace(/[^\n]*\n|[^\n]+$/g, part => `${String(++line).padStart(6)}\t${part}`) : value);
       if (!parsed.args.length) {
-        ctx.stdout(ctx.stdin);
+        print(ctx.stdin);
         return 0;
       }
       let code = 0;
@@ -22,7 +24,7 @@ function cat(): CommandDefinition {
           const result = ctx.dispatch('fs.read', { path: ctx.resolve(raw) });
           ctx.stderr(`cat: ${raw}: ${strerror(result.ok ? 'EINVAL' : result.error.code)}\n`);
           code = 1;
-        } else ctx.stdout(value);
+        } else print(value);
       }
       return code;
     },

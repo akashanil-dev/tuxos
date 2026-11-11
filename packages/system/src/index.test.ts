@@ -215,3 +215,14 @@ it('activates restored window modules before boot returns without opening duplic
   expect((await client.session()).windows.filter(window => window.appId === 'resumable')).toHaveLength(1);
   await client.reset();
 });
+
+it('routes desktop opening from the learner shell and refuses tutor-requested power changes', async () => {
+  const values=new Map<string,string>();const client=createLocalSystem({storage:{get:async key=>values.get(key)??null,set:async(key,value)=>{values.set(key,value);},remove:async key=>{values.delete(key);}},modules:[{manifest:about.manifest,load:async()=>about}]});
+  await client.boot('ada');const shell=await client.createTerminal();
+  expect((await shell.run('xdg-open about')).code).toBe(0);
+  expect((await client.session()).windows.filter(window=>window.appId==='about')).toHaveLength(1);
+  const actions:string[]=[];client.subscribe(event=>{if(event.ok&&event.action.type==='session.power')actions.push((event.action.payload as {action:string}).action);});
+  expect((await shell.run('reboot')).code).toBe(0);expect(actions).toEqual(['restart']);
+  const tutor=client.tutor();tutor.setCapabilities(['*']);expect((await (await tutor.createTerminal()).run('shutdown now')).code).toBe(1);
+  expect(actions).toEqual(['restart']);await client.reset();
+});

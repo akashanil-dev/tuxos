@@ -41,3 +41,25 @@ it('records actual editor exit and protected root refusal, without rewarding hel
   expect(status.ok && status.value.learned.rm).toBeUndefined();
   await system.reset();
 });
+
+it('awards each remaining secret once and rejects tutor or arbitrary awards', async () => {
+  const { learnLinux } = await import('../../learn-linux/src/index');
+  const system = createLocalSystem({ storage: { get: async () => null, set: async () => {}, remove: async () => {} }, modules: [exploration, learnLinux].map(module => ({manifest:module.manifest,load:async()=>module})) });
+  await system.boot('ada'); const shell = await system.createTerminal();
+  expect((await shell.run('ps')).stdout).toContain('666 segfault-daemon');
+  expect((await shell.run('kill 666')).code).toBe(1);
+  expect((await shell.run('sudo killall segfault-daemon')).code).toBe(0);
+  expect((await shell.run('ps')).stdout).not.toContain('666');
+  expect((await shell.run('ps')).stdout).toContain('420 report-worker');
+  expect((await shell.run('sudo kill 666')).code).toBe(1);
+  await shell.run('sudo make me a sandwich');
+  for(const id of ['konami','memtest','recovery']) expect((await system.dispatch('exploration.discover',{id})).ok).toBe(true);
+  expect((await system.dispatch('exploration.discover',{id:'quest_all'})).ok).toBe(false);
+  const before=await system.dispatch<ExplorationProgress>('exploration.status',{});
+  expect(before.ok && ['konami','memtest','recovery','sandwich','daemon'].every(id=>Boolean(before.value.achievements[id]))).toBe(true);
+  await system.dispatch('exploration.discover',{id:'konami'});
+  expect(await system.dispatch('exploration.status',{})).toEqual(before);
+  const tutor=system.tutor();tutor.setCapabilities(['*']);
+  expect((await tutor.dispatch('exploration.discover',{id:'recovery'})).ok).toBe(false);
+  await system.reset();
+});

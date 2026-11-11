@@ -1,3 +1,4 @@
+import { createKonamiTracker } from '../desktop/konami';
 import { DiscoveryNotice } from '../desktop/DiscoveryNotice';
 import { useWallpaper } from '../hooks/useWallpaper';
 import type { Window as SessionWindow } from '@tuxos/kernel';
@@ -40,6 +41,16 @@ export function Desktop({ system, tutor, onPower, onAchievements, verifySudo = n
   const wallpaper = useWallpaper(session.wallpaper);
   const environment = environmentFor(session.desktop);
   // The environment currently drawn; null until the first splash has played.
+  const [roll, setRoll] = useState(false);
+  useEffect(() => {
+    if (!active) return;
+    const track = createKonamiTracker(); let timer: ReturnType<typeof setTimeout> | undefined;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.repeat || event.ctrlKey || event.altKey || event.metaKey || (event.target as HTMLElement)?.closest?.('input, textarea, [contenteditable=true]')) return;
+      if (track(event.key, Date.now())) { void system.dispatch('exploration.discover', { id: 'konami' }); if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setRoll(true); clearTimeout(timer); timer = setTimeout(() => setRoll(false), 1200); } }
+    };
+    window.addEventListener('keydown', onKey); return () => { window.removeEventListener('keydown', onKey); clearTimeout(timer); };
+  }, [system, active]);
   const [shown, setShown] = useState<string | null>(null);
   const [launchError, setLaunchError] = useState('');
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
@@ -67,6 +78,9 @@ export function Desktop({ system, tutor, onPower, onAchievements, verifySudo = n
   }, [system]);
   const minimize = useCallback((id: string) => void system.dispatch('session.minimize', { id }), [system]);
   const power = useCallback((action: PowerAction) => onPower?.(action), [onPower]);
+  useEffect(() => system.subscribe(event => {
+    if (active && event.ok && event.action.type === 'session.power' && event.actor.kind === 'user') power((event.action.payload as { action: PowerAction }).action);
+  }), [system, active, power]);
   const close = useCallback((id: string) => {
     const guard = closeGuards.current.get(id);
     if (guard && !guard()) return;
@@ -164,7 +178,7 @@ export function Desktop({ system, tutor, onPower, onAchievements, verifySudo = n
 
   return <IconThemeContext.Provider value={environment.id}>
     <main
-      className={`desktop-screen de-${environment.id}`}
+      className={`desktop-screen de-${environment.id}${roll ? ' konami-roll' : ''}`}
       style={{
         ...desktopThemeStyle(session.theme),
         background: wallpaper.background,

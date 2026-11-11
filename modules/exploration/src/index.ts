@@ -8,6 +8,21 @@ export const exploration: ModuleDefinition = {
   manifest,
   activate(ctx) {
     let lastDesktop: string | undefined;
+    ctx.registerAction({ type: 'exploration.discover', capability: 'exploration:write', mutates: true, description: 'Record a learner’s boot-menu or desktop discovery.',
+      run: ({ state, actor, now }: ActionContext, input: { id?: unknown }) => {
+        if (actor.kind !== 'user') throw new KernelError('EPERM', 'Only the learner can earn discoveries.');
+        if (!['memtest', 'recovery', 'konami'].includes(input?.id as string)) throw new KernelError('EINVAL', 'Unsupported desktop discovery.');
+        const progress = state.exploration ??= emptyExploration(); progress.achievements[input.id as string] ??= now;
+      },
+    });
+    ctx.registerAction({ type: 'exploration.daemon', capability: 'exploration:write', mutates: true, description: 'Stop the fictional segfault daemon without changing course processes.',
+      run: ({ state, actor, user, now }: ActionContext) => {
+        if (actor.kind !== 'user' || user !== 'root') throw new KernelError('EPERM', 'The fictional daemon belongs to root. The learner can use sudo kill 666.');
+        const progress = state.exploration ??= emptyExploration();
+        if (progress.achievements.daemon) throw new KernelError('ESRCH', 'The fictional daemon has already been stopped.');
+        progress.achievements.daemon = now; return 'The segfault daemon lets out a final “core dumped” and vanishes. Your crown is safe.\n';
+      },
+    });
     ctx.registerAction({ type: 'exploration.status', capability: 'exploration:read', mutates: false,
       description: 'Read adventure, discoveries, commands and game records.',
       run: ({ state }: ActionContext) => structuredClone(state.exploration ?? emptyExploration()),

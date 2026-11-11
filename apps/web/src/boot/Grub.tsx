@@ -21,7 +21,7 @@ const COUNTDOWN = 5;
  * The boot menu a Linux PC shows first. Arrow keys move, Enter picks, and after a few seconds the
  * highlighted entry boots on its own; any key stops the countdown, as in real GRUB.
  */
-export function Grub({ onBoot }: { onBoot(mode: 'normal' | 'recovery'): void }) {
+export function Grub({ onBoot, onMemoryTest }: { onBoot(mode: 'normal' | 'recovery'): void; onMemoryTest?(): void }) {
   const [menu, setMenu] = useState<Entry[]>(MAIN);
   const [selected, setSelected] = useState(0);
   const [seconds, setSeconds] = useState<number | null>(COUNTDOWN);
@@ -40,13 +40,14 @@ export function Grub({ onBoot }: { onBoot(mode: 'normal' | 'recovery'): void }) 
     else if (entry.action === 'recovery') onBoot('recovery');
     else if (entry.action === 'advanced') { setMenu(ADVANCED); setSelected(0); }
     else if (entry.action === 'back') { setMenu(MAIN); setSelected(0); }
-    else if (entry.action === 'memtest') setMessage('Memory test: all 4096 MB passed. (TuxOS lives in your browser\'s memory.)');
+    else if (entry.action === 'memtest') { onMemoryTest?.(); setMessage('Simulated memory test: 4096 MB passed. This demonstration does not test your real computer’s memory.'); }
     else setMessage('Firmware settings belong to the real computer this browser runs on, so they aren\'t available here.');
   }
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       setSeconds(null);
+      if (['ArrowDown','ArrowUp','Enter','Escape'].includes(event.key)) event.preventDefault();
       if (event.key === 'ArrowDown') setSelected((index) => Math.min(index + 1, menu.length - 1));
       else if (event.key === 'ArrowUp') setSelected((index) => Math.max(index - 1, 0));
       else if (event.key === 'Enter') choose(menu[selected]!);
@@ -71,6 +72,7 @@ export function Grub({ onBoot }: { onBoot(mode: 'normal' | 'recovery'): void }) 
           >{index === selected ? '*' : ' '}{entry.label}</li>)}
         </ul>
       </div>
+      <button onClick={() => choose(menu[selected]!)}>Run selected entry</button>
       <div className="grub-help">
         {message
           ? <p role="status">{message}</p>
