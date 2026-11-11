@@ -226,7 +226,7 @@ export function createLocalSystem(options: {
   const writeSave = async (): Promise<void> => {
     if (restarting) return;
     const { kernel } = current();
-    const write = options.storage.set(SAVE_KEY, JSON.stringify({ username: kernel.user, snapshot: kernel.snapshot() }));
+    const write = options.storage.set(SAVE_KEY, kernel.serializeSave());
     pendingSaves.add(write);
     try { await write; } finally { pendingSaves.delete(write); }
   };
@@ -281,7 +281,7 @@ export function createLocalSystem(options: {
 
   const client: SystemClient = {
     boot,
-    exportSave() { const { kernel } = current(); return JSON.stringify({ username: kernel.user, snapshot: kernel.snapshot() }); },
+    exportSave() { return current().kernel.serializeSave(); },
     backups: async () => (await backups.list()).filter(item => item.username === current().kernel.user),
     async readBackup(id) { if (!(await client.backups!()).some(item => item.id === id)) throw new Error('This backup belongs to a different learner.'); return backups.read(id); },
     async createBackup(label = 'Manual backup') { return backups.create(client.exportSave!(), current().kernel.user, label); },

@@ -131,6 +131,18 @@ describe('event log', () => {
 });
 
 describe('snapshots', () => {
+  it('captures portable JSON before later edits without exposing mutable state', () => {
+    const kernel = createKernel({ username: 'ada' });
+    kernel.dispatch({ type: 'fs.write', payload: { path: '/home/ada/note', content: 'before' } });
+    const raw = kernel.serializeSave();
+    expect(raw).toBe(JSON.stringify({ username: kernel.user, snapshot: kernel.snapshot() }));
+    kernel.dispatch({ type: 'fs.write', payload: { path: '/home/ada/note', content: 'after' } });
+    const saved = JSON.parse(raw);
+    const restored = createKernel({ snapshot: saved.snapshot });
+    expect(restored.dispatch({ type: 'fs.read', payload: { path: '/home/ada/note' } })).toEqual({ ok: true, value: 'before' });
+    expect(kernel.dispatch({ type: 'fs.read', payload: { path: '/home/ada/note' } })).toEqual({ ok: true, value: 'after' });
+  });
+
   it('restores a system from a snapshot without sharing state', () => {
     const first = createKernel({ username: 'ada' });
     first.dispatch({ type: 'fs.write', payload: { path: '/home/ada/keep.txt', content: 'saved' } });

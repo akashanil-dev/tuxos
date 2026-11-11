@@ -11,24 +11,30 @@ type Pending =
   | { kind: 'delete'; entry: Stat }
   | null;
 
-export default function FilesView({ system, args }: AppViewProps) {
+export default function FilesView({ system, args, windowId }: AppViewProps) {
   const [path, setPath] = useState('');
   const [typedPath, setTypedPath] = useState('');
   const [back, setBack] = useState<string[]>([]);
-  const [showHidden, setShowHidden] = useState(false);
+  const [showHidden, setShowHidden] = useState(args?.hidden === 'true');
   const [selected, setSelected] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending>(null);
   const [notice, setNotice] = useState('');
-  const [presentation, setPresentation] = useState<'table' | 'icons'>('table');
+  const [presentation, setPresentation] = useState<'table' | 'icons'>(args?.view === 'icons' ? 'icons' : 'table');
   const [preview, setPreview] = useState<{ path: string; content: string } | null>(null);
   const [previewPath, setPreviewPath] = useState<string | null>(null);
-  const { entries, error } = useDirectory(system, path);
+  const { entries, error, loading } = useDirectory(system, path);
 
   useEffect(() => {
     let active = true;
-    void system.user().then((user) => { if (active) go(args?.path ?? `/home/${user}`, false); });
+    void system.user().then((user) => { const next = args?.path ?? `/home/${user}`; if (active && next !== path) go(next, false); });
     return () => { active = false; };
   }, [system, args?.path]);
+
+  useEffect(() => {
+    if (!path || loading || error || (args?.path === path && args?.hidden === String(showHidden) && args?.view === presentation)) return;
+    // Persist only a directory that loaded successfully; an unavailable path remains recoverable via Places.
+    void system.dispatch('session.setArgs', { id: windowId, args: { path, hidden: String(showHidden), view: presentation } });
+  }, [system, windowId, path, loading, error, showHidden, presentation, args?.path, args?.hidden, args?.view]);
 
   function go(next: string, remember = true) {
     next = resolvePath(next);
@@ -145,12 +151,12 @@ export default function FilesView({ system, args }: AppViewProps) {
       <button onClick={() => setPending(null)}>Cancel</button>
     </div>}
     {notice && <p className="files-bar files-error" role="alert">{notice}</p>}
-    {error
+    {loading ? <p className="files-empty" role="status">Opening folder…</p> : error
       ? <p className="files-empty files-error" role="alert">{error}</p>
       : <FileTable entries={visible} selected={selected} onSelect={name => { setSelected(name); setPreviewPath(null); setPreview(null); }} onOpen={open} presentation={presentation} />}
     {preview && <aside className="files-preview" aria-label="File preview"><header><strong>{preview.path}</strong><button onClick={() => { setPreviewPath(null); setPreview(null); }}>Close preview</button><button onClick={() => void system.openApp('editor', { path: preview.path })}>Edit file</button></header><small>Terminal equivalent: <code>cat {shellQuote(preview.path)}</code></small><pre>{preview.content}</pre></aside>}
     <footer className="files-status">
-      {selectedEntry ? `“${selectedEntry.name}” — ${formatSize(selectedEntry)}` : `${visible.length} items`}
+      {loading ? 'Opening folder…' : selectedEntry ? `“${selectedEntry.name}” — ${formatSize(selectedEntry)}` : `${visible.length} items`}
       {showHidden ? ' · showing hidden files' : ' · Ctrl+H shows hidden files'}
     </footer>
   </div>;

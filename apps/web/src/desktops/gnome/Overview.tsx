@@ -87,7 +87,7 @@ export function Overview({ apps, session, open, activate, mode, setMode, onClose
 function AppGrid({ apps, launch }: { apps: App[]; launch(app: App): void }) {
   if (!apps.length) return <p className="gnome-empty">No results.</p>;
   return <div className="gnome-app-grid">
-    {apps.map((app) => <button key={app.id} className="gnome-app" onClick={() => launch(app)}>
+    {apps.map((app) => <button key={app.id} data-preload-app={app.id} className="gnome-app" onClick={() => launch(app)}>
       <AppIcon name={app.icon} />
       <span>{app.title}</span>
     </button>)}

@@ -28,6 +28,16 @@ export const views: Record<string, () => Promise<ViewModule>> = {
 };
 
 const lazyViews = new Map<string, LazyExoticComponent<ComponentType<AppViewProps>>>();
+const preloads = new Map<string, Promise<ViewModule>>();
+export function retryView(appId: string): void { lazyViews.delete(appId); preloads.delete(appId); }
+/** The first Terminal is measurably expensive. Warm just its code on actual launcher intent. */
+export function preloadTerminal(appId: string): void {
+  if (appId !== 'terminal' || preloads.has(appId)) return;
+  const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+  if (connection?.saveData || connection?.effectiveType?.includes('2g')) return;
+  const pending = views.terminal!(); preloads.set(appId, pending);
+  void pending.catch(() => { if (preloads.get(appId) === pending) preloads.delete(appId); });
+}
 export const dynamicViews = new Map<string, () => Promise<ViewModule>>();
 
 export function registerView(appId: string, loader: () => Promise<ViewModule>): void {
@@ -45,7 +55,7 @@ export function getLazyView(appId: string): LazyExoticComponent<ComponentType<Ap
   if (!loader) return null;
   let component = lazyViews.get(appId);
   if (!component) {
-    component = lazy(loader);
+    component = lazy(() => preloads.get(appId) ?? loader());
     lazyViews.set(appId, component);
   }
   return component;

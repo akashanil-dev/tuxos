@@ -1,0 +1,284 @@
+{
+  "root": "/tmp/tuxos-migration-baseline-20261111",
+  "compression": "gzip level 9, individual files",
+  "entry": {
+    "file": "index-3OzJoYRB.js",
+    "raw": 852971,
+    "gzip": 249804,
+    "staticImports": [],
+    "dynamicImports": [
+      "view-D_7NCIji.js",
+      "view-Cj8-YOm9.js",
+      "view-D4PQfLRx.js",
+      "view-CXlew_7l.js",
+      "view-DRptAvKo.js",
+      "view-C_SK3ACa.js",
+      "view-BoQcUbNp.js",
+      "view-CL20LQ75.js",
+      "PluginManager-CPg_t7RA.js",
+      "SoftwareShop-Bmh--qkm.js",
+      "PluginWindowFrame-DkqMe9Jv.js",
+      "Penguin3D-CDhEr2Bs.js",
+      "index-CuhSVRKd.js",
+      "index-DXxZ__r3.js",
+      "index-Cnqp3ZOC.js",
+      "index-D0i-t1uZ.js",
+      "index-C_2cXF4f.js",
+      "index-BMjbqav7.js",
+      "index-2u2nJAC6.js",
+      "index-PYFVwjdH.js",
+      "index-DU-aJogy.js",
+      "index-Bh0jIqgI.js",
+      "PluginWindowFrame-DkqMe9Jv.js"
+    ]
+  },
+  "initial": {
+    "files": [
+      "index-3OzJoYRB.js"
+    ],
+    "raw": 852971,
+    "gzip": 249804
+  },
+  "chunks": [
+    {
+      "file": "Penguin3D-CDhEr2Bs.js",
+      "raw": 527997,
+      "gzip": 132787,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "PluginManager-CPg_t7RA.js",
+      "raw": 32220,
+      "gzip": 10824,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "PluginWindowFrame-DkqMe9Jv.js",
+      "raw": 9006,
+      "gzip": 3615,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "SoftwareShop-Bmh--qkm.js",
+      "raw": 10301,
+      "gzip": 3811,
+      "staticImports": [
+        "index-3OzJoYRB.js",
+        "dpkg-hTwHAEEU.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "dpkg-hTwHAEEU.js",
+      "raw": 3340,
+      "gzip": 1527,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-2u2nJAC6.js",
+      "raw": 2046,
+      "gzip": 978,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-3OzJoYRB.js",
+      "raw": 852971,
+      "gzip": 249804,
+      "staticImports": [],
+      "dynamicImports": [
+        "view-D_7NCIji.js",
+        "view-Cj8-YOm9.js",
+        "view-D4PQfLRx.js",
+        "view-CXlew_7l.js",
+        "view-DRptAvKo.js",
+        "view-C_SK3ACa.js",
+        "view-BoQcUbNp.js",
+        "view-CL20LQ75.js",
+        "PluginManager-CPg_t7RA.js",
+        "SoftwareShop-Bmh--qkm.js",
+        "PluginWindowFrame-DkqMe9Jv.js",
+        "Penguin3D-CDhEr2Bs.js",
+        "index-CuhSVRKd.js",
+        "index-DXxZ__r3.js",
+        "index-Cnqp3ZOC.js",
+        "index-D0i-t1uZ.js",
+        "index-C_2cXF4f.js",
+        "index-BMjbqav7.js",
+        "index-2u2nJAC6.js",
+        "index-PYFVwjdH.js",
+        "index-DU-aJogy.js",
+        "index-Bh0jIqgI.js",
+        "PluginWindowFrame-DkqMe9Jv.js"
+      ]
+    },
+    {
+      "file": "index-BMjbqav7.js",
+      "raw": 23386,
+      "gzip": 8801,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-Bh0jIqgI.js",
+      "raw": 24466,
+      "gzip": 9492,
+      "staticImports": [
+        "index-3OzJoYRB.js",
+        "dpkg-hTwHAEEU.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-C_2cXF4f.js",
+      "raw": 131,
+      "gzip": 135,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-Cnqp3ZOC.js",
+      "raw": 122,
+      "gzip": 125,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-CuhSVRKd.js",
+      "raw": 746,
+      "gzip": 474,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-D0i-t1uZ.js",
+      "raw": 115833,
+      "gzip": 22850,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-DU-aJogy.js",
+      "raw": 355,
+      "gzip": 287,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-DXxZ__r3.js",
+      "raw": 116,
+      "gzip": 121,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "index-PYFVwjdH.js",
+      "raw": 124,
+      "gzip": 128,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-BoQcUbNp.js",
+      "raw": 6009,
+      "gzip": 2428,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-CL20LQ75.js",
+      "raw": 11513,
+      "gzip": 4177,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-CXlew_7l.js",
+      "raw": 28837,
+      "gzip": 10312,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-C_SK3ACa.js",
+      "raw": 160,
+      "gzip": 153,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-Cj8-YOm9.js",
+      "raw": 6417,
+      "gzip": 2620,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-D4PQfLRx.js",
+      "raw": 2474,
+      "gzip": 1296,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-DRptAvKo.js",
+      "raw": 158,
+      "gzip": 152,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "file": "view-D_7NCIji.js",
+      "raw": 941,
+      "gzip": 509,
+      "staticImports": [
+        "index-3OzJoYRB.js"
+      ],
+      "dynamicImports": []
+    }
+  ]
+}

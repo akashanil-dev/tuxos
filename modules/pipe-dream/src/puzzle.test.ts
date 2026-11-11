@@ -5,7 +5,14 @@ import { createLocalSystem } from '@tuxos/system';
 import { exploration } from '../../exploration/src';
 import { pipeDream } from './index';
 import { LEVELS } from './levels';
-import { evaluatePuzzle } from './puzzle';
+import { evaluatePuzzle, readDraft } from './puzzle';
+
+it('opens corrupt saved drafts as an unsaved empty preview, without changing the original', () => {
+  for (const bad of [[100], [-1], [0,0,0,0,0,0,0], ['0'], { broken: true }]) {
+    const original = structuredClone(bad); expect(readDraft('fruit', bad)).toEqual({ stages: [], invalid: true }); expect(bad).toEqual(original);
+  }
+  expect(readDraft('fruit', [0])).toEqual({ stages: [0], invalid: false }); expect(readDraft('fruit', undefined).invalid).toBe(false);
+});
 
 for (const level of LEVELS) it(`solves ${level.id} with the same intermediate output as real terminal filters`, async () => {
   const kernel = createKernel({ username: 'ada' });

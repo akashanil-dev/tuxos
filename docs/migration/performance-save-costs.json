@@ -1,0 +1,171 @@
+{
+  "measuredAt": "2026-11-11T11:25:56.361Z",
+  "runtime": "v26.7.0",
+  "cpu": "12th Gen Intel(R) Core(TM) i5-1240P",
+  "logicalCpus": 16,
+  "totalMemoryBytes": 16471023616,
+  "freeMemoryBytes": 3033280512,
+  "method": "50 samples after 10 warmups; Node CPU timings, not browser storage/network latency. Synthetic files only; no performance assertions in functional tests.",
+  "results": [
+    {
+      "personalFiles": 0,
+      "bytes": 15597,
+      "snapshotClone": {
+        "samples": 50,
+        "medianMs": 0.132,
+        "p95Ms": 0.191,
+        "maxMs": 0.387
+      },
+      "serialize": {
+        "samples": 50,
+        "medianMs": 0.055,
+        "p95Ms": 0.089,
+        "maxMs": 0.223
+      },
+      "parse": {
+        "samples": 50,
+        "medianMs": 0.052,
+        "p95Ms": 0.066,
+        "maxMs": 0.102
+      },
+      "previousExport": {
+        "samples": 50,
+        "medianMs": 0.176,
+        "p95Ms": 0.32,
+        "maxMs": 0.39
+      },
+      "completeExport": {
+        "samples": 50,
+        "medianMs": 0.037,
+        "p95Ms": 0.048,
+        "maxMs": 0.058
+      },
+      "atomicFileWrite": {
+        "samples": 50,
+        "medianMs": 0.14,
+        "p95Ms": 0.252,
+        "maxMs": 0.629
+      }
+    },
+    {
+      "personalFiles": 128,
+      "bytes": 166270,
+      "snapshotClone": {
+        "samples": 50,
+        "medianMs": 0.21,
+        "p95Ms": 0.355,
+        "maxMs": 0.788
+      },
+      "serialize": {
+        "samples": 50,
+        "medianMs": 0.262,
+        "p95Ms": 0.372,
+        "maxMs": 0.441
+      },
+      "parse": {
+        "samples": 50,
+        "medianMs": 0.146,
+        "p95Ms": 0.305,
+        "maxMs": 0.385
+      },
+      "previousExport": {
+        "samples": 50,
+        "medianMs": 0.517,
+        "p95Ms": 0.874,
+        "maxMs": 1.053
+      },
+      "completeExport": {
+        "samples": 50,
+        "medianMs": 0.125,
+        "p95Ms": 0.165,
+        "maxMs": 0.318
+      },
+      "atomicFileWrite": {
+        "samples": 50,
+        "medianMs": 0.349,
+        "p95Ms": 0.702,
+        "maxMs": 1.044
+      }
+    },
+    {
+      "personalFiles": 1024,
+      "bytes": 1221782,
+      "snapshotClone": {
+        "samples": 50,
+        "medianMs": 1.228,
+        "p95Ms": 2.073,
+        "maxMs": 2.417
+      },
+      "serialize": {
+        "samples": 50,
+        "medianMs": 2.395,
+        "p95Ms": 3.006,
+        "maxMs": 3.052
+      },
+      "parse": {
+        "samples": 50,
+        "medianMs": 0.797,
+        "p95Ms": 0.986,
+        "maxMs": 1.298
+      },
+      "previousExport": {
+        "samples": 50,
+        "medianMs": 3.382,
+        "p95Ms": 3.918,
+        "maxMs": 3.993
+      },
+      "completeExport": {
+        "samples": 50,
+        "medianMs": 2.13,
+        "p95Ms": 2.534,
+        "maxMs": 2.667
+      },
+      "atomicFileWrite": {
+        "samples": 50,
+        "medianMs": 1.111,
+        "p95Ms": 1.371,
+        "maxMs": 1.803
+      }
+    },
+    {
+      "personalFiles": 3000,
+      "bytes": 3551486,
+      "snapshotClone": {
+        "samples": 50,
+        "medianMs": 7.776,
+        "p95Ms": 9.156,
+        "maxMs": 9.811
+      },
+      "serialize": {
+        "samples": 50,
+        "medianMs": 6.381,
+        "p95Ms": 6.826,
+        "maxMs": 6.997
+      },
+      "parse": {
+        "samples": 50,
+        "medianMs": 5.005,
+        "p95Ms": 6.177,
+        "maxMs": 6.302
+      },
+      "previousExport": {
+        "samples": 50,
+        "medianMs": 12.039,
+        "p95Ms": 18.769,
+        "maxMs": 19.051
+      },
+      "completeExport": {
+        "samples": 50,
+        "medianMs": 7.052,
+        "p95Ms": 10.924,
+        "maxMs": 11.858
+      },
+      "atomicFileWrite": {
+        "samples": 50,
+        "medianMs": 5.947,
+        "p95Ms": 9.065,
+        "maxMs": 9.901
+      }
+    }
+  ]
+}

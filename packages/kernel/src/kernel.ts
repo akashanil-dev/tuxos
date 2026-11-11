@@ -183,6 +183,11 @@ export class Kernel {
     return { version: SNAPSHOT_VERSION, state: structuredClone(this.state) };
   }
 
+  /** Capture an immutable portable save synchronously, without an intermediate full-state clone. */
+  serializeSave(): string {
+    return JSON.stringify({ username: this.user, snapshot: { version: SNAPSHOT_VERSION, state: this.state } });
+  }
+
   private run<R>(definition: ActionDefinition, ctx: ActionContext, payload: unknown): DispatchResult<R> {
     // Actions mutate state in place, so work on a copy and only keep it if the action succeeds.
     // That way a failed action can never leave the system half-changed.

@@ -63,7 +63,7 @@ export function Kickoff({ apps, user, open, power, onClose }: ShellProps & { onC
         >{name}</button>)}
       </nav>
       <div className="kickoff-apps" role="list">
-        {shown.map((app) => <button key={app.id} role="listitem" className="kickoff-app" onClick={() => launch(app)}>
+        {shown.map((app) => <button key={app.id} data-preload-app={app.id} role="listitem" className="kickoff-app" onClick={() => launch(app)}>
           <AppIcon name={app.icon} />
           <span><strong>{app.title}</strong><small>{app.description}</small></span>
         </button>)}

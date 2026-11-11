@@ -7,4 +7,16 @@
 .reference-controls { display:flex; flex-wrap:wrap; gap:12px; margin:20px 0; }.reference-controls input,.reference-controls button { border:1px solid var(--line); background:var(--surface); color:var(--window-fg); border-radius:var(--radius-small); padding:8px; }
 .command-reference table { width:100%; border-collapse:collapse; font-size:13px; }.command-reference th,.command-reference td { border-bottom:1px solid var(--line); padding:12px 8px; text-align:left; vertical-align:top; }.command-reference code { overflow-wrap:anywhere; }
 .discovery-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; }.discovery-grid article { display:flex; gap:14px; padding:14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }.discovery-grid article.earned { border-color:var(--accent); }.discovery-grid article > span { font-size:28px; }.discovery-grid h2 { font-size:16px; margin:0; }.discovery-grid p { margin:5px 0; }
-@media print { body:has(.print-this-reference) * { visibility:hidden; } body .print-this-reference,body .print-this-reference * { visibility:visible; } body .print-this-reference { position:fixed; inset:0; padding:16px; background:white; color:black; font:11pt sans-serif; overflow:visible; } .print-this-reference .reference-controls { display:none; }.print-this-reference tr { break-inside:avoid; }.print-this-reference p { color:#333; } }
+#tuxos-print-document { display:none; }
+@media print {
+  @page { margin:16mm; }
+  body:has(> #tuxos-print-document) { height:auto!important; overflow:visible!important; background:white!important; }
+  body:has(> #tuxos-print-document) > :not(#tuxos-print-document) { display:none!important; }
+  #tuxos-print-document { display:block!important; position:static; width:auto; height:auto; overflow:visible; background:white; color:black; font:11pt/1.4 sans-serif; }
+  #tuxos-print-document .command-reference { height:auto; overflow:visible; }
+  #tuxos-print-document table { table-layout:fixed; width:100%; }
+  #tuxos-print-document th,#tuxos-print-document td { color:black; border-bottom:1px solid #aaa; padding:8pt 5pt; overflow-wrap:anywhere; }
+  #tuxos-print-document thead { display:table-header-group; }
+  #tuxos-print-document tr { break-inside:avoid; }
+  #tuxos-print-document p { color:#333; }
+}

@@ -182,6 +182,15 @@ export const sessionActions: ActionDefinition[] = [
     run: ({ state }, payload) => { const wallpaper = settingId(payload, 'wallpaper'); demandReward(state.session, 'wallpaper'); if (wallpaper === 'kde-30th') demandReward(state.session, 'anniversary'); state.session.wallpaper = wallpaper; },
   },
   {
+    type: 'session.setArgs', capability: 'session:control', description: 'Remember an app window’s current location and view.', mutates: true,
+    run: ({ state }, payload) => {
+      const window = find(state.session, id(payload));
+      const args = (payload as { args?: unknown })?.args;
+      if (!args || typeof args !== 'object' || Array.isArray(args) || Object.keys(args).length > 16 || Object.entries(args).some(([key, value]) => ['__proto__', 'constructor', 'prototype'].includes(key) || typeof value !== 'string' || value.length > 4096)) throw new KernelError('EINVAL', 'Expected bounded text app arguments.');
+      window.args = { ...window.args, ...args as Record<string, string> };
+    },
+  },
+  {
     type: 'session.setTitle', capability: 'session:control', description: 'Change a window title.', mutates: true,
     run: ({ state }, payload) => {
       find(state.session, id(payload)).title = field(payload, 'title', 'string') as string;

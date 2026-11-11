@@ -164,7 +164,7 @@ function Wofi({ apps, launch, onClose }: { apps: App[]; launch(app: App): void; 
       />
       <div className="wofi-list" role="listbox">
         {results.map((app, position) => <button
-          key={app.id}
+          key={app.id} data-preload-app={app.id}
           role="option"
           aria-selected={position === index}
           className={`wofi-row ${position === index ? 'selected' : ''}`}

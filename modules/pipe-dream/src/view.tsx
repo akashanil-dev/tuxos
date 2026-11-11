@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { emptyExploration, type ExplorationProgress } from '@tuxos/sdk';
 import type { AppViewProps } from '@tuxos/system';
 import { LEVELS, MAX_STAGES } from './levels';
-import { evaluatePuzzle } from './puzzle';
+import { evaluatePuzzle, readDraft } from './puzzle';
 import './pipe.css';
 export default function PipeDreamView({ system }: AppViewProps) {
   const [progress, setProgress] = useState(emptyExploration);
@@ -15,14 +15,16 @@ export default function PipeDreamView({ system }: AppViewProps) {
     void system.dispatch<ExplorationProgress>('exploration.status', {}).then(result => {
       if (!active || !result.ok) return;
       const id = LEVELS.find(level => level.id === result.value.pipe.current)?.id ?? LEVELS.find(level => !result.value.pipe.solved[level.id])?.id ?? LEVELS[0].id;
-      setProgress(result.value); setLevelId(id); setStages(result.value.pipe.drafts?.[id] ?? []); setLoaded(true);
+      const draft = readDraft(id, result.value.pipe.drafts?.[id]);
+      setProgress(result.value); setLevelId(id); setStages(draft.stages); setLoaded(true);
+      if (draft.invalid) setError('This saved pipeline is damaged. It has been left unchanged in your save. Add a block or reset the pipeline to replace just this draft; completed puzzles are kept.');
     });
     return () => { active = false; };
   }, [system]);
   const level = LEVELS.find(level => level.id === levelId)!;
-  const result = evaluatePuzzle(level.id, stages);
+  const result = useMemo(() => evaluatePuzzle(level.id, stages), [level.id, stages]);
   async function play(id: string, next: number[]) {
-    setLevelId(id); setStages(next);
+    setError(''); setLevelId(id); setStages(next);
     const saved = await system.dispatch('pipe-dream.play', { id, stages: next });
     if (!saved.ok) { setError(saved.error.message); return; }
     const current = await system.dispatch<ExplorationProgress>('exploration.status', {});
@@ -30,7 +32,7 @@ export default function PipeDreamView({ system }: AppViewProps) {
   }
   if (!loaded) return <p role="status">Opening Pipe Dream…</p>;
   return <div className="pipe-dream">
-    <nav aria-label="Pipe Dream levels"><h2>Pipe Dream</h2><p>{Object.keys(progress.pipe.solved).length} of 8 solved</p>{LEVELS.map((item, i) => <button key={item.id} aria-current={item.id === level.id ? 'step' : undefined} onClick={() => void play(item.id, progress.pipe.drafts?.[item.id] ?? [])}>{progress.pipe.solved[item.id] ? '✓' : i + 1} {item.title}</button>)}</nav>
+    <nav aria-label="Pipe Dream levels"><h2>Pipe Dream</h2><p>{Object.keys(progress.pipe.solved).length} of 8 solved</p>{LEVELS.map((item, i) => <button key={item.id} aria-current={item.id === level.id ? 'step' : undefined} onClick={() => { const draft = readDraft(item.id, progress.pipe.drafts?.[item.id]); if (draft.invalid) { setLevelId(item.id); setStages(draft.stages); setError('This saved pipeline is damaged. Add a block or reset to replace only this draft.'); } else void play(item.id, draft.stages); }}>{progress.pipe.solved[item.id] ? '✓' : i + 1} {item.title}</button>)}</nav>
     <main><div className="pipe-work"><h2>{level.title}</h2><p>{level.story}</p>{error && <p role="alert">{error}</p>}
       <div className="pipe-comparison"><section><h3>{result.solved ? '✓ Target reached!' : 'Target output'}</h3><pre>{result.target}</pre></section><section><h3>Your output</h3><pre>{result.output || '(nothing)'}</pre></section></div>
       <h3>Your pipeline · {stages.length}/{MAX_STAGES} blocks</h3>

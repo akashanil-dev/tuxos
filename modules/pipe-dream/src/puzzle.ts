@@ -12,3 +12,10 @@ export function evaluatePuzzle(id: unknown, indices: unknown) {
     solved: stages.length > 0 && results.every(result => result.code === 0) && output === target,
     command: `cat ${level.file}${stages.map(stage => ' | ' + stage.join(' ')).join('')}` };
 }
+
+/** Corrupted local drafts should not prevent opening the recovery UI or other puzzles. */
+export function readDraft(id: string, value: unknown): { stages: number[]; invalid: boolean } {
+  if (value === undefined) return { stages: [], invalid: false };
+  try { return { stages: evaluatePuzzle(id, value).stages, invalid: false }; }
+  catch { return { stages: [], invalid: true }; }
+}

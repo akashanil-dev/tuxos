@@ -3,7 +3,8 @@ import type { SystemClient } from '@tuxos/system';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { PopupMenu, type MenuItem } from '../desktops/shared/Menu';
 import { usePointerDrag } from '../hooks/usePointerDrag';
-import { getLazyView } from '../views';
+import { getLazyView, retryView } from '../views';
+import { AppErrorBoundary } from './AppErrorBoundary';
 import { clampGeometry } from './geometry';
 
 export interface Insets {
@@ -57,6 +58,7 @@ export function WindowFrame(props: WindowFrameProps) {
   const dragOrigin = useRef({ x: 0, y: 0 });
   const resizeOrigin = useRef({ width: 0, height: 0, x: 0, y: 0 });
   const View = getLazyView(window.appId);
+  const [, setAttempt] = useState(0);
   // Apps get one stable function for the window's whole life, whatever the desktop passes on each render.
   const guardTarget = useRef(setCloseGuard);
   guardTarget.current = setCloseGuard;
@@ -173,9 +175,9 @@ export function WindowFrame(props: WindowFrameProps) {
       <button onClick={() => { minimize(); void system.dispatch('session.setPreferences', { resume: 'desktop' }); }}>Explore desktop</button>
     </nav>}
     <div className="window-content">
-      {View ? <Suspense fallback={<p className="window-loading">Loading app…</p>}>
+      {View ? <AppErrorBoundary title={window.title} retry={() => { retryView(window.appId); setAttempt(value => value + 1); }}><Suspense fallback={<p className="window-loading" role="status">Opening {window.title}…</p>}>
         <View active={focused && props.active !== false && !window.minimized && !offWorkspace} system={system} windowId={window.id} args={window.args} setCloseGuard={guard} />
-      </Suspense> : <p className="window-loading">No view registered for {window.appId}</p>}
+      </Suspense></AppErrorBoundary> : <p className="window-loading">This app is currently unavailable. Its saved records are kept. Re-enable it in Plugins or restore a compatible system backup.</p>}
     </div>
     {!fixed && <button
       className="resize-handle"

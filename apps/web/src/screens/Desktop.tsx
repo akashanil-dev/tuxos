@@ -1,4 +1,5 @@
 import { createKonamiTracker } from '../desktop/konami';
+import { preloadTerminal } from '../views';
 import { DiscoveryNotice } from '../desktop/DiscoveryNotice';
 import { useWallpaper } from '../hooks/useWallpaper';
 import type { Window as SessionWindow } from '@tuxos/kernel';
@@ -179,6 +180,8 @@ export function Desktop({ system, tutor, onPower, onAchievements, verifySudo = n
   return <IconThemeContext.Provider value={environment.id}>
     <main
       className={`desktop-screen de-${environment.id}${roll ? ' konami-roll' : ''}`}
+      onPointerOverCapture={event => { if (active) preloadTerminal((event.target as HTMLElement).closest<HTMLElement>('[data-preload-app]')?.dataset.preloadApp ?? ''); }}
+      onFocusCapture={event => { if (active) preloadTerminal((event.target as HTMLElement).closest<HTMLElement>('[data-preload-app]')?.dataset.preloadApp ?? ''); }}
       style={{
         ...desktopThemeStyle(session.theme),
         background: wallpaper.background,
@@ -197,7 +200,7 @@ export function Desktop({ system, tutor, onPower, onAchievements, verifySudo = n
       {environment.desktopIcons === 'apps' && <div className="icon-grid icons-apps" style={iconGridStyle(insets)}>
         {(primaryApps.length ? primaryApps : apps).map((app) => <button
           className="desktop-icon"
-          key={app.id}
+          key={app.id} data-preload-app={app.id}
           title={`Open ${app.title}`}
           data-tutor-target={`app:${app.id}`}
           onDoubleClick={() => open(app.id)}
