@@ -49,8 +49,9 @@ Old releases such as `2562174` cannot be the recovery reader for schema-2 saves.
 schema-downgrade protection. The deploy script now refuses that rollback configuration before switching.
 Prepare a separately tested compatible recovery release first. Commit `e80d3a1` is a locally tested continuation
 checkpoint; its production files were preserved during this task under
-`/tmp/tuxos-recovery-e80d3a1-20261111` with metadata, before later release UI changes. Temporary paths are session
-artifacts, not durable backups. Archive and verify the exact files/hashes before relying on them on a server.
+`/tmp/tuxos-recovery-e80d3a1-20261111` with metadata, before later release UI changes. The preserved files are also packaged as `dist/tuxos-compatible-recovery-e80d3a1.tar.gz`;
+[release-artifacts.json](release-artifacts.json) records its checksum. These are local candidate artifacts, not
+production backups. Verify their exact files/hashes and rehearse on the host before relying on them.
 
 On the deployment host, install the verified recovery bundle under `/opt/tuxos/releases/<recovery-id>` without
 activating it. For the first rollout only, pass `TUXOS_ROLLBACK_RELEASE=<recovery-id>` to `deploy/deploy.sh`.

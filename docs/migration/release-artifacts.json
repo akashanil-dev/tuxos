@@ -1,0 +1,25 @@
+{
+  "sourceRevision": "ef75db96459b6a954d480541ce0e62e9ecd7e36b",
+  "preparedAt": "2026-11-11T11:53:51.828749+00:00",
+  "status": "local candidates only; not uploaded or deployed",
+  "artifacts": [
+    {
+      "path": "dist/tuxos-continuation-ef75db9.tar.gz",
+      "kind": "continuation candidate",
+      "bytes": 2309357,
+      "sha256": "19284f5c5ce55ef182d715b874f4e24ca379e2f97eaf794aea230749c2e41ac1"
+    },
+    {
+      "path": "dist/tuxos-compatible-recovery-e80d3a1.tar.gz",
+      "kind": "schema-2 recovery candidate",
+      "bytes": 2310781,
+      "sha256": "b51d76cf0ecd8661053d35a80531bb09cc9656c4febefc2e29b3d5fdcc635ae8"
+    },
+    {
+      "path": "dist/tuxplore-export-candidate.tar.gz",
+      "kind": "additive original-origin export candidate",
+      "bytes": 2004815,
+      "sha256": "b25d3d7f9ba90a61dc63f841c1ffab73f6174701f831f14c9d34f7792d1410d7"
+    }
+  ]
+}
