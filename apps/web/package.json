@@ -30,7 +30,8 @@
     "@tuxos/module-exploration": "*",
     "@tuxos/module-pipe-dream": "*",
     "@tuxos/module-learn-adventure": "*",
-    "@tuxos/module-try-linux": "*"
+    "@tuxos/module-try-linux": "*",
+    "@tuxos/module-know-your-distro": "*"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.0",

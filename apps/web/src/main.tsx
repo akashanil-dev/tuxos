@@ -1,3 +1,4 @@
+import { manifest as runnerManifest } from '@tuxos/module-know-your-distro/manifest';
 import { manifest as guideManifest } from '@tuxos/module-try-linux/manifest';
 import { manifest as adventureManifest } from '@tuxos/module-learn-adventure/manifest';
 import { manifest as explorationManifest } from '@tuxos/module-exploration/manifest';
@@ -70,6 +71,7 @@ const system = createLocalSystem({
   journey: true,
   ai,
   modules: [
+    { manifest: runnerManifest, load: () => import('@tuxos/module-know-your-distro').then(m => m.knowYourDistro) },
     { manifest: guideManifest, load: () => import('@tuxos/module-try-linux').then(m => m.tryLinux) },
     { manifest: adventureManifest, load: () => import('@tuxos/module-learn-adventure').then(m => m.learnAdventure) },
     { manifest: explorationManifest, load: () => import('@tuxos/module-exploration').then(m => m.exploration) },

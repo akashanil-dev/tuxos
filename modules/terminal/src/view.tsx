@@ -153,7 +153,9 @@ export function TerminalSurface({ system, windowId, args, learningModule, inputI
         // The controller buffers busy input and must receive answers while a command is waiting.
         void activeController.input(data).catch((cause: unknown) => { if (!disposed) setError(String(cause)); });
       };
-      term.focus();
+      const desktopSession = await system.session();
+      const owningWindow = windowId ?? desktopSession.windows.find(window => window.appId === learningModule)?.id;
+      if (!disposed && (!owningWindow || desktopSession.focusedId === owningWindow)) term.focus();
       if (windowId && !disposed) {
         const launch = await system.dispatch<string | undefined>('session.consumeLaunch', { id: windowId });
         if (!disposed && launch.ok && launch.value) await activeController.input(launch.value + '\r');

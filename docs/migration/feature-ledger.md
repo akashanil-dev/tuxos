@@ -10,7 +10,7 @@ Status distinguishes implemented behavior from full release verification. Source
 | Desktop/lesson continuity | apps/journal.js | course-view/JourneyScreen | Use Files and Terminal beside instruction; retain work | Implemented; browser focus/window continuity verified |
 | Ten quests and dungeon story | quests.js, fs.js | learn-adventure | Every objective, hints, partial resume, scoped reset | Implemented; ten-quest replay and browser first quest pass; real guide integrated |
 | Pipe Dream, eight levels | apps/pipedream.js, coreutils.js | pipe-dream | Block stages, previews, terminal parity, saved completion | Implemented; eight-solution parity tests and browser solve pass |
-| Know Your Distro | apps/runner.js | know-your-distro | Rapid/Infinite, families/map, scores/combos, controls, sound, weather, showcase | Pending |
+| Know Your Distro | apps/runner.js | know-your-distro | Rapid/Infinite, families/map, scores/combos, controls, sound, weather, showcase | Implemented; full model/replay tests and browser gameplay pass |
 | Learned commands/print | apps/journal.js, shell.js | exploration/reference | Successful learner commands, examples, readable print, import | Implemented; print and import verification pending |
 | Thirty achievements | core.js and triggers | shared exploration progress | Stable IDs/timestamps, exact-once triggers, import, no tutor farming | Catalog and shared observer implemented; feature triggers continue |
 | Try Linux | apps/system.js | try-linux | Four-question selector/six distros, sourced guide, next steps | Implemented; quiz/reload tests and browser complete flow pass |
@@ -28,4 +28,4 @@ Status distinguishes implemented behavior from full release verification. Source
 | Performance | startup scripts and loops | production web build | Same-device cold/warm, populated saves, hidden/visible games/Vasu | Pending |
 | Metadata, credits, old links | index.html, assets, deployment | web/deploy/docs | Continuation identity, original-origin export and meaningful old links | Pending |
 | Stats and unfinished career tracks | analytics.js, tracks.js | verify deployed scope | Do not invent parity for absent local stats or empty tracks | Investigation |
-| TuxOS additions | current modules | preserve | Linux 34 lessons/150 tasks, Docker, filesystem, editor/apt, plugins/widgets, account versioning, AI | 569 integration tests pass; full visual matrix pending |
+| TuxOS additions | current modules | preserve | Linux 34 lessons/150 tasks, Docker, filesystem, editor/apt, plugins/widgets, account versioning, AI | 576 integration tests pass; added focus regression passes; full visual matrix pending |

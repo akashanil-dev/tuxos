@@ -8,6 +8,7 @@ type ViewModule = { default: ComponentType<AppViewProps> };
 export const views: Record<string, () => Promise<ViewModule>> = {
   'learn-adventure': () => import('@tuxos/module-learn-adventure/view'),
   'try-linux': () => import('@tuxos/module-try-linux/view'),
+  'know-your-distro': () => import('@tuxos/module-know-your-distro/view'),
   play: () => import('@tuxos/module-exploration/view'),
   'command-reference': () => import('@tuxos/module-exploration/view'),
   'exploration-achievements': () => import('@tuxos/module-exploration/view'),

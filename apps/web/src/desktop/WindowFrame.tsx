@@ -126,6 +126,8 @@ export function WindowFrame(props: WindowFrameProps) {
     aria-label={window.title}
     data-tutor-target={`window:${window.id}`}
     onPointerDown={focus}
+    onClickCapture={focus}
+    onFocusCapture={focus}
   >
     <header
       onPointerDown={(event) => {
@@ -172,7 +174,7 @@ export function WindowFrame(props: WindowFrameProps) {
     </nav>}
     <div className="window-content">
       {View ? <Suspense fallback={<p className="window-loading">Loading app…</p>}>
-        <View active={props.active !== false && !window.minimized && !offWorkspace} system={system} windowId={window.id} args={window.args} setCloseGuard={guard} />
+        <View active={focused && props.active !== false && !window.minimized && !offWorkspace} system={system} windowId={window.id} args={window.args} setCloseGuard={guard} />
       </Suspense> : <p className="window-loading">No view registered for {window.appId}</p>}
     </div>
     {!fixed && <button
