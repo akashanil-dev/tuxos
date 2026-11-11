@@ -90,6 +90,7 @@ export function HyprlandShell(props: ShellProps) {
             >{name}</button>;
           })}
         </div>
+        <button className="waybar-windows" aria-label={`Switch window (${visible.length} open)`} disabled={!visible.length} onClick={event => popup(event, visible.map(window => ({ label: `${window.id === session.focusedId ? '• ' : ''}${window.title}`, run: () => activate(window.id) })))} title="Switch between readable window groups (Alt+arrow)">Windows ({visible.length})</button>
       </div>
       <button
         className="waybar-title"
@@ -175,7 +176,7 @@ function Wofi({ apps, launch, onClose }: { apps: App[]; launch(app: App): void; 
           <small>{app.description}</small>
         </button>)}
       </div>
-      <p className="wofi-keys">Alt+Q terminal · Alt+C close · Alt+1…5 workspace · Alt+Shift+1…5 move window</p>
+      <p className="wofi-keys">Alt+Q terminal · Alt+C close · Alt+arrows switch window · Alt+1…5 workspace · Alt+Shift+1…5 move window</p>
     </div>
   </div>;
 }

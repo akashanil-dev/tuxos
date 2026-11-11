@@ -13,7 +13,7 @@ import { DesktopWidgets, desktopThemeStyle } from '../desktop/DesktopWidgets';
 import { FullscreenControl } from '../desktop/FullscreenControl';
 import { environmentFor } from '../desktops/registry';
 import { PopupMenu } from '../desktops/shared/Menu';
-import { tileLayout } from '../desktops/shared/tiling';
+import { tileLayout, tiledGroup } from '../desktops/shared/tiling';
 import type { PowerAction } from '../desktops/types';
 import { useSession } from '../hooks/useSession';
 import { TutorPanel } from '../tutor/TutorPanel';
@@ -170,10 +170,13 @@ export function Desktop({ system, tutor, onPower, onAchievements, verifySudo = n
   const { Shell } = environment;
   const insets = { ...environment.insets, top: environment.insets.top + 36 };
   const tiles = new Map<string, Geometry>();
+  let tiledIds: Set<string> | undefined;
   if (environment.tiling && viewport.width >= NARROW) {
     const visible = session.windows.filter((window) => !window.minimized && onWorkspace(window));
     const area = { x: 0, y: insets.top, width: viewport.width, height: viewport.height - insets.top - insets.bottom };
-    tileLayout(visible.length, area).forEach((geometry, index) => tiles.set(visible[index]!.id, geometry));
+    const group = tiledGroup(visible.map(window => window.id), session.focusedId, area);
+    tiledIds = new Set(group);
+    tileLayout(group.length, area).forEach((geometry, index) => tiles.set(group[index]!, geometry));
   }
   const minimizedHere = session.windows.filter((window) => window.minimized && onWorkspace(window));
 
@@ -240,7 +243,7 @@ export function Desktop({ system, tutor, onPower, onAchievements, verifySudo = n
           decoration={environment.decoration}
           icon={app && <AppIcon name={app.icon} />}
           tiled={tiles.get(window.id)}
-          offWorkspace={!onWorkspace(window)}
+          offWorkspace={!onWorkspace(window) || Boolean(tiledIds && !tiledIds.has(window.id))}
           onClose={() => close(window.id)}
           setCloseGuard={(guard) => {
             if (guard) closeGuards.current.set(window.id, guard);
