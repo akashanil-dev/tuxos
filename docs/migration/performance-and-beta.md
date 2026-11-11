@@ -20,6 +20,8 @@ Repeated navigation re-downloads/revalidates files (`no-cache`, no ETag), so the
 
 Read the raw [browser samples](performance-browser-samples.json), [baseline graph](performance-baseline-bundles.json), [current graph](performance-current-bundles.json), and [save CPU samples](performance-save-costs.json). Initial graphs use the same compressor; the original Phase 0 Vite estimate used a different calculation. No frame-rate, battery, mobile-hardware, true warm-cache, or live-AI claim is made.
 
+The final release candidate adds public/recovery UI and the Hyprland window-group fix. Its [release graph](performance-release-bundles.json) is **171,109 gzip bytes**, a **31.5%** reduction from the archived build, within the 180,000-byte budget. Earlier browser samples remain identified as their own builds.
+
 ## Save cost and changes
 
 The synthetic 3,000-file save is 3,551,486 bytes. In 50 Node samples after 10 warmups, the old clone-then-serialize export had a 12.039 ms median / 18.769 ms p95. Direct synchronous serialization has a 7.052 ms median / 10.924 ms p95. It captures an immutable string before storage starts and avoids exposing mutable state. Snapshot cloning for callers and atomic action rollback remain intact; save ordering, conflict detection and storage-switch tests still pass. These timings exclude browser storage and network latency and vary with host load/JIT.

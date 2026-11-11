@@ -137,7 +137,7 @@ describe('web desktop', () => {
     await system.openApp('about');
     await system.dispatch('fs.read', { path: '/etc/hostname' });
     await system.dispatch('fs.list', { path: '/' });
-    expect(await screen.findByText('A small Linux desktop for learning by doing.', {}, { timeout: 3000 })).toBeTruthy();
+    expect(await screen.findByText(/TuxOS continues Tuxplore:/, {}, { timeout: 3000 })).toBeTruthy();
     const hostname = await screen.findByText('tuxos');
     await system.dispatch('session.focus', { id: 'window-1' });
     expect(screen.getByText('tuxos')).toBe(hostname);

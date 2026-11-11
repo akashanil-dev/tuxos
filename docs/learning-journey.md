@@ -1,51 +1,67 @@
-# Account-first learning journey
+# Exploration and learning
 
-New learners create an account or sign in before starting. The web app uses the existing API account service and database for saves, with no anonymous/local-only fallback. `npm run dev` runs that API locally; public accounts across devices require deploying the API with persistent storage alongside the web app. A database outage shows a retry action rather than silently switching to browser storage.
+Choose Explore TuxOS for a guest desktop, or Start guided learning for the reviewed Linux course. Both work
+without an account. Guest progress stays in this browser; accounts save through the versioned API. The interface
+always identifies the save location and offers Export backup and Import & backups. Account failure never
+silently changes an account session into a guest session.
 
-After sign-in, Learn Linux opens with one question above the terminal. Hint, Show answer and Explain this offer optional help. Commands are checked by the existing reviewed curriculum; displaying an answer never completes a question. The same 34 lessons and 150 checked tasks remain available, with future lessons unlocking in order.
+The same 34 Linux lessons and 150 checked tasks remain. Free hints, answers, normal clipboard behavior and
+review/search are available. Checked learner tasks earn XP once. AI actions, mode changes, imports and opening
+apps never fabricate advanced mastery. Tux’s Adventure, Docker, filesystem lessons, games, learned commands
+and discoveries have distinct progress records.
 
-| Completed lessons | Reward |
+## One learning surface
+
+Learn Linux opens as a desktop window. Use Focus view to concentrate, then return to the desktop. Terminal
+working directory, environment and bounded history remain available across presentation changes. Reload
+resumes saved context, not a running process. A desktop Terminal does not assess Linux/Docker course tasks;
+use the course’s terminal for those checks. Adventure checks observe their own defined learner actions.
+
+Files and commands use the same simulated filesystem. Scoped practice recovery preserves personal files and
+other courses. Avoid resetting the whole system just to repair one exercise.
+
+## Milestones and access
+
+KDE Plasma, GNOME, Hyprland, CDE, wallpapers, palettes, Software and Plugins are available from the start.
+Milestones still record the existing achievement history and suggest useful next activities. The anniversary
+wallpaper remains an earned or explicitly retained cosmetic. Switching desktop style does not install a package
+or complete a course. Explicit imported appearance choices and earned history survive reconciliation.
+
+| Completed lessons | Milestone |
 | --- | --- |
-| 1 | Terminal Explorer badge |
-| 2 | Permission to install KDE Plasma, then use Files, Software and learning apps |
-| 3 | Wallpaper customisation |
-| 7 | GNOME desktop |
-| 12 | Breeze Blue, Forest and Twilight colour palettes |
-| 16 | KDE 30th Anniversary wallpaper |
-| 21 | Hyprland desktop |
-| 26 | Plugins, widgets and community themes |
-| 31 | CDE desktop |
-| 34 | Completion badge and all features available |
+| 1 | Terminal Explorer |
+| 2 | Hello, KDE! and optional installation practice |
+| 3 | Make it yours |
+| 7 | A new perspective |
+| 12 | Colour your world |
+| 16 | KDE at 30 anniversary wallpaper |
+| 21 | Think in tiles |
+| 26 | Open-source maker |
+| 31 | Time traveller |
+| 34 | Full Linux learning-path completion |
 
-The default wallpaper is KDE Minimal. Anniversary artwork is selectable only after its reward, regardless of calendar date. Rewards enable a choice; they do not automatically change the learner's desktop or wallpaper.
+Rewards use non-blocking notices and remain in Your rewards. Hints, breaks, failed commands and replay do not
+remove achievements. These are teaching records in a client-side simulation, not professional certification.
 
-Each newly checked task gives 10 XP. Hints, answers, errors and breaks have no penalty. Replaying a completed task does not award duplicate XP or remove earned rewards. The reward map explains the next milestone. Learn Linux in the desktop, launcher or taskbar resumes the same learning journey without closing other windows. The trophy reward map also offers Continue learning; no floating navigation buttons cover the desktop.
+## Optional desktop installation practice
 
-Completed lessons, checked task IDs, acknowledged rewards and the guided terminal's folder/environment are saved with the account. Earlier reviewed-course progress is imported on boot. A legacy browser save can migrate into a newly created account with the same username; user files are preserved. Appearance choices that have not yet been earned revert to the starting appearance. Save failures remain visible with Retry saving.
+Choose the practice explicitly from Your rewards. The simulated apt/dpkg exercise teaches update, dependency
+installation, confirmation and cancellation. Its installed-package state is separate from the availability of
+desktop interface styles. The everyday desktop remains reachable. Supported example packages include
+`kde-plasma-desktop`, `gnome-core`, `hyprland` and `tuxos-cde` in the bounded TuxOS practice repository; these are
+not universal instructions for a real Linux machine. Separate Package Practice introduces Fedora/dnf and
+Arch/pacman without altering the desktop’s apt database.
 
-Milestones live in `packages/sdk/src/journey.ts`. The kernel enforces appearance and app gates, and the plugin manager checks installation/launch eligibility. Only the built-in Learn Linux module can submit progress through `journey.record`; optional AI practice never awards journey progress. These are teaching rules in a client-side simulation, not a server-validated credential or anti-cheating system.
+## Saving and recovery
 
-Tests cover all 34 lessons, each reward boundary, direct-action restrictions, free hints/answers, replay, migration, terminal resume, persistence and the learning-to-desktop interface.
+Use Import & backups for Tuxplore files, native backups and browser recovery copies. Preview conflicts and
+in-progress adventure choices first. TuxOS retains a recovery copy before applying changes and refuses stale
+previews, oversized data and unsafe versions. Repeating the same Tuxplore import does not duplicate history.
 
-## Install an earned desktop
+Save to an account can retain that account’s existing system or explicitly replace it with the browser system
+after backup. Authenticated renamed transfers update structured identity paths and ownership, not personal
+file text. The browser source remains intact.
 
-Rewards unlock installation, rather than preinstalling a desktop. At lesson 2, the learning screen becomes a guided KDE installation terminal:
-
-```sh
-sudo apt update
-sudo apt install kde-plasma-desktop
-```
-
-Answer Y (or press Enter) at the confirmation prompt. Simulated download, unpack and configuration phases show progress. Only a successful finish registers the desktop. Ctrl+C cancels staged work without marking packages installed; rerun to retry. After installation, KDE Plasma opens automatically without a launch button. Returning to learning does not trigger another automatic switch. Completed lesson progress is preserved.
-
-Later, Settings offers Install for earned environments: `gnome-core`, `hyprland`, and `tuxos-cde`. It opens a terminal with the commands to type; once installed, the card changes to Switch to. These use the same dpkg database as apt and persist with the account. The active desktop cannot be removed until another installed desktop is selected. Pre-existing accounts keep their lessons and files, but must install any earned desktop not yet in the package database.
-
-Package names for [KDE Plasma](https://packages.ubuntu.com/noble/kde-plasma-desktop) and [GNOME](https://packages.ubuntu.com/noble/gnome-core) follow Ubuntu. All desktop packages here are abbreviated TuxOS teaching packages, with simulated sizes and versions, shown as `tuxos://practice-repository`. In particular, the Hyprland and CDE examples are not instructions for an Ubuntu 24.04 machine; [native Hyprland installation varies by distribution](https://wiki.hypr.land/getting-started/installation/).
-
-The pre-desktop screen omits its tagline and redundant terminal labels. Questions have a highlighted background and strong border. Guided terminal output is cyan, errors are red, and commands and prompts retain their normal colour. Existing ANSI program output is preserved. Clipboard restrictions remain until KDE is installed.
-
-
-Settings → Learning history → Clear history asks for confirmation, then replaces the account’s saved TuxOS simulation with a fresh one and opens lesson 1. It clears lessons, XP, rewards, software, plugins and practice files, while keeping the account signed in. Older pending saves finish before replacement, and a failed reset save leaves the running session available for retry.
-
-
-The desktop Terminal is independent of lesson assessment: it opens at a plain shell prompt, never advances lessons or awards XP, and omits course-only hint/answer/task/next commands from help and completion. Learn Linux and Learn Docker explicitly attach their embedded terminals to their own courses. Files and installed software are shared, while each shell keeps its own working directory and command history.
+Settings → Reset whole system is an explicitly confirmed full replacement, including personal files, software
+and all progress. It requires a backup before resetting. Use adventure/package recovery for smaller repairs.
+See [the migration and recovery contracts](migration/import-and-recovery.md) for detailed failure behavior.

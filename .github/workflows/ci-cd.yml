@@ -24,6 +24,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build --workspace @tuxos/web
+      - run: node scripts/performance/bundles.mjs apps/web/dist --check > bundle-budget.json
+      - run: npm run test:release
       # Production runs the API's TypeScript directly with Node (type stripping), which accepts less syntax than
       # the test runner does: start it for real and check it answers.
       - name: Start the API with Node
@@ -40,7 +42,8 @@ jobs:
           cp -a apps/web/dist/. release/web/
           cp -a apps/api/package.json apps/api/src release/api/
           find release/api -name '*.test.ts' -delete
-          cp deploy/deploy.sh release/deploy/
+          cp deploy/deploy.sh deploy/rollback.sh deploy/check-release.mjs release/deploy/
+          cp deploy/release.json release/
           tar -czf release.tar.gz -C release .
       - uses: actions/upload-artifact@v4
         with:

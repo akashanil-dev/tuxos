@@ -13,7 +13,9 @@
     "check": "npm run typecheck && npm test",
     "dev": "node scripts/dev.mjs",
     "build": "npm run typecheck && npm run build --workspace @tuxos/web",
-    "api": "npm run start --workspace @tuxos/api"
+    "api": "npm run start --workspace @tuxos/api",
+    "test:release": "node --test deploy/release.drill.mjs",
+    "check:bundle": "node scripts/performance/bundles.mjs apps/web/dist --check"
   },
   "engines": {
     "node": ">=22.18"

@@ -1,67 +1,49 @@
 # TuxOS
 
-A pretend Linux computer that runs in the browser and teaches newcomers Linux and its ecosystem. An AI tutor,
-Vasu the penguin, guides each learner and can operate the system himself. Every activity (Learn Linux, Learn
-Docker, games) is a module that shows up as a desktop icon.
+TuxOS continues Tuxplore: a simulated Linux computer for exploring desktops, learning through adventures,
+and keeping your progress. Start as a guest, then use an optional account when you want to save across devices.
+Vasu offers local guidance; AI assistance is optional.
 
-**Live:** https://tuxos.akashanil.dev
+**Project site:** [tuxos.akashanil.dev](https://tuxos.akashanil.dev) · **Team:** Akash A · Edson Edwin Ninan
 
-**Team:** Akash A · Edson Edwin Ninan
+This branch contains the continuation release candidate. Local validation is recorded in
+[the implementation status](docs/migration/status.md); production rollout and retirement have separate gates.
 
 ## Features
 
-- **Earn your desktop.** Create an account and start with a single Linux question above a terminal. Free hints
-  and answers support each step; checked lessons earn XP and unlock KDE Plasma, GNOME, Hyprland, CDE,
-  wallpaper changes, themes and plugins. The existing 34-lesson syllabus is unchanged. See the [reward map](docs/learning-journey.md).
-- **A desktop in the browser.** Each earned environment has its own panels, window decorations and icon theme.
-  Open windows are saved, so your desktop comes back as you left it. Restart still plays GRUB and the boot log.
-- **Terminal.** A bash-like shell in each window, with pipes, redirection, variables, globs, `&&`/`||`, Tab
-  completion, history and line editing. Ctrl+Alt+T opens one from anywhere.
-- **Installing software with apt.** `apt`, `apt-get` and `dpkg` behave like Ubuntu's: changing packages needs
-  `sudo`, `apt update` fetches the package lists first, dependencies come along (and `apt autoremove` cleans
-  them up), and installed programs land in `/usr/bin` with dpkg's database in `/var/lib/dpkg`. Packages to try:
-  `cmatrix`, `tree`, `hello`, `cowsay`, `sl`, `neofetch`, `fortune-mod` and `jq`. A missing program says how to get it
-  (`sudo apt install tree`), as on Ubuntu. Answer Y/n prompts in the terminal, preview installs/removals with
-  `-s`, and stop the Matrix animation with Ctrl+C. Headless calls can pass `-y` or a piped answer.
-- **Files and Text Editor.** A point-and-click file manager and an editor over the same filesystem. Both show
-  real permission errors.
-- **Plugins.** Discover and install Quick Notes, Focus Timer and Permission Explorer, or import your own
-  self-contained plugin package through a graphical manager. Review permissions before installation, enable
-  or disable plugins, export packages and remove them. Apps appear immediately in the desktop and launcher.
-  Each plugin runs in a restricted iframe with access only to its approved private storage.
-  See the [Plugin User Manual](docs/plugins.md) for step-by-step creation and installation, updates,
-  permissions, troubleshooting and the package/SDK reference.
-- **Learn Linux Filesystem.** A separate beginner guide with 27 short folder topics, file previews, quick checks and six configuration exercises. Open it from the desktop, Software or Files. The expanded virtual root tree includes system configuration, personal folders, logs and clearly labelled hardware/boot examples. Practice copies and backups live in `~/Documents/filesystem-lab`; progress is saved with the learner’s system. Existing saved files are preserved during the one-time layout upgrade. See [the filesystem guide](docs/filesystem-guide.md).
-- **Learn Linux.** A complete, reviewed path with **34 lessons and 150 checked tasks in seven stages**:
-  foundations, shell fluency, accounts and security, services, networking and storage, automation and recovery,
-  and administrator assessments. Search or filter the syllabus, read explanations before exercises, pause and
-  resume, and redo completed lessons. The curriculum works without AI and remains the default when AI is on.
-  An optional personalized AI practice lab is available separately. Administration commands operate on a
-  bounded training machine; workbooks for SSH, LVM, boot recovery and Bash scripting include companion VM
-  exercises. Browser completion is not a professional certification. See [the curriculum guide](docs/linux-curriculum.md).
-- **Learn Docker.** A simulated `docker` CLI (`run`, `ps`, `images`, `logs`, `exec`, published ports with
-  `curl`...) with an AI-designed lab, or five built-in lessons when no AI is available.
-- **chmod Arcade.** A 60-second game for reading and writing file permissions.
-- **Vasu, the AI tutor.** A penguin who walks along the bottom of the screen and answers questions. He can see
-  the screen and your recent commands. He can also use the computer: he moves his own pointer, clicks, types
-  into his own terminal and opens apps. He runs as a normal user and has to ask for sudo, with your password,
-  before he can act as root. Every action shows in the chat, and **Stop** (or Esc) takes control back.
-- **Accounts required.** Sign up or sign in to save your system and learning progress to the API's database.
-  There is no anonymous browser-only session. Existing local saves can migrate when creating an account with the same username.
-- **Any AI provider, your own key, with an off switch.** Vasu and the AI trainers use a provider the learner
-  chooses in **Settings → AI** (Groq, NVIDIA, OpenRouter, Google Gemini, Cerebras, Mistral, OpenAI, DeepSeek or
-  Together; several have free plans), with the learner's own key and a model picked from the provider's list.
-  The server has no key. A signed-in learner's settings are encrypted with a key only their password unlocks, so
-  the API stores encrypted settings. The **AI features** switch is
-  off until the learner turns it on. With AI off, nothing is sent to an AI: the courses teach their built-in
-  lessons and Vasu answers from his offline guide. *AI is currently switched off on the live site while it is
-  rebuilt (`AI_FEATURES`).*
+- **Explore immediately.** KDE Plasma, GNOME, Hyprland and CDE are available without lessons, installation or
+  registration. Fast boot, chosen context, open windows and bounded terminal history resume. Desktop styles,
+  wallpapers, icons and palettes retain their character.
+- **Learn alongside your tools.** One Learn Linux window can sit beside Files and Terminal or use a focus view.
+  Keep the reviewed **34 lessons / 150 tasks**, five built-in Docker lessons, filesystem guide, administration
+  practice, optional AI labs and chmod Arcade. Free hints and answers remain available; using them has no penalty.
+  Badges and course mastery are separate from interface access. The anniversary wallpaper remains an earned
+  or retained cosmetic. Desktop package installation is optional practice. See [the learning guide](docs/learning-journey.md).
+- **Tuxplore activities.** Ten-quest Tux’s Adventure, eight Pipe Dream puzzles, Know Your Distro’s Rapid and
+  Infinite modes, family map, thirty discoveries, a searchable/printable learned-command reference, and the
+  four-question Try Linux guide. Games preserve separate records and pause when inactive.
+- **A shared shell and filesystem.** Bash-like pipes, redirection, variables, globs, conditionals, completion and
+  history; Files Places, breadcrumbs, previews, list/icons, permissions and Open terminal here. Text Editor and
+  the teaching nano/Vim interfaces preserve unsaved-work guards. Normal clipboard behavior is available.
+- **Software practice.** apt/dpkg and Software share dependency resolution, prompts, package locks and installed
+  programs. Separate Fedora/dnf and Arch/pacman exercises teach family differences without mixing package state.
+  All packages and commands are bounded simulations, not real downloads or host programs.
+- **Plugins and widgets.** Review permissions, install/update/disable/export packages, and use the bundled apps,
+  widgets and Theme Studio. Plugins retain restricted iframes and approved private storage. Imported native
+  backups leave plugins disabled until their permissions are reviewed again. See [the plugin manual](docs/plugins.md).
+- **Progress you can recover.** Guest saves remain in this browser; account saves retain version-conflict protection.
+  Import & backups previews Tuxplore conversion or a native restore, offers file conflict choices, records
+  compatibility notes and requires a recovery copy before replacement. Different account names are supported
+  after authentication; account and browser systems are never silently merged. See [the migration guide](apps/web/public/migrate.html)
+  and [conversion contracts](docs/migration/import-and-recovery.md).
+- **Vasu with or without AI.** Local quest hints, command suggestions and app shortcuts work without the API.
+  The lightweight 2D penguin is the default; optional 3D loads only when requested. AI is off by default, uses
+  the learner’s provider/key, shows its actions, requires sudo consent and stops with Stop or Esc. Course checks
+  distinguish learner work from tutor actions.
 
-### Software shop and desktop extensions
-
-After earning the KDE desktop, open **Software** for a Discover-inspired collection of eight terminal programs, with previews, categories, search, install/remove controls, package details and optional command explanations. **Try it** opens a terminal and runs the example once. The shop calls the same simulated `apt` commands as the terminal, including dependency resolution and package locks, and reads the same dpkg database. Changes from either interface update the shop live and use the normal TuxOS save.
-
-After lesson 26, **Plugins** includes visual previews, release notes, catalog updates, four pinnable widgets and Theme Studio’s three desktop palettes. Widget position and size persist, and widgets keep the existing sandbox and private-storage model. Themes can be reset in Settings. See the [plugin manual](docs/plugins.md#desktop-widgets-and-appearance-presets) for usage and the optional authoring fields. This is a browser-based practice repository, not access to the full Ubuntu or native Omarchy catalogs.
+Guest operation does not imply a fully offline/PWA site. Browser-local saves and recovery copies disappear when
+site data is cleared; download important backups. Tuxplore’s exact original origin must continue serving its
+export page, and old account access must remain available until its export replacement is verified.
 
 ## Architecture
 
@@ -72,7 +54,7 @@ Linux kernel. It models the parts a learner touches: users, file ownership, perm
 apps/web      React desktop (Vite, xterm.js)
 apps/api      Node API: AI tutor and trainers, accounts, saves
 packages/     kernel, sdk, shell, lessons, module-host, system, tutor, course-view, appearance
-modules/      terminal, files, editor, settings, apt, learn-linux, learn-docker, chmod-arcade, about
+modules/      terminal, files, editors, courses, adventure, puzzles, runner, exploration, guide, apt, settings
 ```
 
 - **Kernel** (`packages/kernel`): holds the system state. The only way to change it is
@@ -179,8 +161,7 @@ Production runs on an Ubuntu 24.04 server behind Cloudflare and Caddy. The files
 - **CI:** every push and pull request runs `npm ci`, the type check, the tests and the web build.
 - **CD:** a passing push to `main` uploads the release over SSH. `deploy/deploy.sh` installs it in
   `/opt/tuxos/releases/<commit>`, switches the `/opt/tuxos/current` symlink, restarts the `tuxos-api` systemd
-  service and checks `/api/health`. If the check fails, it switches back to the previous release. The last five
-  releases are kept.
+  service and checks `/api/health`. If the check fails, it switches back to the previous release. During migration, releases are retained. Rollback requires a schema-2-compatible reader and API; see [the rollout runbook](docs/migration/release-runbook.md).
 - **Server:** Caddy serves `/opt/tuxos/current/web` and forwards `/api/*` to the API's Unix socket
   `/run/tuxos/api.sock` ([`deploy/Caddyfile`](deploy/Caddyfile)). The API runs as the unprivileged `tuxos` user
   ([`deploy/tuxos-api.service`](deploy/tuxos-api.service)), with settings in `/etc/tuxos/tuxos.env` and the
@@ -190,8 +171,7 @@ Production runs on an Ubuntu 24.04 server behind Cloudflare and Caddy. The files
   `DEPLOY_HOST`, `DEPLOY_SSH_KEY` and `DEPLOY_KNOWN_HOSTS` to a `production` environment.
 - **Backup:** `sudo sqlite3 /var/lib/tuxos/tuxos.db ".backup /root/tuxos-backup.db"`. Saved API keys in a backup
   stay encrypted with each learner's password, so a backup can't reveal them either.
-- **Manual rollback:** `ln -sfn /opt/tuxos/releases/<commit> /opt/tuxos/current`, then
-  `sudo systemctl restart tuxos-api`. Logs: `journalctl -u tuxos-api`.
+- **Manual rollback:** `bash deploy/rollback.sh <compatible-release-name>` verifies the reader and API before switching. Never restore the old database over new learner progress. Logs: `journalctl -u tuxos-api`.
 
 ## Known limitations
 
@@ -210,7 +190,7 @@ Production runs on an Ubuntu 24.04 server behind Cloudflare and Caddy. The files
 - The provider flow was tested against stand-ins and each provider's real endpoints (without a valid key), not
   end to end with real keys. Small free models vary a lot in tool calling and JSON output; the fallbacks keep
   things working, but answer quality depends on the model chosen.
-- Each state-changing action copies the whole state, which is fine at learner-sized filesystems.
+- Each state-changing action copies the whole state, so near-limit saves still require target-device profiling; portable saving avoids an extra full-state copy.
 
 ## Credits
 
@@ -221,5 +201,7 @@ License). Icon themes: GNOME (CC-BY-SA / GPL-3.0), Breeze (LGPL-3.0) and Papirus
 see [`apps/web/public/icons/CREDITS.md`](apps/web/public/icons/CREDITS.md). The AI features use the
 [OpenAI chat-completions format](https://platform.openai.com/docs/api-reference/chat), which every supported
 provider accepts.
+
+Tuxplore’s license is retained in [the migration credits](docs/migration/licenses/Tuxplore-LICENSE.txt); distribution artwork credits are in [the public asset inventory](apps/web/public/distros/CREDITS.md).
 
 The development history is in [CHANGELOG.md](CHANGELOG.md).

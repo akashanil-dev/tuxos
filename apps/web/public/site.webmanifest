@@ -1,0 +1,19 @@
+{
+  "id": "/",
+  "name": "TuxOS \u00b7 continuing Tuxplore",
+  "short_name": "TuxOS",
+  "description": "Explore Linux through a simulated desktop, adventures and games.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "browser",
+  "background_color": "#232629",
+  "theme_color": "#1b2224",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

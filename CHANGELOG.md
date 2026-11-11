@@ -4,6 +4,17 @@ Notable changes, newest first. Older entries were written while TuxOS was built 
 the DevDay Exchange Community Hackathon in Kochi; they mention event files (AI_USAGE.md, SUBMISSION.md) that
 have since been removed.
 
+## 2026-11-11 · Tuxplore continuation candidate
+
+- Guest-first entry, optional accounts, fast boot/resume and free desktop access separated from course mastery.
+- Continuous desktop/focus learning, normal clipboard use, improved Files, safe app instances, reachable windows and non-blocking rewards.
+- Ten-quest Adventure, eight Pipe Dream puzzles, Rapid/Infinite Know Your Distro, thirty discoveries, command reference, Try Linux, teaching editors and Fedora/Arch practice.
+- Offline Vasu guidance, lightweight default rendering, paused hidden games and deferred Terminal code.
+- Versioned Tuxplore import with explicit conflicts, historical reports, unchanged source downloads, mandatory backup/restore and renamed authenticated account transfer.
+- Smaller startup JavaScript, cheaper portable saving, recoverable app-load errors and populated-save measurements.
+- Continuation metadata/pages, original-origin export candidate, release compatibility checks and a local rollback rehearsal.
+- Local candidate only: production export deployment, real-user beta, physical-device/print checks and retirement gates are documented in `docs/migration/`.
+
 ## 2026-10-21 — The tutor is now called Vasu, and drawn in 3D
 
 - Changed: the AI tutor's name is now Vasu, everywhere (his prompt, the interface, the code and these notes).

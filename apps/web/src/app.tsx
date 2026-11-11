@@ -9,6 +9,7 @@ import { BootLog } from './boot/BootLog';
 import { PhoneScreen } from './boot/PhoneScreen';
 import { Grub } from './boot/Grub';
 import { PowerOff } from './boot/PowerScreens';
+import { AppErrorBoundary } from './desktop/AppErrorBoundary';
 import type { AccountsClient } from './accounts';
 import type { PowerAction } from './desktops/types';
 import { Dtlogin } from './greeters/Dtlogin';
@@ -34,7 +35,6 @@ export interface AccountsWiring {
 }
 
 const SAVE_KEY = 'tuxos.save';
-const ImportAndBackups = lazy(() => import('./migration/ImportAndBackups'));
 
 /** Each desktop environment's display manager, as a real distribution pairs them. */
 const GREETERS = { sddm: Sddm, gdm: Gdm, dtlogin: Dtlogin, tuigreet: Tuigreet };
@@ -67,6 +67,7 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
   const [guestBusy, setGuestBusy] = useState(false);
   const [saveToAccount, setSaveToAccount] = useState(false);
   const [recoveryOpen, setRecoveryOpen] = useState(false);
+  const [ImportAndBackups, setRecoveryView] = useState(() => lazy(() => import('./migration/ImportAndBackups')));
   const [transfer, setTransfer] = useState<{ existing: boolean; from?: string; to?: string; summary: string; choose(choice: 'guest' | 'account' | 'cancel'): void } | null>(null);
   const wallpaper = useWallpaper('default').background;
   useEffect(() => {
@@ -212,7 +213,7 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
     case 'off': return <PowerOff onPowerOn={powerOn} />;
     case 'desktop': return <>{powerError && <div className="journey-save-error" role="alert">{powerError}<button onClick={download}>Download backup</button></div>}<JourneyScreen active={!recoveryOpen} key={booted} system={system} tutor={tutor} onPower={power} verifySudo={verifySudo} />
       <aside className="session-save-status" aria-label="Save location"><span>{booted?.startsWith('guest:') ? 'Browser storage' : `Account: ${account}`}</span><button onClick={download}>Export backup</button><button onClick={() => setRecoveryOpen(true)}>Import & backups</button>{booted?.startsWith('guest:') && accounts && <button onClick={() => void openAccount()}>Save to an account</button>}</aside>
-      {recoveryOpen && <Suspense fallback={<div className="journey-loading" role="status">Opening import and recovery…</div>}><ImportAndBackups system={system} close={() => setRecoveryOpen(false)} /></Suspense>}</>;
+      {recoveryOpen && <div className="recovery-load-shell"><AppErrorBoundary title="Import & backups" close={() => setRecoveryOpen(false)} retry={() => setRecoveryView(() => lazy(() => import('./migration/ImportAndBackups')))}><Suspense fallback={<section className="transfer-card" role="status">Opening import and recovery… <button onClick={() => setRecoveryOpen(false)}>Return to desktop</button></section>}><ImportAndBackups system={system} close={() => setRecoveryOpen(false)} /></Suspense></AppErrorBoundary></div>}</>;
   }
   const greeter = desktopById(desktop).greeter;
   const Greeter = GREETERS[greeter];
@@ -224,6 +225,7 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
       <div className="explore-actions"><button className="primary" disabled={guestBusy || savedUser === undefined} onClick={() => void explore(savedUser ? undefined : 'desktop')}>{guestBusy ? 'Opening…' : savedUser ? 'Resume TuxOS' : 'Explore TuxOS'}</button><button disabled={guestBusy || savedUser === undefined} onClick={() => void explore('learn')}>Start guided learning</button></div>
       {accounts && <button className="explore-account" onClick={() => setAuthOpen(true)}>{account ? `Sign in as ${account}` : 'Sign in or create an account'}</button>}
       <p className="explore-note">No account needed to explore. An account lets you keep your progress across devices.</p>
+      <p className="explore-note"><a href="/about.html">About TuxOS</a> · <a href="/migrate.html">Bring your Tuxplore progress</a></p>
       {powerError && <p role="alert">{powerError}</p>}
     </div></main>}
     {authOpen && <button className="explore-back" onClick={() => { setAuthOpen(false); setSaveToAccount(false); }}>← Back to exploration</button>}

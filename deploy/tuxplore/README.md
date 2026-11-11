@@ -9,3 +9,18 @@ The portable envelope is `format: tuxplore-export`, `version: 1`, with `exported
 Account users must be able to sign in to the legacy service to retrieve their latest save until a separately validated account export path replaces it. No accounts are linked by matching usernames.
 
 This directory is deployment-ready source, not evidence that the bridge has been published. Record the actual deployment and original-origin browser check in `docs/migration/status.md`.
+
+## Prepare the candidate without editing the legacy checkout
+
+```sh
+node deploy/tuxplore/prepare.mjs /path/to/verified/tuxplore /path/to/new/candidate
+```
+
+The preparation adds a greeter link across all four styles, a Settings link, and an About notice. It preserves
+play, public pages and assets, excludes the backend/secrets, and records source hashes. Inspect the candidate
+against the actual deployed source. Its `archive.html` is additive and its `play.html` retains legacy account
+access; replacing the original root is separately gated. See `docs/migration/release-runbook.md`.
+
+Local candidate verification on 11 November 2026: missing-save feedback, greeter notice, fictional guest entry,
+then export-prepared confirmation for `bridgeguest`. Export unit tests confirm the supported envelope and no
+credential reads. This is not original-origin production or authenticated legacy-cloud export verification.

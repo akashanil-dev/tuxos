@@ -38,3 +38,9 @@ The integration milestone passes 617 tests in 73 files and a production build. F
 Browser verification imported the fictional partial fixture, retained both welcome-file versions, opened `Documents/personal.txt` with its original contents and mode 640, and showed Rapid 230 / Infinite 1400 / historical 120. Restoring the pre-import backup returned CDE, the original editor notes and Infinite 200; the imported-only personal file was absent, as expected. Both recovery copies remained available. See [import success](screenshots/import-success.jpg) and [restore drill](screenshots/restore-drill.jpg).
 
 The original-origin export bridge is prepared under `deploy/tuxplore/` but has not been deployed. Browser-local export and authenticated legacy cloud export must remain accessible at the original origin before production retirement. No production data has been changed.
+
+Final account browser check used a disposable local API database: authenticate as `continuationqa`, preview
+replacement from `explorer`, apply, then verify `whoami`, `/home/continuationqa` and unchanged personal notes.
+After a local API stop, the save warning remained until restart and Retry saving. A fresh page/unlock resumed
+the account system. See [transfer preview](screenshots/account-transfer-preview.jpg) and
+[result](screenshots/account-transfer-result.jpg).
