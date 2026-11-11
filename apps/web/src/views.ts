@@ -23,6 +23,7 @@ export const views: Record<string, () => Promise<ViewModule>> = {
   'chmod-arcade': () => import('@tuxos/module-chmod-arcade/view'),
   settings: () => import('@tuxos/module-settings/view'),
   plugins: () => import('./plugins/PluginManager'),
+  'package-practice': () => import('./software/PackagePractice'),
   software: () => import('./software/SoftwareShop'),
 };
 

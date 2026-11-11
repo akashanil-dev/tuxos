@@ -24,7 +24,7 @@ export default function ExplorationView({ system, windowId }: AppViewProps) {
   }, [system, windowId]);
   const launch = (id: string) => void system.openApp(id).then(result => { if (!result.ok) setError(result.error.message); });
   const learned = Object.keys(progress.learned).sort().filter(name => `${name} ${commands.find(cmd => cmd.name === name)?.summary ?? ''}`.toLowerCase().includes(search.toLowerCase()));
-  const activities = ['learn-adventure', 'pipe-dream', 'know-your-distro', 'chmod-arcade', 'learn-linux', 'learn-docker', 'learn-filesystem', 'try-linux', 'command-reference', 'exploration-achievements'];
+  const activities = ['learn-adventure', 'pipe-dream', 'know-your-distro', 'chmod-arcade', 'package-practice', 'learn-linux', 'learn-docker', 'learn-filesystem', 'try-linux', 'command-reference', 'exploration-achievements'];
   return <div className="exploration-view">
     {error && <p role="alert">{error}</p>}
     {page === 'play' ? <><h1>Play and explore</h1><p>Pick a short adventure, a puzzle, or a deeper course. Every activity keeps its own progress.</p><div className="activity-grid">{activities.map(id => apps.find(app => app.id === id)).filter(app => !!app).map(app => <button key={app.id} onClick={() => launch(app.id)}><strong>{app.title}</strong><span>{app.description}</span><small>Open →</small></button>)}</div></>

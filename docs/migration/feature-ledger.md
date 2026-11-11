@@ -16,9 +16,9 @@ Status distinguishes implemented behavior from full release verification. Source
 | Try Linux | apps/system.js | try-linux | Four-question selector/six distros, sourced guide, next steps | Implemented; quiz/reload tests and browser complete flow pass |
 | File navigation and preview | apps/files.js | files | Places/breadcrumbs, permissions, equivalent CLI, terminal-here | Implemented; browser preview and terminal-here verified |
 | Clipboard and teaching tone | terminal.js | terminal/JourneyScreen | Copy/paste/context menu, Ctrl+C, neutral optional practice | Implemented; browser paste and lesson completion verified |
-| Help and Windows/typo suggestions | shell.js | shell | man/whatis, harmless suggestions, existing help/completion | Pending |
-| Teaching editors | apps/terminal.js | terminal/shell | nano/vim open/edit/save/exit, permission/cancel behavior | Pending |
-| Package families | shell.js | apt/family practice | apt depth retained; explicit dnf/pacman exercises | Pending |
+| Help and Windows/typo suggestions | shell.js | shell | man/whatis, harmless suggestions, existing help/completion | Implemented; command and routing checks pass |
+| Teaching editors | apps/terminal.js | terminal/shell | nano/vim open/edit/save/exit, permission/cancel behavior | Implemented; unit and browser save/reload verified |
+| Package families | shell.js | apt/family practice | apt depth retained; explicit dnf/pacman exercises | Implemented; both workflows, isolation, resume and scoped recovery tests pass |
 | Fun commands and secrets | shell.js, boot.js | shell/adventure/desktop | Inventory each trigger, avoid duplicate implementations | Pending |
 | File reset without lost progress | apps/system.js | scoped practice recovery | Personal files/courses/scores preserved, backup restore | Adventure recovery implemented and tested; general backup manager follows |
 | Companion reactions/shortcuts | tux.js | offline Vasu | Useful without AI/API, cooldown/dismiss/hide, focus intact | Pending |
