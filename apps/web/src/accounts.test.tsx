@@ -52,19 +52,21 @@ function fakeService(signedIn: string | null = null) {
   return { client, saves, users };
 }
 
-function setup(service: ReturnType<typeof fakeService>, local = memory()) {
+function setup(service: ReturnType<typeof fakeService>, local = memory(), auth = true) {
   const { storage, use } = switchableStorage(local);
   const accountStorage = service.client.storage();
   const accounts: AccountsWiring = {
     client: service.client,
     use: (target) => use(target === 'account' ? accountStorage : local),
     localSave: () => local.get('tuxos.save'),
+    backup: (value, label) => local.set(`backup.${label}`, value),
   };
   const system = createLocalSystem({
     storage,
     modules: [{ manifest: settings.manifest, load: async () => settings }],
   });
   render(<App system={system} accounts={accounts} start="greeter" />);
+  if (auth) fireEvent.click(screen.getByRole('button', { name: /Sign in or create an account/ }));
   return { system, local };
 }
 
@@ -100,6 +102,7 @@ describe('accounts', () => {
     expect((screen.getByLabelText('Username') as HTMLInputElement).value).toBe('ada');
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Use browser progress' }));
     await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
     expect(await system.dispatch('fs.read', { path: '/home/ada/notes.txt' })).toMatchObject({ ok: true, value: 'mine' });
   });
@@ -148,25 +151,78 @@ describe('accounts', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Leave' }, SLOW));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Log Out' }));
     await waitFor(() => expect(service.client.logout).toHaveBeenCalled());
-    expect(await screen.findByText('Create account', { selector: '.sddm-name' }, SLOW)).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Explore TuxOS' }, SLOW)).toBeTruthy();
   }, 15_000);
 
-  it('requires an account and offers no guest route or pre-login desktop selector', async () => {
-    setup(fakeService());
-    await screen.findByRole('button', { name: 'Create account' });
-    expect(screen.queryByText('Try without an account')).toBeNull();
-    expect(screen.queryByRole('button', { name: /Desktop Session/ })).toBeNull();
-    expect(screen.getByLabelText('Password')).toBeTruthy();
+  it('explores without an account and retains a local system', async () => {
+    const service = fakeService();
+    const { system, local } = setup(service, memory(), false);
+    const explore = await screen.findByRole('button', { name: 'Explore TuxOS' });
+    await waitFor(() => expect((explore as HTMLButtonElement).disabled).toBe(false));
+    expect(screen.queryByLabelText('Password')).toBeNull();
+    fireEvent.click(explore);
+    await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
+    await system.dispatch('fs.write', { path: '/home/explorer/note.txt', content: 'local progress' });
+    await system.flush();
+    expect(JSON.parse(local.values.get('tuxos.save')!).username).toBe('explorer');
+    expect(service.saves.size).toBe(0);
+    expect(screen.getByRole('button', { name: 'Save to an account' })).toBeTruthy();
   });
-  it('keeps users at sign-in when the account service is unavailable, with a retry', async () => {
+  it('keeps guest entry available when account discovery never responds', async () => {
+    const service = fakeService();
+    service.client.me = () => new Promise(() => {});
+    const { local } = setup(service, memory(), false);
+    const explore = screen.getByRole('button', { name: 'Explore TuxOS' });
+    await waitFor(() => expect((explore as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(explore);
+    await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
+    expect(local.values.has('tuxos.save')).toBe(true);
+  });
+  it('offers an account retry without blocking exploration', async () => {
     const service = fakeService();
     service.client.me = vi.fn().mockRejectedValueOnce(new Error('Account service unavailable')).mockResolvedValue(null);
     setup(service);
-    expect((await screen.findByRole('alert')).textContent).toContain('Account service unavailable');
-    expect(screen.queryByLabelText('Username')).toBeNull();
+    await screen.findByText('Account connection unavailable. You can still explore as a guest.');
     fireEvent.click(screen.getByRole('button', { name: 'Retry connection' }));
     await screen.findByRole('button', { name: 'Create account' });
+    await waitFor(() => expect(screen.queryByText('Account connection unavailable. You can still explore as a guest.')).toBeNull());
   });
+
+  it('previews a guest/account conflict, cancels safely, and backs up before an explicit replacement', async () => {
+    const local = memory();
+    const guest = createLocalSystem({ storage: local, modules: [] });
+    await guest.boot('grace');
+    await guest.dispatch('fs.write', { path: '/home/grace/note.txt', content: 'guest work' });
+    await guest.flush();
+    const remote = memory();
+    const cloud = createLocalSystem({ storage: remote, modules: [] });
+    await cloud.boot('grace');
+    await cloud.dispatch('fs.write', { path: '/home/grace/note.txt', content: 'account work' });
+    await cloud.flush();
+    const original = remote.values.get('tuxos.save')!;
+    const service = fakeService();
+    service.saves.set('grace', { data: original, version: 3 });
+    const { system } = setup(service, local, false);
+    const resume = await screen.findByRole('button', { name: 'Resume TuxOS' });
+    fireEvent.click(resume);
+    await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
+    fireEvent.click(screen.getByRole('button', { name: 'Save to an account' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Sign in' }));
+    fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'grace' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'pw' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    await screen.findByRole('dialog', { name: 'Choose saved progress' });
+    expect(service.saves.get('grace')!.data).toBe(original);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel transfer' }));
+    await screen.findByText('Transfer cancelled. Both saved systems are unchanged.');
+    expect(service.saves.get('grace')!.data).toBe(original);
+    fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Back up account and use browser progress' }));
+    await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
+    expect(local.values.get('backup.account-grace')).toBe(original);
+    expect(await system.dispatch('fs.read', { path: '/home/grace/note.txt' })).toMatchObject({ ok: true, value: 'guest work' });
+    expect(local.values.has('tuxos.save')).toBe(true);
+  }, 15000);
 });
 
 describe('account storage over HTTP', () => {

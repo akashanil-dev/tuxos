@@ -58,6 +58,7 @@ async function call(method: string, path: string, body?: unknown): Promise<Recor
 const hintOf = (key: string) => `${key.slice(0, 4)}…${key.slice(-4)}`;
 
 export function webAiKeys(): WebAiKeys {
+  let loadGeneration = 0;
   let signedIn = false;
   let available = false;
   let catalog: { providers: AiProviderInfo[]; custom: boolean } = { providers: [], custom: false };
@@ -97,16 +98,20 @@ export function webAiKeys(): WebAiKeys {
     },
     providers: () => catalog,
     async load(isAccount) {
+      const generation = ++loadGeneration;
       signedIn = isAccount;
+      available = false;
       account = undefined;
       accountOn = false;
       locked = false;
+      changed();
       try { localStorage.removeItem(OLD_GUEST_KEY); } catch { /* nothing stored */ }
       // If the server can't be asked, AI stays off: the built-in lessons still work.
       const [offered, saved] = await Promise.all([
         call('GET', '/api/ai/providers').catch(() => ({} as Record<string, unknown>)),
         isAccount ? call('GET', '/api/ai/key').catch(() => ({} as Record<string, unknown>)) : Promise.resolve({} as Record<string, unknown>),
       ]);
+      if (generation !== loadGeneration) return;
       available = offered.available === true;
       catalog = {
         providers: Array.isArray(offered.providers) ? offered.providers as AiProviderInfo[] : [],

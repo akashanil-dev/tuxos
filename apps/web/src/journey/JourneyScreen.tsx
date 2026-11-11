@@ -29,30 +29,24 @@ function JourneySession({ system, tutor, onPower, verifySudo }: {
 }) {
   const { progress, loaded } = useJourney(system);
   const [installer, setInstaller] = useState(false);
-  const [mode, setMode] = useState<'learn' | 'desktop'>('learn');
-  const [visitedDesktop, setVisitedDesktop] = useState(false);
+  const [mode, setMode] = useState<'learn' | 'desktop'>('desktop');
+  const [visitedDesktop, setVisitedDesktop] = useState(true);
+  const [visitedLearning, setVisitedLearning] = useState(false);
   useEffect(() => {
-    if (!progress) return;
-    if (unlocked(progress, 'desktop') && !desktopReady(progress)) {
-      setInstaller(true);
-      setMode('learn');
-    } else if (installer && desktopReady(progress)) {
-      // Enter Plasma once after installation; returning to lessons stays in learning mode.
-      setInstaller(false);
-      setVisitedDesktop(true);
-      setMode('desktop');
-    }
-  }, [progress, installer]);
+    let active = true;
+    void system.session().then(session => { if (active) { setMode(session.preferences?.resume ?? 'desktop'); setVisitedLearning(session.preferences?.resume === 'learn'); } });
+    return () => { active = false; };
+  }, [system]);
   const [map, setMap] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
-  const [saveState, setSaveState] = useState('Progress saves to your account');
+  const [saveState, setSaveState] = useState('Progress saves with your system');
   useEffect(() => system.onSaveError(cause => { setError(cause.message); setSaveState('Changes need saving'); }), [system]);
   useEffect(() => {
     if (!progress) return;
     let active = true;
     setSaveState('Saving progress…');
-    void system.flush().then(() => { if (active) setSaveState('Progress saved to your account'); }).catch(cause => { if (active) { setError(String(cause)); setSaveState('Changes need saving'); } });
+    void system.flush().then(() => { if (active) setSaveState('Progress saved'); }).catch(cause => { if (active) { setError(String(cause)); setSaveState('Changes need saving'); } });
     return () => { active = false; };
   }, [system, progress]);
   if (!loaded) return <div className="journey-loading">Opening your learning journey…</div>;
@@ -61,8 +55,8 @@ function JourneySession({ system, tutor, onPower, verifySudo }: {
   const level = journeyLevel(progress);
   const next = REWARDS.find(r => !unlocked(progress, r.id));
   const reward = [...REWARDS].reverse().find(r => unlocked(progress, r.id) && !progress.acknowledged.includes(r.id));
-  const resumeLearning = () => { setMap(false); setMode('learn'); };
-  const explore = () => { if (desktopReady(progress)) { setVisitedDesktop(true); setMode('desktop'); } };
+  const resumeLearning = () => { setMap(false); setInstaller(false); setVisitedLearning(true); setMode('learn'); void system.dispatch('session.setPreferences', { resume: 'learn' }); };
+  const explore = () => { setVisitedDesktop(true); setMode('desktop'); void system.dispatch('session.setPreferences', { resume: 'desktop' }); };
   const acknowledge = async () => {
     if (!reward) return;
     setSaving(true);
@@ -74,17 +68,17 @@ function JourneySession({ system, tutor, onPower, verifySudo }: {
     finally { setSaving(false); }
   };
   return <div className="journey-shell">
-    <div className={`journey-learning ${!desktopReady(progress) ? 'journey-console' : ''}`} inert={Boolean(map || reward)} hidden={mode !== 'learn'}>
+    <div className="journey-learning" inert={Boolean(map)} hidden={mode !== 'learn'}>
       <FullscreenControl />
-      <header className="journey-header"><div className="journey-brand"><span aria-hidden="true">&gt;_</span><div><strong>TuxOS</strong>{desktopReady(progress) && <small>Learn a little. Unlock a little.</small>}</div></div><div className="journey-stats"><strong>{progress.steps.length * 10} XP</strong><span>{level}/{JOURNEY_LESSONS.length} lessons</span></div>
-        <div className="journey-top-actions"><button onClick={() => setMap(true)}>Your rewards</button><button disabled={!desktopReady(progress)} onClick={explore}>{desktopReady(progress) ? 'Explore desktop ↗' : unlocked(progress, 'desktop') ? 'Install KDE to enter desktop' : 'Desktop · unlock at lesson 2'}</button><button onClick={() => onPower('logout')}>Sign out</button></div>
+      <header className="journey-header"><div className="journey-brand"><span aria-hidden="true">&gt;_</span><div><strong>TuxOS</strong><small>Learn at your pace.</small></div></div><div className="journey-stats"><strong>{progress.steps.length * 10} XP</strong><span>{level}/{JOURNEY_LESSONS.length} lessons</span></div>
+        <div className="journey-top-actions"><button onClick={() => setMap(true)}>Your rewards</button><button onClick={explore}>Explore desktop ↗</button><button onClick={() => onPower('logout')}>Leave session</button></div>
       </header>
       <section className="journey-next-reward" aria-label="Next reward"><span>{next ? `Next: ${next.title}` : 'Everything unlocked. Keep exploring!'}</span><progress max={next?.at ?? 34} value={level} aria-label="Progress to next reward" /><small>{next ? `${next.at - level} more ${next.at - level === 1 ? 'lesson' : 'lessons'}` : 'Learning path complete'}</small></section>
-      {installer || (unlocked(progress, 'desktop') && !desktopReady(progress)) ? <DesktopInstallation system={system} ready={desktopReady(progress)} /> : <Mission system={system} progress={progress} visible={mode === 'learn'} onExplore={explore} />}
+      {installer ? <DesktopInstallation system={system} ready={desktopReady(progress)} /> : visitedLearning && <Mission system={system} progress={progress} visible={mode === 'learn'} onExplore={explore} />}
       <footer className="journey-save"><span>{saveState}</span><span>No timers. No lost lives. Hints are always welcome.</span></footer>
     </div>
-    {visitedDesktop && <div className="journey-desktop" inert={Boolean(map || reward)} hidden={mode !== 'desktop'}><Desktop system={system} tutor={tutor} onPower={onPower} verifySudo={verifySudo} active={mode === 'desktop' && !map && !reward} onAchievements={() => setMap(true)} onLearnLinux={resumeLearning} /></div>}
-    {error && <div role="alert" className="journey-save-error">{error}<button onClick={() => void system.flush().then(() => { setError(''); setSaveState('Progress saved to your account'); }).catch(cause => setError(String(cause)))}>Retry saving</button></div>}
+    {visitedDesktop && <div className="journey-desktop" inert={Boolean(map)} hidden={mode !== 'desktop'}><Desktop system={system} tutor={tutor} onPower={onPower} verifySudo={verifySudo} active={mode === 'desktop' && !map} onAchievements={() => setMap(true)} /></div>}
+    {error && <div role="alert" className="journey-save-error">{error}<button onClick={() => void system.flush().then(() => { setError(''); setSaveState('Progress saved'); }).catch(cause => setError(String(cause)))}>Retry saving</button></div>}
     {map && <JourneyDialog className="journey-map" label="Your reward map" onClose={() => setMap(false)}>
       <header><div><small>YOUR LINUX JOURNEY</small><h2>Your achievements</h2></div><button onClick={() => setMap(false)}>Close rewards</button></header>
       <div className="journey-achievement-summary" aria-label="Achievement progress">
@@ -93,6 +87,7 @@ function JourneySession({ system, tutor, onPower, verifySudo }: {
       </div>
       <p>{next ? `Next unlock: ${next.title} · ${next.at - level} more ${next.at - level === 1 ? 'lesson' : 'lessons'}.` : 'Every achievement earned. Your whole desktop is unlocked!'} Hints and answers cost nothing.</p>
       <button className="journey-resume" onClick={resumeLearning}>Continue learning →</button>
+      <button onClick={() => { setMap(false); setInstaller(true); setMode('learn'); }}>Practice installing a desktop</button>
       <ol>{REWARDS.map(r => {
         const earned = unlocked(progress, r.id);
         return <li key={r.id} className={earned ? 'earned' : ''}>
@@ -104,7 +99,7 @@ function JourneySession({ system, tutor, onPower, verifySudo }: {
         </li>;
       })}</ol>
     </JourneyDialog>}
-    {reward && !map && <RewardReveal reward={reward} saving={saving} onContinue={() => { if (!saving) void acknowledge(); }} />}
+    {reward && !map && <aside className="milestone-toast" role="status"><strong>{reward.title}</strong><span>{reward.description}</span><button disabled={saving} onClick={() => void acknowledge()}>Dismiss milestone</button><button onClick={() => setMap(true)}>View rewards</button></aside>}
   </div>;
 }
 
@@ -173,7 +168,7 @@ function Mission({ system, progress, visible, onExplore }: { system: SystemClien
       </> : <div className="journey-lesson-done"><span>✓</span><div><h1>{next ? 'Lesson complete. Nicely done.' : 'You built your Linux foundation.'}</h1><p>{next ? `Up next: ${next.title}` : 'Every reward is yours. Explore your desktop or review a lesson anytime.'}</p></div>{next ? <button disabled={busy} onClick={() => { setBusy(true); void call('start', { lesson: next.id }).finally(() => setBusy(false)); }}>Continue to next lesson →</button> : <button onClick={onExplore}>Explore your unlocked desktop ↗</button>}</div>}
       {active && lessonIndex >= 2 && <button className="journey-open-files" onClick={onExplore}>Need a desktop app? Open your desktop ↗</button>}
     </section>
-    <div className="journey-terminal">{desktopReady(progress) && <div className="journey-terminal-label"><span>● Terminal</span><small>Type a command, then press Enter</small></div>}{active ? <TerminalSurface key={terminalLesson} system={system} learningModule="learn-linux" inputId="journey-terminal" clipboardDisabled={!desktopReady(progress)} /> : <div className="journey-terminal-rest"><pre>{status.lastExplain || 'Take a breath. Your next discovery is waiting.'}</pre></div>}</div>
+    <div className="journey-terminal"><div className="journey-terminal-label"><span>● Terminal</span><small>Type a command, then press Enter</small></div><TerminalSurface system={system} learningModule="learn-linux" inputId="journey-terminal" /></div>
   </main>;
 }
 
@@ -188,7 +183,7 @@ function DesktopInstallation({ system, ready }: { system: SystemClient; ready: b
         <small>This installs the TuxOS simulation. Downloads and package sizes are practice examples.</small>
       </>}
     </section>
-    <div className="journey-terminal"><TerminalSurface system={system} inputId="desktop-installation" learningModule="desktop-installation" clipboardDisabled={!ready} colourOutput /></div>
+    <div className="journey-terminal"><TerminalSurface system={system} inputId="desktop-installation" learningModule="desktop-installation" colourOutput /></div>
   </main>;
 }
 

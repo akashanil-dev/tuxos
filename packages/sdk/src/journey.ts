@@ -11,15 +11,15 @@ export const JOURNEY_LESSONS = [
 export interface JourneyProgress { lessons: string[]; steps: string[]; acknowledged: string[]; installedDesktops?: string[]; terminal?: { lesson: string; cwd: string; env: Record<string, string> }; }
 export const REWARDS = [
   { id: 'first-command', at: 1, title: 'Terminal Explorer', description: 'Your first badge. You can ask Linux who you are and where you are.', icon: '⌘' },
-  { id: 'desktop', at: 2, title: 'Hello, KDE!', description: 'You can now install KDE Plasma. Run sudo apt update, then sudo apt install kde-plasma-desktop.', icon: '▦' },
-  { id: 'wallpaper', at: 3, title: 'Make it yours', description: 'Choose your wallpaper in Settings. The anniversary edition has its own milestone.', icon: '▧' },
-  { id: 'gnome', at: 7, title: 'A new perspective', description: 'Install GNOME with sudo apt install gnome-core, then select it in Settings.', icon: '◉' },
-  { id: 'themes', at: 12, title: 'Colour your world', description: 'Personalise desktop colours with palettes in Settings.', icon: '◐' },
+  { id: 'desktop', at: 2, title: 'Hello, KDE!', description: 'You know your way around directories. Try the optional desktop installation practice from Your rewards.', icon: '▦' },
+  { id: 'wallpaper', at: 3, title: 'Make it yours', description: 'You can create and organise files. Celebrate with a wallpaper in Settings.', icon: '▧' },
+  { id: 'gnome', at: 7, title: 'A new perspective', description: 'You have practised installing software. Explore GNOME or try installing its practice package.', icon: '◉' },
+  { id: 'themes', at: 12, title: 'Colour your world', description: 'Your shell foundations are complete. Try a desktop colour palette in Settings.', icon: '◐' },
   { id: 'anniversary', at: 16, title: 'KDE at 30', description: 'You earned the special KDE 30th Anniversary wallpaper. Apply it whenever you like.', icon: '30' },
-  { id: 'hyprland', at: 21, title: 'Think in tiles', description: 'Install Hyprland with sudo apt install hyprland from the TuxOS practice repository.', icon: '▥' },
-  { id: 'plugins', at: 26, title: 'Open-source maker', description: 'Install and contribute plugins, add widgets and explore community themes.', icon: '✧' },
-  { id: 'cde', at: 31, title: 'Time traveller', description: 'Install the classic desktop with sudo apt install tuxos-cde from the TuxOS practice repository.', icon: '▣' },
-  { id: 'complete', at: 34, title: 'Your system. Your freedom.', description: 'Every desktop and customisation is unlocked. Keep experimenting and revisit any lesson.', icon: '★' },
+  { id: 'hyprland', at: 21, title: 'Think in tiles', description: 'You have reached the boot and recovery milestone. Try the keyboard-driven Hyprland desktop.', icon: '▥' },
+  { id: 'plugins', at: 26, title: 'Open-source maker', description: 'Your networking and storage foundation is growing. Explore plugins, widgets and community themes.', icon: '✧' },
+  { id: 'cde', at: 31, title: 'Time traveller', description: 'You have practised monitoring and response. Explore the classic CDE desktop when you want a change.', icon: '▣' },
+  { id: 'complete', at: 34, title: 'Your system. Your freedom.', description: 'You completed the full Linux learning path. Keep experimenting, revisit a lesson, or try the companion VM exercises.', icon: '★' },
 ] as const;
 export type RewardId = typeof REWARDS[number]['id'];
 /** Interface access is independent of assessed course progress. Only the anniversary cosmetic is earned. */

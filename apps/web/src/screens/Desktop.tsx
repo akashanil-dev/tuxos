@@ -49,6 +49,7 @@ export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, 
   const [placement, setPlacement] = useState<Record<string, number>>({});
   const viewport = useViewport();
   const closeGuards = useRef(new Map<string, () => boolean>());
+  useEffect(() => system.registerLeaveGuard?.('desktop', () => [...closeGuards.current.values()].every(guard => guard())), [system]);
 
   const workspaceCount = environment.workspaces?.length ?? 1;
   const workspace = Math.min(chosenWorkspace, workspaceCount);
@@ -89,6 +90,9 @@ export function Desktop({ system, tutor, onPower, onAchievements, onLearnLinux, 
   useEffect(() => rememberAppearance(session.desktop, session.wallpaper), [session.desktop, session.wallpaper]);
   // Switching desktop: fetch the new icon theme while its splash screen plays.
   useEffect(() => preloadIconTheme(session.desktop), [session.desktop]);
+  useEffect(() => {
+    if (loaded && (session.preferences?.fastBoot !== false || (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches))) setShown(session.desktop);
+  }, [loaded, session.desktop, session.preferences?.fastBoot]);
 
   // New windows open on the current workspace.
   useEffect(() => {

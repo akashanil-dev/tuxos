@@ -25,7 +25,7 @@ async function call(method: string, path: string, body?: unknown): Promise<{ sta
       ...(body === undefined ? {} : { headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }),
     });
   } catch {
-    throw new Error('The account service is not reachable. Check your connection and try again. Your account is required to save progress.');
+    throw new Error('The account service is not reachable. Try again when connected. Guest exploration remains available in this browser.');
   }
   const data = await response.json().catch(() => ({})) as Record<string, unknown>;
   return { status: response.status, data };

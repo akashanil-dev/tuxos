@@ -23,6 +23,7 @@ import './styles/boot.css';
 import './styles/greeters.css';
 import './styles/window.css';
 import './styles/tutor.css';
+import './styles/continuation.css';
 
 const browserStorage: KeyValueStorage = {
   async get(key) { try { return localStorage.getItem(key); } catch { return null; } },
@@ -42,19 +43,21 @@ const browserStorage: KeyValueStorage = {
   },
 };
 
-// All learners save to their account. Browser storage is read only for legacy save migration.
+// Explore locally first. Account storage is selected only after an explicit sign-in/transfer.
 const accountsClient = httpAccounts();
 const accountStorage = accountsClient.storage();
-const { storage, use } = switchableStorage(accountStorage);
+const { storage, use } = switchableStorage(browserStorage);
 // AI uses the learner's own provider and key, saved in their account.
 const ai = webAiKeys();
 const accounts: AccountsWiring = {
   client: accountsClient,
-  use: () => {
-    use(accountStorage);
-    return ai.load(true);
+  use: async target => {
+    await use(target === 'account' ? accountStorage : browserStorage);
+    // Provider availability must not make local exploration wait for the network.
+    void ai.load(target === 'account');
   },
   localSave: () => browserStorage.get('tuxos.save'),
+  backup: (value, label) => browserStorage.set(`tuxos.backup.${label}.${Date.now()}`, value),
 };
 
 // Only manifests load up front; each module's code is fetched the first time it is used.
@@ -98,6 +101,8 @@ const system = createLocalSystem({
 // With AI switched off (or no key), Vasu's requests never leave the browser.
 const tutor = httpTransport('/api/tutor', async (url, init) => {
   if (!ai.status().enabled) throw new Error('AI is turned off. Turn it on in Settings → AI.');
-  return fetch(url, { ...init, headers: { ...init?.headers as Record<string, string>, ...ai.headers() } });
+  return fetch(url, { ...init, credentials: ai.status().signedIn ? 'same-origin' : 'omit', headers: { ...init?.headers as Record<string, string>, ...ai.headers() } });
 });
-createRoot(document.getElementById('root')!).render(<StrictMode><App start={isPhone() ? 'phone' : 'grub'} system={system} tutor={tutor} accounts={accounts} /></StrictMode>);
+let fastBoot = true;
+try { fastBoot = localStorage.getItem('tuxos.fast-boot') !== '0'; } catch { /* Start normally when preferences are unavailable. */ }
+createRoot(document.getElementById('root')!).render(<StrictMode><App start={isPhone() ? 'phone' : fastBoot ? 'greeter' : 'grub'} system={system} tutor={tutor} accounts={accounts} /></StrictMode>);

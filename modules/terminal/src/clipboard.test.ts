@@ -15,7 +15,7 @@ function setup() {
   return { input, blocked, consumed, stop, select: () => { selected = true; } };
 }
 
-it.each(['copy', 'cut', 'paste', 'contextmenu', 'drop'])('blocks %s before terminal handlers run and shows the notice', type => {
+it.each(['paste', 'drop'])('blocks %s before terminal handlers run and shows the notice', type => {
   const { input, blocked, consumed } = setup();
   const event = new Event(type, { bubbles: true, cancelable: true });
   input.dispatchEvent(event);
@@ -25,9 +25,7 @@ it.each(['copy', 'cut', 'paste', 'contextmenu', 'drop'])('blocks %s before termi
 });
 it.each([
   { key: 'v', ctrlKey: true }, { key: 'V', ctrlKey: true, shiftKey: true },
-  { key: 'v', metaKey: true }, { key: 'c', metaKey: true },
-  { key: 'C', ctrlKey: true, shiftKey: true },
-  { key: 'Insert', shiftKey: true }, { key: 'Insert', ctrlKey: true },
+  { key: 'v', metaKey: true }, { key: 'Insert', shiftKey: true },
 ])('blocks clipboard keyboard shortcut %j', shortcut => {
   const { input, blocked, consumed } = setup();
   const event = new KeyboardEvent('keydown', { ...shortcut, bubbles: true, cancelable: true });
@@ -36,7 +34,7 @@ it.each([
   expect(consumed).not.toHaveBeenCalled();
   expect(blocked).toHaveBeenCalledOnce();
 });
-it('preserves typing, Tab, history and Ctrl+C interrupt, but blocks copying a selection', () => {
+it('preserves typing, Tab, history and Ctrl+C interrupt, and allows copying a selection', () => {
   const { input, select, consumed } = setup();
   for (const key of ['w', 'Tab', 'ArrowUp', 'Enter', 'c']) {
     const event = new KeyboardEvent('keydown', { key, ctrlKey: key === 'c', bubbles: true, cancelable: true });
@@ -45,8 +43,8 @@ it('preserves typing, Tab, history and Ctrl+C interrupt, but blocks copying a se
   expect(consumed).toHaveBeenCalledTimes(5);
   select();
   const copy = new KeyboardEvent('keydown', { key: 'c', ctrlKey: true, bubbles: true, cancelable: true });
-  input.dispatchEvent(copy); expect(copy.defaultPrevented).toBe(true);
-  expect(consumed).toHaveBeenCalledTimes(5);
+  input.dispatchEvent(copy); expect(copy.defaultPrevented).toBe(false);
+  expect(consumed).toHaveBeenCalledTimes(6);
 });
 it('blocks middle-click paste and mobile paste input', () => {
   const { input, consumed } = setup();
@@ -67,4 +65,12 @@ it('keeps clipboard actions outside the terminal working and restores the termin
   expect(paste.defaultPrevented).toBe(false);
   expect(blocked).not.toHaveBeenCalled();
   expect(consumed).toHaveBeenCalledOnce();
+});
+
+it.each(['copy', 'cut', 'contextmenu'])('allows %s even during typing practice', type => {
+  const { input, blocked } = setup();
+  const event = new Event(type, { bubbles: true, cancelable: true });
+  input.dispatchEvent(event);
+  expect(event.defaultPrevented).toBe(false);
+  expect(blocked).not.toHaveBeenCalled();
 });

@@ -121,6 +121,11 @@ export interface SystemClient {
   onSaveError(listener: (error: Error) => void): () => void;
   /** Save now instead of waiting for the debounce. Rejects if storage fails. */
   flush(): Promise<void>;
+  /** Export the current snapshot even when storage is unavailable. */
+  exportSave?(): string;
+  /** Protect unsaved UI work before changing accounts or powering off. */
+  registerLeaveGuard?(id: string, guard: () => boolean): () => void;
+  canLeave?(): boolean;
   user(): Promise<string>;
   hostname(): Promise<string>;
   session(): Promise<SessionState>;
@@ -196,6 +201,7 @@ export function createLocalSystem(options: {
   const appListeners = new Set<() => void>();
   const restartListeners = new Set<() => void>();
   const pendingSaves = new Set<Promise<void>>();
+  const leaveGuards = new Map<string, () => boolean>();
   let restarting = false;
 
   const current = (): Running => {
@@ -256,6 +262,9 @@ export function createLocalSystem(options: {
 
   const client: SystemClient = {
     boot,
+    exportSave() { const { kernel } = current(); return JSON.stringify({ username: kernel.user, snapshot: kernel.snapshot() }); },
+    registerLeaveGuard(id, guard) { leaveGuards.set(id, guard); return () => { if (leaveGuards.get(id) === guard) leaveGuards.delete(id); }; },
+    canLeave() { return [...leaveGuards.values()].every(guard => guard()); },
     async hasSave() {
       const saved = await options.storage.get(SAVE_KEY);
       if (!saved) return null;
@@ -415,6 +424,7 @@ function browserLearningBackend(ai: AiKeyStore | undefined): LearningBackend {
       try {
         response = await fetch(`/api/learning${path}`, {
           method: 'POST',
+          credentials: ai?.status().signedIn === false ? 'omit' : 'same-origin',
           headers: { 'content-type': 'application/json', ...ai?.headers() },
           body: JSON.stringify(body),
           // The server gives the AI 90 seconds; never wait forever if the connection hangs.

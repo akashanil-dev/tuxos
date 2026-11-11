@@ -8,7 +8,7 @@ The accepted [implementation plan](../research/tuxplore-comparison-2026-11-11/im
 | --- | --- | --- |
 | 0 Baseline | In progress | Existing typecheck passes; baseline 539/540 tests pass. One shell listing assertion hard-coded October against the real clock. Production build succeeds. Freeze source/feature inventory and save fixtures. |
 | 1 Contracts and export | Implemented; integration verification | Version 2 snapshots read v1 and preserve appearance. Desktop/theme/plugin access is independent of mastery; anniversary entitlement is retained. Storage transitions drain original writes; API refuses schema downgrade. Original-origin export bridge is prepared, not deployed. |
-| 2 Convenient entry | Pending | Guest/account entry, fast boot/resume, clipboard, appearance defaults, notifications. |
+| 2 Convenient entry | Core implemented | Guest/account entry, safe same-name transfer with conflict preview and backup, fast boot/resume, clipboard, canonical wallpaper, non-blocking milestones. Cross-name transfer and backup management continue with Phase 5. Curated Play/Journal entry follows feature modules. |
 | 3 Continuous desktop learning | Pending | Windowed learning/focus, terminal continuity, Files, window policies, touch. |
 | 4 Signature features | Pending | Adventure, both games, reference, achievements, guide, shell teaching, local help. |
 | 5 Import | Pending | Validated preview, conflict handling, backup, atomic/idempotent transfer, recovery. |
@@ -32,6 +32,14 @@ Record each meaningful implementation batch with its verification here as the wo
 
 - `8d31deb`: baseline research, implementation plan, feature ledger, synthetic fixtures, source/build manifests, and a fixed-clock shell test (26 shell tests passed).
 - Access/persistence batch: SDK exploration/preferences contracts, v1→v2 snapshot support, retained cosmetics, optional package practice, isolated storage transitions, API downgrade protection, and the legacy export page. First full check: 547/548 tests passed; the remaining assertion expected the old session shape and was updated to include the new preferences. All 43 targeted tests then passed, including the corrected test; typecheck and production build passed. Fixture puzzle IDs were corrected to the actual eight level IDs, and the upstream license notice is retained.
+- `4158d05`: committed the access/persistence/export foundation.
+- Guest-entry batch: Explore/Guided choices, optional account entry even when account discovery hangs, local export, explicit conflict choices, original guest retention and account backup before replacement. AI discovery no longer blocks boot and stale discovery replies are ignored. Normal clipboard and copyable output, optional typing-practice exit, KDE Minimal default, available desktop/theme/plugin choices, fast boot including desktop splashes, persistent mode, and non-blocking milestones. Full suite reached 547/548 with one splash-timing timeout; honoring fast boot removed that delay. All 32 affected account/AI/desktop/flow tests then passed, as did typecheck/build. Earlier 47 focused checks passed. Browser at `127.0.0.1:5178` confirmed guest entry without lessons/registration, Settings availability, and switching to GNOME with the Settings window retained.
+
+## Current local verification environment
+
+- API: port 8791, disposable `/tmp/tuxos-continuation-test-20261111.db`, AI off; exec session 59932.
+- Web: port 5178, localhost only, proxy to the disposable API; exec session 29749.
+- These are local testing services. No production account or save has been changed.
 
 ## External release gates
 

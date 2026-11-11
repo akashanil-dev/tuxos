@@ -53,7 +53,7 @@ export function TerminalSurface({ system, windowId, args, learningModule, inputI
   system: AppViewProps['system']; windowId?: string; args?: AppViewProps['args']; learningModule?: string;
   /** The id that TERMINAL_TYPE_EVENT uses to type here; a window's terminal uses its window id. */
   inputId?: string;
-  /** Only the early learning journey disables clipboard actions. */
+  /** Optional, explicitly chosen typing practice. Output can always be copied. */
   clipboardDisabled?: boolean;
   colourOutput?: boolean;
 }) {
@@ -62,6 +62,7 @@ export function TerminalSurface({ system, windowId, args, learningModule, inputI
   const container = useRef<HTMLDivElement>(null);
   const terminal = useRef<Terminal | null>(null);
   const [clipboardNotice, setClipboardNotice] = useState(false);
+  const [pasteAllowed, setPasteAllowed] = useState(false);
   const clipboardTipId = useId();
   const [error, setError] = useState('');
   const [running, setRunning] = useState(false);
@@ -173,7 +174,7 @@ export function TerminalSurface({ system, windowId, args, learningModule, inputI
   useEffect(() => {
     const element = container.current;
     setClipboardNotice(false);
-    if (!clipboardDisabled || !element) return;
+    if (!clipboardDisabled || pasteAllowed || !element) return;
     let timeout: ReturnType<typeof setTimeout> | undefined;
     const stop = guardTerminalClipboard(element, () => terminal.current?.hasSelection() ?? false, () => {
       setClipboardNotice(true);
@@ -181,11 +182,12 @@ export function TerminalSurface({ system, windowId, args, learningModule, inputI
       timeout = setTimeout(() => setClipboardNotice(false), 4500);
     });
     return () => { stop(); clearTimeout(timeout); };
-  }, [clipboardDisabled]);
+  }, [clipboardDisabled, pasteAllowed]);
 
   return <div className="terminal-view">
-    {clipboardDisabled && <div className={`terminal-clipboard-lock ${clipboardNotice ? 'show-notice' : ''}`}>
+    {clipboardDisabled && !pasteAllowed && <div className={`terminal-clipboard-lock ${clipboardNotice ? 'show-notice' : ''}`}>
       <span tabIndex={0} aria-describedby={clipboardTipId}>[ typing mode ]</span>
+      <button onClick={() => setPasteAllowed(true)}>Allow paste</button>
       <span id={clipboardTipId} role="tooltip" className="terminal-clipboard-tooltip">{CLIPBOARD_LOCK_MESSAGE}</span>
       <span className="terminal-clipboard-announcement" role="status">{clipboardNotice ? CLIPBOARD_LOCK_MESSAGE : ''}</span>
     </div>}
