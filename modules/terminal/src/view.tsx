@@ -47,7 +47,7 @@ export interface TerminalTypeDetail {
 
 export default function TerminalView(props: AppViewProps) {
   const desktop = DESKTOP_PACKAGES.find(item => item.id === props.args?.installDesktop);
-  return <div className="terminal-install-window">{desktop && <section className="terminal-install-guide"><strong>Install {desktop.name}</strong><p>Practice installing these simulated packages. Desktop styles are already available in Settings.</p><pre>sudo apt update{'\n'}sudo apt install {desktop.package}</pre><small>TuxOS practice packages · simulated installation</small></section>}<TerminalSurface system={props.system} windowId={props.windowId} setCloseGuard={props.setCloseGuard} args={props.args} learningModule={desktop ? "desktop-installation" : undefined} colourOutput={Boolean(desktop)} /></div>;
+  return <div className="terminal-install-window">{desktop && <section className="terminal-install-guide"><strong>Install {desktop.name}</strong><p>Practice installing these simulated packages. Desktop styles are already available in Settings.</p><pre>sudo apt update{'\n'}sudo apt install {desktop.package}</pre><small>TuxOS practice packages · simulated installation</small></section>}<TerminalSurface system={props.system} windowId={props.windowId} setCloseGuard={props.setCloseGuard} args={props.args} learningModule={desktop ? "desktop-installation" : undefined} colourOutput /></div>;
 }
 
 /** Reusable real xterm surface for terminal-first learning labs. */
@@ -142,7 +142,7 @@ export function TerminalSurface({ system, windowId, args, learningModule, inputI
       close: () => { if (windowId) void system.dispatch('session.close', { id: windowId }); },
       setTitle: (title: string) => {
         if (windowId) void system.dispatch('session.setTitle', {
-          id: windowId, title: owner === 'vasu' ? `Vasu's terminal — ${title}` : title,
+          id: windowId, title: owner === 'vasu' ? `Vasu's terminal — ${title}` : learningModule === 'learn-linux' ? `Learn Linux Terminal · ${title}` : title,
         });
       },
     };

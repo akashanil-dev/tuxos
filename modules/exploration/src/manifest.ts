@@ -5,6 +5,6 @@ export const manifest: ModuleManifest = {
   contributes: { apps: [
     { id: 'play', title: 'Play', icon: 'play', category: 'Games', description: 'Learn through Pipe Dream, Know Your Distro and Linux adventures.', defaultGeometry: { width: 780, height: 540 } },
     { id: 'command-reference', title: 'Command Reference', icon: 'command-reference', category: 'Education', description: 'Your learned commands, examples and printable cheat sheet.' },
-    { id: 'exploration-achievements', title: 'Discoveries', icon: 'exploration-achievements', category: 'Education', description: 'Thirty Tuxplore discoveries, alongside your course milestones.' },
+    { id: 'exploration-achievements', title: 'Achievements', icon: 'exploration-achievements', category: 'Education', description: 'Thirty Tuxplore achievements, alongside your course milestones.' },
   ] },
 };

@@ -21,7 +21,7 @@ async function renderFiles(): Promise<SystemClient> {
   });
   await system.boot('ada');
   render(<FilesView system={system} windowId="window-1" />);
-  await screen.findByText('Documents');
+  await screen.findByText('Documents', { selector:'td' });
   return system;
 }
 
@@ -31,13 +31,15 @@ it('resumes a verified folder, hidden-file preference and icon view after a full
   const system = createLocalSystem({ storage: memory(), modules: [{ manifest: files.manifest, load: async () => files }] });
   await system.boot('ada'); const opened = await system.openApp('files'); if (!opened.ok) throw new Error('Files did not open');
   const view = render(<FilesView system={system} windowId={opened.value} />);
-  await screen.findByText('Documents'); fireEvent.click(screen.getByRole('button', { name: 'Temporary files' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Hidden files' })); fireEvent.click(screen.getByRole('button', { name: 'Icon view' }));
+  await screen.findByText('Documents', { selector:'td' }); fireEvent.click(screen.getByRole('button', { name: 'Temporary files' }));
+  fireEvent.click(screen.getByLabelText('More actions'));
+    fireEvent.click(screen.getByRole('button', { name: 'Hidden files' })); fireEvent.click(screen.getByRole('button', { name: 'Icon view' }));
   await waitFor(async () => expect((await system.session()).windows[0]?.args).toMatchObject({ path: '/tmp', hidden: 'true', view: 'icons' }));
   await system.flush(); view.unmount(); await system.boot('ada');
   const saved = (await system.session()).windows[0]!;
   render(<FilesView system={system} windowId={saved.id} args={saved.args} />);
   await waitFor(() => expect((screen.getByLabelText('Location') as HTMLInputElement).value).toBe('/tmp'));
+  fireEvent.click(screen.getByLabelText('More actions'));
   expect(screen.getByRole('button', { name: 'Hidden files' }).getAttribute('aria-pressed')).toBe('true');
   expect(screen.getByRole('button', { name: 'List view' }).getAttribute('aria-pressed')).toBe('true');
   await system.reset();
@@ -54,21 +56,22 @@ describe('Files', () => {
     expect(await screen.findByText('proc')).toBeTruthy();
     expect(screen.getByLabelText<HTMLInputElement>('Location').value).toBe('/');
     fireEvent.click(screen.getByRole('button', { name: 'Home' }));
-    expect(await screen.findByText('Documents')).toBeTruthy();
+    expect(await screen.findByText('Documents', { selector:'td' })).toBeTruthy();
   });
 
   it('opens in the home folder and enters a folder on double-click', async () => {
     await renderFiles();
     expect(screen.getByLabelText<HTMLInputElement>('Location').value).toBe('/home/ada');
-    fireEvent.doubleClick(screen.getByText('Documents'));
+    fireEvent.doubleClick(screen.getByText('Documents', { selector:'td' }));
     expect(await screen.findByText('This folder is empty.')).toBeTruthy();
     expect(screen.getByLabelText<HTMLInputElement>('Location').value).toBe('/home/ada/Documents');
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
-    expect(await screen.findByText('Documents')).toBeTruthy();
+    expect(await screen.findByText('Documents', { selector:'td' })).toBeTruthy();
   });
 
   it('shows the kernel error for a folder the learner may not open', async () => {
     await renderFiles();
+    fireEvent.click(screen.getByLabelText('Edit location'));
     fireEvent.change(screen.getByLabelText('Location'), { target: { value: '/root' } });
     fireEvent.submit(screen.getByLabelText('Location').closest('form')!);
     expect((await screen.findByRole('alert')).textContent).toBe('Can’t open “/root”: Permission denied');
@@ -95,14 +98,16 @@ describe('Files', () => {
 
   it('deletes only after confirmation', async () => {
     const system = await renderFiles();
-    fireEvent.click(screen.getByText('Documents'));
+    fireEvent.click(screen.getByText('Documents', { selector:'td' }));
+    if (!screen.queryByRole('alertdialog')) fireEvent.click(screen.getByLabelText('More actions'));
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
     expect(screen.getByRole('alertdialog').textContent).toContain('and everything in it');
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(await system.dispatch('fs.stat', { path: '/home/ada/Documents' })).toMatchObject({ ok: true });
+    if (!screen.queryByRole('alertdialog')) fireEvent.click(screen.getByLabelText('More actions'));
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
     fireEvent.click(screen.getAllByRole('button', { name: 'Delete' }).at(-1)!);
-    await waitFor(() => expect(screen.queryByText('Documents')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Documents', { selector:'td' })).toBeNull());
   });
 
   it('previews files safely before opening the same path in Text Editor', async () => {
@@ -120,7 +125,7 @@ describe('Files', () => {
     const system = await renderFiles();
     await act(async () => { await system.dispatch('fs.write', { path: '/home/ada/.bashrc', content: '' }); });
     expect(screen.queryByText('.bashrc')).toBeNull();
-    fireEvent.keyDown(screen.getByText('Documents'), { key: 'h', ctrlKey: true });
+    fireEvent.keyDown(screen.getByText('Documents', { selector:'td' }), { key: 'h', ctrlKey: true });
     expect(await screen.findByText('.bashrc')).toBeTruthy();
   });
 });
@@ -147,4 +152,18 @@ describe('Files model', () => {
     expect(parentOf('/home/ada')).toBe('/home');
     expect(parentOf('/home')).toBe('/');
   });
+});
+
+it('edits and selects the full path when its current breadcrumb is clicked, and Escape cancels', async () => {
+  await renderFiles();
+  fireEvent.click(screen.getByRole('button', { name: /explorer|ada/ }));
+  const location = screen.getByLabelText<HTMLInputElement>('Location');
+  expect(location.closest('form')?.hidden).toBe(false);
+  expect(document.activeElement).toBe(location);
+  expect(location.selectionStart).toBe(0);
+  expect(location.selectionEnd).toBe('/home/ada'.length);
+  fireEvent.change(location, { target: { value:'/tmp' } });
+  fireEvent.keyDown(location, { key:'Escape' });
+  expect(location.value).toBe('/home/ada');
+  expect(location.closest('form')?.hidden).toBe(true);
 });

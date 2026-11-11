@@ -197,7 +197,7 @@ function LinuxTerminalLab({ system, courseId, setCloseGuard }: { system: SystemC
   </div>;
 }
 
-function LinuxLessonPanel({ system, courseId }: { system: SystemClient; courseId: string }) {
+export function LinuxLessonPanel({ system, courseId, detached = false }: { system: SystemClient; courseId: string; detached?: boolean }) {
   const { status, error, call } = useLessonStatus(system, courseId);
   const [retrying, setRetrying] = useState(false);
   const [browse, setBrowse] = useState(false);
@@ -240,17 +240,18 @@ function LinuxLessonPanel({ system, courseId }: { system: SystemClient; courseId
         <span className="linux-mission-count">Step {active!.stepIndex + 1} of {active!.steps.length}</span>
       </div>
       {error && <p className="learn-error" role="alert">{error}</p>}
+      {detached && <><p className="learning-journal-story">{active!.lesson.story}</p><ol className="learn-steps learning-journal-checklist">{active!.steps.map((step, index) => <li key={step.id} className={step.done ? 'done' : index === active!.stepIndex ? 'now' : ''}><span aria-hidden="true">{step.done ? '✓' : '○'} </span>{step.task}</li>)}</ol></>}
       <div className="linux-mission-task" aria-live="polite" aria-atomic="true">
         <span className="linux-mission-label">Try this</span>
         <p><LessonText text={task.task} /></p>
       </div>
-      <span className="linux-mission-help">Use the terminal below. Your progress saves automatically.</span>
+      <span className="linux-mission-help">{detached ? 'Open the Learn Linux Terminal to practise. Your progress saves automatically.' : 'Use the terminal below. Your progress saves automatically.'}</span>
       <details className="linux-task-help" key={`${active!.lesson.id}.${task.id}`}>
         <summary>Need help?</summary>
         {task.teach && <div className="linux-help-explanation"><LessonText text={task.teach} /></div>}
         <div className="linux-mission-actions">
-          <button type="button" onClick={() => type('/hint')}>Give me a hint</button>
-          <button type="button" className="quiet" onClick={() => type('/answer')}>Show answer</button>
+          {detached ? <><div>{task.hints.map(hint => <p key={hint}>{hint}</p>)}</div><p>Type <code>/hint</code> or <code>/answer</code> in your learning terminal for guided help.</p></> : <><button type="button" onClick={() => type('/hint')}>Give me a hint</button>
+          <button type="button" className="quiet" onClick={() => type('/answer')}>Show answer</button></>}
         </div>
         {active!.lesson.story && <details className="linux-lesson-context">
           <summary>About this lesson</summary>

@@ -181,7 +181,7 @@
 }
 
 .about-specs dt {
-  opacity: 0.65;
+  color: var(--muted);
 }
 
 .about-specs dd {
@@ -304,9 +304,8 @@
   pointer-events: none;
 }
 
-.ai-key.unavailable form,
 .ai-key.unavailable .ai-key-help {
-  opacity: .55;
+  color: var(--muted);
 }
 
 .ai-key fieldset {
@@ -399,7 +398,7 @@
 }
 
 .ai-key-help a {
-  color: var(--accent);
+  color: var(--accent-strong);
 }
 
 .settings button:disabled { opacity:.55; cursor:not-allowed; }
@@ -413,3 +412,7 @@
 .settings-reset-confirm h4 { margin: 0; }
 .settings-reset-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .settings-reset .settings-reset-delete { background: #973c3c; color: white; border-color: #bf6262; }
+
+.settings-save-actions { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
+
+.settings .desktop-display-controls { position:static; flex-wrap:wrap; gap:12px; margin-bottom:20px; }

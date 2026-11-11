@@ -149,14 +149,14 @@ describe('web desktop', () => {
     render(<Desktop system={system} />);
     await system.openApp('about');
     const title = await findWindowTitle();
-    await waitFor(() => expect((title.closest('.app-window') as HTMLElement).style.top).toBe('36px'));
+    await waitFor(() => expect((title.closest('.app-window') as HTMLElement).style.top).toBe('20px'));
     system.dispatch.mockClear();
     dispatchPointer(title, 'pointerdown', 30, 46, 1);
     dispatchPointer(title, 'pointermove', 80, 90, 1);
     dispatchPointer(title, 'pointerup', 100, 110, 1);
     const moves = system.dispatch.mock.calls.filter((call: [string, unknown]) => call[0] === 'session.move');
     expect(moves).toHaveLength(1);
-    expect(moves[0]![1]).toMatchObject({ x: 90, y: 100 });
+    expect(moves[0]![1]).toMatchObject({ x: 90, y: 84 });
   });
 
   it('clamps resize to the minimum geometry', async () => {

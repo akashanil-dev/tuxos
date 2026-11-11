@@ -1,6 +1,6 @@
 import type { Window as SessionWindow } from '@tuxos/kernel';
 import type { SystemClient } from '@tuxos/system';
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { PopupMenu, type MenuItem } from '../desktops/shared/Menu';
 import { usePointerDrag } from '../hooks/usePointerDrag';
 import { getLazyView, retryView } from '../views';
@@ -53,7 +53,19 @@ const MIN_HEIGHT = 160;
 
 export function WindowFrame(props: WindowFrameProps) {
   const { system, window, focused, insets, decoration, icon, tiled, offWorkspace, onClose, setCloseGuard } = props;
-  const [preview, setPreview] = useState<Geometry>(() => geometryOf(window));
+  const initialGeometry = () => {
+    if (!window.centerOnLaunch) return geometryOf(window);
+    const box = clampGeometry(geometryOf(window), { width: globalThis.innerWidth, height: globalThis.innerHeight }, insets);
+    return window.centerOnLaunch ? { ...box, x: Math.max(0, (globalThis.innerWidth - box.width) / 2), y: insets.top + Math.max(0, (globalThis.innerHeight - insets.top - insets.bottom - box.height) / 2) } : box;
+  };
+  const [preview, setPreview] = useState<Geometry>(initialGeometry);
+  useLayoutEffect(() => {
+    if (!window.centerOnLaunch) return;
+    const box = initialGeometry();
+    setPreview(box);
+    void system.dispatch('session.resize', { id: window.id, width: box.width, height: box.height });
+    void system.dispatch('session.move', { id: window.id, x: box.x, y: box.y });
+  }, [window.id, window.centerOnLaunch, system]);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const dragOrigin = useRef({ x: 0, y: 0 });
   const resizeOrigin = useRef({ width: 0, height: 0, x: 0, y: 0 });
@@ -66,7 +78,7 @@ export function WindowFrame(props: WindowFrameProps) {
   const fixed = Boolean(tiled) || window.maximized;
 
   useEffect(() => {
-    setPreview(geometryOf(window));
+    if (!window.centerOnLaunch) setPreview(geometryOf(window));
   }, [window.x, window.y, window.width, window.height]);
 
   const movePreview = (event: React.PointerEvent) => {
@@ -169,11 +181,6 @@ export function WindowFrame(props: WindowFrameProps) {
           && <WindowButton label={`Close ${window.title}`} kind="close" onClick={onClose} onPointerDown={stopPointer} />}
       </div>
     </header>
-    {window.appId === 'learn-linux' && <nav className="learning-window-controls" aria-label="Learning view">
-      <button onClick={() => { toggleMaximize(); void system.dispatch('session.setPreferences', { resume: window.maximized ? 'desktop' : 'learn' }); }}>{window.maximized ? 'Return to window' : 'Focus view'}</button>
-      <button onClick={() => void system.openApp('files')}>Open Files</button>
-      <button onClick={() => { minimize(); void system.dispatch('session.setPreferences', { resume: 'desktop' }); }}>Explore desktop</button>
-    </nav>}
     <div className="window-content">
       {View ? <AppErrorBoundary title={window.title} retry={() => { retryView(window.appId); setAttempt(value => value + 1); }}><Suspense fallback={<p className="window-loading" role="status">Opening {window.title}…</p>}>
         <View active={focused && props.active !== false && !window.minimized && !offWorkspace} system={system} windowId={window.id} args={window.args} setCloseGuard={guard} />

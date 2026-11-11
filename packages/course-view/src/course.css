@@ -546,3 +546,20 @@
 .learning-instructions .linux-mission { max-height:none; }
 .learning-instructions .linux-terminal-lab { height:auto; }
 .continuous-learning > .terminal-view { flex:1 1 45%; min-height:130px; }
+
+/* The journal and its practice terminal are independent desktop windows. */
+.learning-entry > nav { flex-wrap:nowrap; flex-shrink:0; gap:0; padding:0 12px; overflow-x:auto; background:var(--surface); }
+.learning-entry > nav button { flex-shrink:0; padding:13px 12px; border:0; border-bottom:3px solid transparent; border-radius:0; background:transparent; color:var(--muted); }
+.learning-entry > nav button[aria-selected="true"] { color:var(--window-fg); border-bottom-color:var(--accent); background:var(--hover); }
+.learning-tab-content { flex:1; min-height:0; overflow:auto; }
+.linux-learning-journal { min-height:100%; background:var(--window-bg); color:var(--window-fg); }
+.learning-journal-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:16px 20px; border-bottom:1px solid var(--line); }
+.learning-journal-actions span { font-size:12px; color:var(--muted); }
+.learning-journal-actions button { background:var(--surface-2); color:var(--window-fg); border:1px solid var(--accent); }
+.linux-learning-journal .linux-terminal-lab { height:auto; }
+.linux-learning-journal .linux-mission { max-height:none; padding:20px; }
+.learning-terminal-note { flex-shrink:0; padding:9px 14px; background:var(--surface); color:var(--muted); font-size:12px; border-bottom:1px solid var(--line); }
+.learning-journal-checklist { list-style:none; padding:0; margin:18px 0; }
+.learning-journal-checklist li { padding:8px 10px; border-radius:var(--radius-small); }
+.learning-journal-checklist li.now { background:var(--accent-soft); }
+.learning-journal-checklist li > span { display:inline-block; width:20px; color:var(--accent-strong); }

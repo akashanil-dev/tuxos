@@ -1,3 +1,5 @@
+import { FullscreenControl } from './desktop/FullscreenControl';
+import { SessionControls } from '@tuxos/module-settings/session-controls';
 import { DEFAULT_DESKTOP } from '@tuxos/kernel';
 import { JourneyScreen } from './journey/JourneyScreen';
 import { desktopById, wallpaperById } from '@tuxos/appearance';
@@ -63,22 +65,12 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
   const [accountError, setAccountError] = useState('');
   const [retry, setRetry] = useState(0);
   const [powerError, setPowerError] = useState('');
-  const [authOpen, setAuthOpen] = useState(false);
   const [guestBusy, setGuestBusy] = useState(false);
   const [saveToAccount, setSaveToAccount] = useState(false);
   const [recoveryOpen, setRecoveryOpen] = useState(false);
   const [ImportAndBackups, setRecoveryView] = useState(() => lazy(() => import('./migration/ImportAndBackups')));
   const [transfer, setTransfer] = useState<{ existing: boolean; from?: string; to?: string; summary: string; choose(choice: 'guest' | 'account' | 'cancel'): void } | null>(null);
   const wallpaper = useWallpaper('default').background;
-  useEffect(() => {
-    if (!booted) return;
-    const remember = () => void system.session().then(session => {
-      try { localStorage.setItem('tuxos.fast-boot', session.preferences?.fastBoot === false ? '0' : '1'); } catch { /* Preference caching is optional; the save reports persistence failures. */ }
-    });
-    remember();
-    return system.onChange(event => { if (event.action.type === 'session.setPreferences') remember(); });
-  }, [system, booted]);
-
   useEffect(() => {
     if (!booted || screen !== 'desktop') return;
     const pending = [...bootDiscoveries.current]; bootDiscoveries.current.clear();
@@ -100,7 +92,7 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
     const guestSave = accounts
       ? accounts.localSave().then((saved) => (saved ? (JSON.parse(saved) as { username?: string }).username ?? null : null))
       : system.hasSave();
-    void guestSave.then(value => { if (active) setSavedUser(value); }).catch(() => { if (active) setSavedUser(null); });
+    void guestSave.then(value => { if (active) setSavedUser(value) }).catch(() => { if (active) setSavedUser(null) });
     setAccountError('');
     if (accounts) void accounts.client.me().then(value => { if (active) setAccount(value); }).catch(cause => { if (active) { setAccount(null); setAccountError(String(cause)); } });
     return () => { active = false; };
@@ -147,11 +139,11 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
     // Set together with the screen change: the greeter is keyed on the account, so setting it earlier remounted
     // the login form as the password-only unlock screen for as long as the system took to boot.
     setAccount(username);
-    setSaveToAccount(false); setAuthOpen(false);
+    setSaveToAccount(false);
     setScreen('desktop');
   }, [system, accounts, booted, saveToAccount]);
 
-  const explore = async (mode?: 'desktop' | 'learn') => {
+  const explore = useCallback(async (mode?: 'desktop' | 'learn') => {
     setGuestBusy(true); setPowerError('');
     try {
       if (booted) await system.flush();
@@ -159,11 +151,12 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
       const username = savedUser || 'explorer';
       await system.boot(username);
       if (mode) await system.dispatch('session.setPreferences', { resume: mode });
-      setBooted(`guest:${username}`); setScreen('desktop'); setAuthOpen(false);
+      setBooted(`guest:${username}`); setScreen('desktop');
       try { await system.flush(); } catch (cause) { setPowerError(`This session has not been saved: ${String(cause)}. Download a backup before leaving.`); }
     } catch (cause) { setPowerError(String(cause)); }
     finally { setGuestBusy(false); }
-  };
+  }, [accounts, booted, savedUser, system]);
+
   const download = () => {
     try {
       const data = system.exportSave?.();
@@ -175,7 +168,7 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
   };
   const openAccount = async () => {
     if (system.canLeave?.() === false) return;
-    try { await system.flush(); setSavedUser(undefined); setAccount(undefined); setSaveToAccount(true); setAuthOpen(true); setScreen('greeter'); }
+    try { await system.flush(); setSavedUser(undefined); setAccount(undefined); setSaveToAccount(true); setScreen('greeter'); }
     catch (cause) { setPowerError(`Save to this browser first, or download a backup: ${String(cause)}`); }
   };
 
@@ -188,12 +181,12 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
     if (system.canLeave?.() === false) return;
     void (async () => {
       await system.flush();
-      if (action === 'lock') { setAuthOpen(booted.startsWith('account:')); setScreen('greeter'); }
+      if (action === 'lock') { setScreen('greeter'); }
       else if (action === 'logout') {
         if (booted.startsWith('account:')) await accounts?.client.logout();
-        setAuthOpen(false);
+
         setAccount(undefined); setSavedUser(undefined); setBooted(null); setScreen('greeter');
-      } else { const preferences = (await system.session()).preferences; setBooted(null); setScreen(action === 'restart' ? preferences?.fastBoot === false ? 'grub' : 'greeter' : 'off'); }
+      } else { setBooted(null); setScreen(action === 'restart' ? 'grub' : 'off'); }
       setPowerError('');
     })().catch(cause => setPowerError(`Could not save and leave: ${String(cause)}. Try signing out again after reconnecting.`));
   }, [system, booted, accounts]);
@@ -203,7 +196,7 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
     setRecovery(mode === 'recovery');
     setScreen('boot');
   }, []);
-  const toGreeter = useCallback(() => setScreen('greeter'), []);
+  const toGreeter = useCallback(() => { setScreen('greeter'); }, []);
   const powerOn = useCallback(() => setScreen('grub'), []);
 
   switch (screen) {
@@ -211,8 +204,7 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
     case 'grub': return <Grub onBoot={onBoot} onMemoryTest={() => bootDiscoveries.current.add('memtest')} />;
     case 'boot': return <BootLog recovery={recovery} onDone={toGreeter} />;
     case 'off': return <PowerOff onPowerOn={powerOn} />;
-    case 'desktop': return <>{powerError && <div className="journey-save-error" role="alert">{powerError}<button onClick={download}>Download backup</button></div>}<JourneyScreen active={!recoveryOpen} key={booted} system={system} tutor={tutor} onPower={power} verifySudo={verifySudo} />
-      <aside className="session-save-status" aria-label="Save location"><span>{booted?.startsWith('guest:') ? 'Browser storage' : `Account: ${account}`}</span><button onClick={download}>Export backup</button><button onClick={() => setRecoveryOpen(true)}>Import & backups</button>{booted?.startsWith('guest:') && accounts && <button onClick={() => void openAccount()}>Save to an account</button>}</aside>
+    case 'desktop': return <>{powerError && <div className="journey-save-error" role="alert">{powerError}<button onClick={download}>Download backup</button></div>}<SessionControls.Provider value={{ displayControls: <FullscreenControl />, location: booted?.startsWith('guest:') ? 'Browser storage' : `Account: ${account}`, download, importBackups: () => setRecoveryOpen(true), saveToAccount: booted?.startsWith('guest:') && accounts ? () => { void openAccount(); } : undefined }}><JourneyScreen active={!recoveryOpen} key={booted} system={system} tutor={tutor} onPower={power} verifySudo={verifySudo} /></SessionControls.Provider>
       {recoveryOpen && <div className="recovery-load-shell"><AppErrorBoundary title="Import & backups" close={() => setRecoveryOpen(false)} retry={() => setRecoveryView(() => lazy(() => import('./migration/ImportAndBackups')))}><Suspense fallback={<section className="transfer-card" role="status">Opening import and recovery… <button onClick={() => setRecoveryOpen(false)}>Return to desktop</button></section>}><ImportAndBackups system={system} close={() => setRecoveryOpen(false)} /></Suspense></AppErrorBoundary></div>}</>;
   }
   const greeter = desktopById(desktop).greeter;
@@ -221,17 +213,11 @@ export function App({ system, tutor, accounts, start = 'greeter' }: {
     className={`greeter-screen greeter-${greeter}`}
     style={{ '--greeter-wallpaper': wallpaper } as React.CSSProperties}
   >
-    {!authOpen && <main className="explore-welcome"><div className="explore-card"><p className="explore-eyebrow">TuxOS · continuing Tuxplore</p><h1>Your Linux adventure starts here.</h1><p>Explore a desktop, try commands, and learn through play. Your progress stays with you in this browser.</p>
-      <div className="explore-actions"><button className="primary" disabled={guestBusy || savedUser === undefined} onClick={() => void explore(savedUser ? undefined : 'desktop')}>{guestBusy ? 'Opening…' : savedUser ? 'Resume TuxOS' : 'Explore TuxOS'}</button><button disabled={guestBusy || savedUser === undefined} onClick={() => void explore('learn')}>Start guided learning</button></div>
-      {accounts && <button className="explore-account" onClick={() => setAuthOpen(true)}>{account ? `Sign in as ${account}` : 'Sign in or create an account'}</button>}
-      <p className="explore-note">No account needed to explore. An account lets you keep your progress across devices.</p>
-      <p className="explore-note"><a href="/about.html">About TuxOS</a> · <a href="/migrate.html">Bring your Tuxplore progress</a></p>
-      {powerError && <p role="alert">{powerError}</p>}
-    </div></main>}
-    {authOpen && <button className="explore-back" onClick={() => { setAuthOpen(false); setSaveToAccount(false); }}>← Back to exploration</button>}
-    {authOpen && accountError && <div className="account-connection" role="status"><p>Account connection unavailable. You can still explore as a guest.</p><button onClick={() => setRetry(n => n + 1)}>Retry connection</button></div>}
-    {authOpen && (savedUser === undefined || account === undefined) && <p className="account-connection" role="status">Checking saved account…</p>}
-    {authOpen && savedUser !== undefined && account !== undefined && <Greeter
+    {powerError && <p className="account-connection" role="alert">{powerError}</p>}
+    <button className="explore-back" disabled={guestBusy || savedUser === undefined} onClick={() => { setSaveToAccount(false); void explore(savedUser ? undefined : 'desktop'); }}>{guestBusy ? 'Opening TuxOS…' : savedUser ? 'Continue in this browser' : 'Explore as guest'}</button>
+    {accountError && <div className="account-connection" role="status"><p>Account connection unavailable. You can still explore as a guest.</p><button onClick={() => setRetry(n => n + 1)}>Retry connection</button></div>}
+    {(savedUser === undefined || account === undefined) && <p className="account-connection" role="status">Checking saved account…</p>}
+    {savedUser !== undefined && account !== undefined && <Greeter
       // A different account or legacy save means a fresh form.
       key={`${account}|${savedUser}`}
       system={system}

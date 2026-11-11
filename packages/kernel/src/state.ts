@@ -11,6 +11,8 @@ export interface UserAccount {
 }
 
 export interface Window {
+  /** The UI resolves initial placement using its viewport and panel insets. */
+  centerOnLaunch?: boolean;
   id: string;
   appId: string;
   title: string;

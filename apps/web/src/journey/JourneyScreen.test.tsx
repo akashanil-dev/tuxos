@@ -33,16 +33,17 @@ it('opens the desktop without starting a course or requiring installation', asyn
   await screen.findByRole('button', { name: 'Close Files' });
 });
 
-it('uses the same learning window and terminal in focus and desktop views', async () => {
+it('keeps the separate learning terminal mounted while minimizing and reopening the journal', async () => {
   await setup('learn');
   await screen.findByText(course.lessons[0]!.steps[0]!.task);
-  const surface = screen.getByLabelText('Learning terminal');
+  fireEvent.click(screen.getByRole('button', { name: 'Open Terminal' }));
+  const surface = await screen.findByLabelText('Learning terminal');
   expect(surface.getAttribute('data-clipboard-disabled')).toBe('false');
-  fireEvent.click(screen.getByRole('button', { name: 'Return to window' }));
+  expect(screen.queryByRole('button', { name: 'Return to window' })).toBeNull();
   expect(screen.getByLabelText('Learning terminal')).toBe(surface);
   expect((await system.session()).journey!.steps).toEqual([]);
-  fireEvent.click(screen.getByRole('button', { name: 'Explore desktop' }));
-  await waitFor(async () => expect((await system.session()).preferences?.resume).toBe('desktop'));
+  fireEvent.click(screen.getByRole('button', { name: 'Minimize Learn Linux' }));
+  await waitFor(async () => expect((await system.session()).windows.find(w => w.appId === 'learn-linux')?.minimized).toBe(true));
   await act(async () => { await system.openApp('learn-linux'); });
   expect(screen.getByLabelText('Learning terminal')).toBe(surface);
   expect((await system.session()).windows.filter(w => w.appId === 'learn-linux')).toHaveLength(1);
@@ -51,7 +52,8 @@ it('uses the same learning window and terminal in focus and desktop views', asyn
 it('keeps the terminal mounted across lessons, milestones and the rewards gallery', async () => {
   const saves = await setup('learn');
   await screen.findByText(course.lessons[0]!.steps[0]!.task);
-  const surface = screen.getByLabelText('Learning terminal');
+  fireEvent.click(screen.getByRole('button', { name: 'Open Terminal' }));
+  const surface = await screen.findByLabelText('Learning terminal');
   const shell = await system.createTerminal({ learningModule: 'learn-linux' });
   await act(async () => { for (const line of ['whoami', 'pwd', 'ls']) await shell.run(line); });
   await screen.findByText('Terminal Explorer');

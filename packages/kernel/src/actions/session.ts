@@ -146,7 +146,7 @@ export const sessionActions: ActionDefinition[] = [
       const index = state.session.windows.length;
       const window: Window = {
         id: `window-${state.session.nextId++}`,
-        appId, title, width, height, x: 48 + index * 24, y: 40 + index * 24,
+        centerOnLaunch: true, appId, title, width, height, x: 48 + index * 24, y: 40 + index * 24,
         minimized: false, maximized: false, z: topZ(state.session),
       };
       if (windowArgs) window.args = windowArgs;
@@ -223,6 +223,7 @@ export const sessionActions: ActionDefinition[] = [
     type: 'session.move', capability: 'session:control', description: 'Move a window.', mutates: true,
     run: ({ state }, payload) => {
       const window = find(state.session, id(payload));
+      delete window.centerOnLaunch;
       window.x = field(payload, 'x', 'number') as number;
       window.y = field(payload, 'y', 'number') as number;
     },

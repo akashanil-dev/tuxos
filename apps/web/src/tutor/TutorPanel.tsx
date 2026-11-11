@@ -1,3 +1,4 @@
+import { VasuGuide } from './VasuGuide';
 import type { AiStatus, SystemClient } from '@tuxos/system';
 import type { Transport } from '@tuxos/tutor';
 import { useEffect, useRef, useState } from 'react';
@@ -5,14 +6,12 @@ import { offlineAnswer, type OfflineContext } from './offline';
 import { PointerOverlay } from './PointerOverlay';
 import { Penguin } from './Penguin';
 import { SudoDialog } from './SudoDialog';
-import { useStroll } from './useStroll';
 import { useStuckNudge } from './useStuckNudge';
 import { useTutor, type CursorState, type Entry } from './useTutor';
 import { hasMetVasu, rememberMetVasu, VasuIntro } from './VasuIntro';
 
-export function TutorPanel({ system, transport, verifySudo = null, rich = false }: {
+export function TutorPanel({ system, transport, verifySudo = null }: {
   system: SystemClient;
-  rich?: boolean;
   transport: Transport;
   /** Checks the signed-in account's password; null for guests. */
   verifySudo?: ((password: string) => Promise<boolean>) | null;
@@ -24,20 +23,20 @@ export function TutorPanel({ system, transport, verifySudo = null, rich = false 
   const log = useRef<HTMLOListElement>(null);
   const [user, setUser] = useState('');
   const [intro, setIntro] = useState(false);
+  const [guide, setGuide] = useState(false);
   const ai = useAiStatus(system);
   const aiOn = ai?.enabled ?? true;
   // Without AI, Vasu answers from his offline guide; that conversation is kept apart from the AI one.
   const [offline, setOffline] = useState<Entry[]>([]);
   const entries = aiOn ? tutor.entries : offline;
 
-  // The first time a learner meets Vasu with AI on, he introduces himself once the desktop has settled. Without
-  // AI he stays quietly in his corner: no introduction or strolls; error help remains local and optional.
+  // First-visit guidance is local and available regardless of AI configuration.
   useEffect(() => {
     let active = true;
     void system.user().then((name) => {
       if (!active) return;
       setUser(name);
-      if (aiOn && !hasMetVasu(name)) setTimeout(() => { if (active) setIntro(true); }, 1200);
+      if (!hasMetVasu(name)) setTimeout(() => { if (active) setIntro(true); }, 1200);
     });
     return () => { active = false; };
   }, [system, aiOn]);
@@ -46,8 +45,6 @@ export function TutorPanel({ system, transport, verifySudo = null, rich = false 
     rememberMetVasu(user);
   };
 
-  // With AI on, he strolls along the bottom of the screen whenever nobody needs him.
-  const stroll = useStroll(aiOn && !open && !intro && !nudge && !tutor.busy && !tutor.pointer && !tutor.sudoRequest);
 
   useEffect(() => {
     log.current?.lastElementChild?.scrollIntoView?.({ block: 'end' });
@@ -96,10 +93,13 @@ export function TutorPanel({ system, transport, verifySudo = null, rich = false 
           title="Vasu can use sudo. Click to take it back."
           onClick={tutor.revokeSudo}
         >sudo · Revoke</button>}
-        <button className="tutor-about" title="What can Vasu do?" onClick={() => { setOpen(false); setIntro(true); }}>About me</button>
-        <button className="tutor-about" onClick={() => { tutor.stop(); void system.dispatch('session.setPreferences', { showVasu: false }); }} title="Show Vasu again in Settings">Hide Vasu</button>
         <button aria-label="Close tutor" onClick={() => setOpen(false)}>×</button>
       </header>
+      <nav className="tutor-toolbar" aria-label="Vasu help">
+        <button className="tutor-about" title="What can Vasu do?" onClick={() => { setOpen(false); setIntro(true); }}>Getting started</button>
+        <button className="tutor-about" onClick={() => { setOpen(false); setIntro(false); setGuide(true); }}>Adventure hint</button>
+        <button className="tutor-about" onClick={() => { tutor.stop(); void system.dispatch('session.setPreferences', { showVasu: false }); }} title="Show Vasu again in Settings">Hide Vasu</button>
+      </nav>
       <ol className="tutor-log" ref={log}>
         {!aiOn && <li className="tutor-hello tutor-no-key">
           Hi! I&apos;m Vasu. {ai?.available === false
@@ -142,13 +142,14 @@ export function TutorPanel({ system, transport, verifySudo = null, rich = false 
       <p>{nudge.text}</p><button onClick={() => void ask(nudge.question)}>Ask Vasu{!aiOn && ' · offline'}</button><button aria-label="Dismiss Vasu hint" onClick={dismiss}>Dismiss</button>
     </aside>}
     <div
-      className={`vasu-actor ${stroll.walking ? 'walking' : ''} ${stroll.x < globalThis.innerWidth / 2 ? 'on-left' : ''}`}
-      style={{ transform: `translateX(${stroll.x}px)`, transitionDuration: `${stroll.durationMs}ms` }}
+      className="vasu-actor tuxplore-companion"
     >
-      {intro && <VasuIntro
+      {guide && !intro && !open && <VasuGuide system={system} onClose={() => setGuide(false)} />}
+      {intro && !open && <VasuIntro
         user={user}
         onClose={closeIntro}
         onChat={() => { closeIntro(); setOpen(true); }}
+        onAdventure={() => { closeIntro(); setGuide(true); void system.openApp('learn-adventure'); }}
         onLearn={() => { closeIntro(); void system.openApp('learn-linux'); }}
       />}
       <button
@@ -157,9 +158,7 @@ export function TutorPanel({ system, transport, verifySudo = null, rich = false 
         aria-expanded={open}
         onClick={() => { if (intro) closeIntro(); setOpen(!open); }}
       >
-        <Penguin rich={rich}
-          facing={stroll.facing}
-          walking={stroll.walking}
+        <Penguin
           mood={tutor.pointer ? 'pointing' : tutor.busy ? (tutor.acting ? 'acting' : 'thinking') : 'idle'}
         />
       </button>

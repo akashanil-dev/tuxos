@@ -10,7 +10,6 @@ import { SessionSplash } from '../boot/PowerScreens';
 import { AppIcon, IconThemeContext, preloadIconTheme } from '../desktop/AppIcon';
 import { WindowFrame, type Geometry } from '../desktop/WindowFrame';
 import { DesktopWidgets, desktopThemeStyle } from '../desktop/DesktopWidgets';
-import { FullscreenControl } from '../desktop/FullscreenControl';
 import { environmentFor } from '../desktops/registry';
 import { PopupMenu } from '../desktops/shared/Menu';
 import { tileLayout, tiledGroup } from '../desktops/shared/tiling';
@@ -158,7 +157,8 @@ export function Desktop({ system, tutor, onPower, onAchievements, verifySudo = n
   useEffect(() => {
     if (!loaded || viewport.width < NARROW) return;
     for (const win of session.windows) {
-      const box = clampGeometry(win, viewport, { top: environment.insets.top + 36, bottom: environment.insets.bottom });
+      if (win.centerOnLaunch) continue;
+      const box = clampGeometry(win, viewport, { top: environment.insets.top, bottom: environment.insets.bottom });
       if (box.x !== win.x || box.y !== win.y) void system.dispatch('session.move', { id: win.id, x: box.x, y: box.y });
       if (box.width !== win.width || box.height !== win.height) void system.dispatch('session.resize', { id: win.id, width: box.width, height: box.height });
     }
@@ -168,7 +168,7 @@ export function Desktop({ system, tutor, onPower, onAchievements, verifySudo = n
   if (!loaded) return <main className="splash splash-gnome" />;
 
   const { Shell } = environment;
-  const insets = { ...environment.insets, top: environment.insets.top + 36 };
+  const insets = { ...environment.insets, top: environment.insets.top };
   const tiles = new Map<string, Geometry>();
   let tiledIds: Set<string> | undefined;
   if (environment.tiling && viewport.width >= NARROW) {
@@ -198,7 +198,6 @@ export function Desktop({ system, tutor, onPower, onAchievements, verifySudo = n
       }}
     >
       {shown !== session.desktop && session.preferences?.fastBoot === false && <div className="desktop-splash-overlay"><SessionSplash desktop={session.desktop} onDone={() => setShown(session.desktop)} /></div>}
-      <FullscreenControl top={environment.insets.top} />
       <DiscoveryNotice system={system} />
       {environment.desktopIcons === 'apps' && <div className="icon-grid icons-apps" style={iconGridStyle(insets)}>
         {(primaryApps.length ? primaryApps : apps).map((app) => <button
@@ -288,7 +287,7 @@ export function Desktop({ system, tutor, onPower, onAchievements, verifySudo = n
         <p>{welcome}</p>
         <button aria-label="Dismiss" onClick={() => setWelcome(null)}>×</button>
       </div>}
-      {tutor && active && session.preferences?.showVasu !== false && <TutorPanel rich={session.preferences?.richVasu === true} system={system} transport={tutor} verifySudo={verifySudo} />}
+      {tutor && active && session.preferences?.showVasu !== false && <TutorPanel system={system} transport={tutor} verifySudo={verifySudo} />}
     </main>
   </IconThemeContext.Provider>;
 }

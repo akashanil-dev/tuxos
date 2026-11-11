@@ -75,7 +75,7 @@ describe('tutor panel', () => {
     expect(transport.requests).toHaveLength(0);
   });
 
-  it('without AI, offers dismissible local error help without introduction or strolling', async () => {
+  it('without AI, offers dismissible local error help with local onboarding', async () => {
     const off: AiStatus = { available: true, enabled: false, on: false, source: null, signedIn: false };
     const ai: AiKeyStore = {
       status: () => off, onChange: () => () => undefined, headers: () => ({}), providers: () => ({ providers: [], custom: false }),
@@ -94,7 +94,7 @@ describe('tutor panel', () => {
     await shell.run('nope');
     // Past the introduction's delay (1.2 s) and his first stroll (2.5 s).
     await new Promise((resolve) => setTimeout(resolve, 3000));
-    expect(screen.queryByRole('dialog', { name: 'Vasu introduces himself' })).toBeNull();
+    expect(screen.getByRole('dialog', { name: 'Vasu introduces himself' })).toBeTruthy();
     expect(screen.getByRole('complementary', { name: 'Optional command help' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss Vasu hint' }));
     expect(screen.queryByRole('complementary', { name: 'Optional command help' })).toBeNull();
@@ -215,8 +215,11 @@ describe('tutor panel', () => {
     render(<Desktop system={system} tutor={transport} />);
     const intro = await screen.findByRole('dialog', { name: 'Vasu introduces himself' }, { timeout: 5000 });
     expect(intro.textContent).toContain('your Linux teacher');
-    fireEvent.click(within(intro).getByRole('button', { name: 'Can you become root?' }));
-    expect(intro.textContent).toContain('Only if you let me');
+    expect(intro.textContent).toContain('pretend Linux computer');
+    fireEvent.click(within(intro).getByRole('button', { name: 'Show me around →' }));
+    expect(intro.textContent).toContain('Double-click desktop icons');
+    fireEvent.click(within(intro).getByRole('button', { name: 'Show me around →' }));
+    expect(intro.textContent).toContain('whoami');
     fireEvent.click(within(intro).getByRole('button', { name: 'Close' }));
     expect(screen.queryByRole('dialog', { name: 'Vasu introduces himself' })).toBeNull();
     // He only introduces himself once; nothing was sent to the AI.

@@ -5,6 +5,7 @@
  */
 :root,
 .de-plasma {
+  color-scheme: dark;
   --font-ui: "Noto Sans", "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "Ubuntu Mono", ui-monospace, monospace;
   --accent: #3daee9;
@@ -58,7 +59,7 @@
 }
 
 .de-cde {
-  --font-ui: Helvetica, Arial, sans-serif;
+  color-scheme: light;  --font-ui: Helvetica, Arial, sans-serif;
   --accent: #4b6a8c;
   --accent-strong: #2d4a6c;
   --accent-soft: rgb(75 106 140 / 25%);
@@ -140,6 +141,29 @@ button {
 button:disabled {
   cursor: not-allowed;
 }
+
+/* Pair control foregrounds and backgrounds. Native light button surfaces must
+   never inherit light desktop text. Low specificity lets app chrome override. */
+:where(button, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select, textarea) {
+  color: var(--window-fg);
+  background-color: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  padding: 6px 10px;
+}
+:where(input, textarea)::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+:where(select option, select optgroup) {
+  color: var(--window-fg);
+  background-color: var(--surface);
+}
+:where(a) { color: var(--accent-strong); }
+:where(button:disabled, input:disabled, select:disabled, textarea:disabled) {
+  cursor: not-allowed;
+}
+
 
 :focus-visible {
   outline: 2px solid var(--accent);

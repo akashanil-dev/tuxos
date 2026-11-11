@@ -24,5 +24,5 @@ export function DiscoveryNotice({ system }: { system: SystemClient }) {
   }, [system]);
   useEffect(() => { if (!notice) return; const timer = setTimeout(() => setNotice(''), 6500); return () => clearTimeout(timer); }, [notice]);
   if (!notice) return null;
-  return <aside className="discovery-notice" role="status"><button onClick={() => { void system.openApp('exploration-achievements'); setNotice(''); }}>Discovery: {notice}</button><button aria-label="Dismiss discovery" onClick={() => setNotice('')}>×</button></aside>;
+  return <aside className="discovery-notice" role="status"><button onClick={() => { void system.openApp('exploration-achievements'); setNotice(''); }}>Achievement: {notice}</button><button aria-label="Dismiss discovery" onClick={() => setNotice('')}>×</button></aside>;
 }

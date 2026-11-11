@@ -1,11 +1,13 @@
 import { REWARDS, JOURNEY_THEMES, defaultPreferences, featureAvailable, type JourneyProgress, type RewardId } from '@tuxos/sdk';
 import { DESKTOPS, WALLPAPERS, desktopById, wallpaperById } from '@tuxos/appearance';
 import type { AiKeyStore, AiModelInfo, AiStatus, AppViewProps } from '@tuxos/system';
-import { useEffect, useState, type FormEvent } from 'react';
+import { SessionControls } from './session-controls';
+import { useContext, useEffect, useState, type FormEvent } from 'react';
 import './settings.css';
 
 /** Settings: pick any desktop environment or wallpaper at any time, and see what this system is. */
 export default function SettingsView({ system }: AppViewProps) {
+  const saves = useContext(SessionControls);
   const [current, setCurrent] = useState({ desktop: '', wallpaper: '', themeName: '' });
   const [journey, setJourney] = useState<JourneyProgress>();
   const [preferences, setPreferences] = useState(defaultPreferences);
@@ -32,10 +34,18 @@ export default function SettingsView({ system }: AppViewProps) {
 
   return <div className="settings">
     {error && <p role="alert">{error}</p>}
+    {saves && <section aria-label="Save location">
+      <h3>Storage &amp; backups</h3>
+      <p>{saves.location}</p>
+      <div className="settings-save-actions">
+        <button onClick={saves.download}>Export backup</button>
+        <button onClick={saves.importBackups}>Import &amp; backups</button>
+        {saves.saveToAccount && <button onClick={saves.saveToAccount}>Save to an account</button>}
+      </div>
+    </section>}
+    {saves?.displayControls && <section><h3>Display</h3>{saves.displayControls}</section>}
     <h3>Coming back to TuxOS</h3>
-    <label className="settings-preference"><input type="checkbox" checked={preferences.fastBoot} onChange={event => void apply('session.setPreferences', { fastBoot: event.target.checked })} />Fast boot · skip GRUB and startup messages</label>
     <label className="settings-preference"><input type="checkbox" checked={preferences.showVasu} onChange={event => void apply('session.setPreferences', { showVasu: event.target.checked })} />Show Vasu · local help is available without AI</label>
-    <label className="settings-preference"><input type="checkbox" checked={preferences.richVasu} onChange={event => void apply('session.setPreferences', { richVasu: event.target.checked })} />Use the optional 3D Vasu</label>
     <p className="settings-intro">Your desktop choices are available while you explore. Learning achievements keep their own progress.</p>
     <h3>Desktop environment</h3>
     <p className="settings-intro">
@@ -97,7 +107,7 @@ export default function SettingsView({ system }: AppViewProps) {
       <button onClick={() => setConfirmReset(true)}>Reset whole system</button>
       {confirmReset && <div className="settings-reset-confirm" role="alertdialog" aria-labelledby="reset-history-title" aria-describedby="reset-history-details">
         <h4 id="reset-history-title">Back up and reset the whole system?</h4>
-        <p id="reset-history-details">This replaces all lessons, discoveries, game scores, software, plugins and personal and practice files. A browser backup is required first. Restore it using Import & backups in the top save bar. Your account stays signed in.</p>
+        <p id="reset-history-details">This replaces all lessons, discoveries, game scores, software, plugins and personal and practice files. A browser backup is required first. Restore it using Import & backups in Settings. Your account stays signed in.</p>
         <div className="settings-reset-actions">
           <button autoFocus disabled={resetting} onClick={() => setConfirmReset(false)}>Cancel</button>
           <button className="settings-reset-delete" disabled={resetting} onClick={() => void clearHistory()}>{resetting ? 'Backing up and resetting…' : 'Back up and reset'}</button>

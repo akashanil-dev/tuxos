@@ -27,15 +27,15 @@ async function setup(colourOutput = false) {
     close: () => { window.closed = true; },
     setTitle: (title) => window.titles.push(title),
   }, { colourOutput });
-  return { system, controller, window, read: () => output, reset: () => { output = ''; }, cleared: () => cleared };
+  return { system, controller, window, read: () => output.replace(/\x1b\[[0-9;]*m/g, ''), readRaw: () => output, reset: () => { output = ''; }, cleared: () => cleared };
 }
 
 describe('TerminalController', () => {
   it('colours learning output without changing file contents or the next prompt', async () => {
-    const { controller, read, system } = await setup(true);
+    const { controller, read, readRaw, system } = await setup(true);
     await controller.start();
     await controller.input('echo Hello world > greeting.txt; cat greeting.txt\r');
-    expect(read()).toContain('\x1b[96mHello world\r\n\x1b[0m');
+    expect(readRaw()).toContain('\x1b[96mHello world\r\n\x1b[0m');
     expect(read().endsWith('ada@tuxos:~$ ')).toBe(true);
     expect(await system.dispatch('fs.read', { path: '/home/ada/greeting.txt' })).toMatchObject({ ok: true, value: 'Hello world\n' });
   });
@@ -175,4 +175,11 @@ describe('trainer feedback', () => {
     expect(Math.max(...plain.split('\r\n').map((line) => line.length))).toBeLessThanOrEqual(40);
     expect(formatFeedback({ correct: true, text: 'Yes.' }, 80)).toContain('\x1b[1;32m');
   });
+});
+
+it('renders coloured shell identity and path while retaining a plain window title', async () => {
+  const { controller, readRaw, window } = await setup();
+  await controller.start();
+  expect(readRaw()).toContain('\x1b[1;32mada@tuxos\x1b[0m:\x1b[1;34m~\x1b[0m$ ');
+  expect(window.titles).toEqual(['ada@tuxos: ~']);
 });

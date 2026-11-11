@@ -1,6 +1,7 @@
+import { AppIcon } from '@tuxos/appearance/icons';
 import { resolvePath, type Stat } from '@tuxos/kernel';
 import type { AppViewProps } from '@tuxos/system';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FileTable } from './file-table';
 import { formatSize, joinPath, nameError, parentOf, sortEntries } from './model';
 import { reason, useDirectory } from './use-directory';
@@ -14,7 +15,12 @@ type Pending =
 export default function FilesView({ system, args, windowId }: AppViewProps) {
   const [path, setPath] = useState('');
   const [typedPath, setTypedPath] = useState('');
+  const [editingPath, setEditingPath] = useState(false);
+  const locationInput = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (editingPath) { locationInput.current?.focus(); locationInput.current?.select(); } }, [editingPath]);
   const [back, setBack] = useState<string[]>([]);
+  const [forward, setForward] = useState<string[]>([]);
+  const [home, setHome] = useState('');
   const [showHidden, setShowHidden] = useState(args?.hidden === 'true');
   const [selected, setSelected] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending>(null);
@@ -26,7 +32,7 @@ export default function FilesView({ system, args, windowId }: AppViewProps) {
 
   useEffect(() => {
     let active = true;
-    void system.user().then((user) => { const next = args?.path ?? `/home/${user}`; if (active && next !== path) go(next, false); });
+    void system.user().then((user) => { const next = args?.path ?? `/home/${user}`; if (active) setHome(`/home/${user}`); if (active && next !== path) go(next, false); });
     return () => { active = false; };
   }, [system, args?.path]);
 
@@ -39,7 +45,8 @@ export default function FilesView({ system, args, windowId }: AppViewProps) {
   function go(next: string, remember = true) {
     next = resolvePath(next);
     setPreviewPath(null); setPreview(null);
-    if (remember && path) setBack((history) => [...history, path].slice(-100));
+    if (remember && path) { setBack((history) => [...history, path].slice(-100)); setForward([]); }
+    setEditingPath(false);
     setPath(next);
     setTypedPath(next);
     setSelected(null);
@@ -92,7 +99,8 @@ export default function FilesView({ system, args, windowId }: AppViewProps) {
   const selectedEntry = visible.find((entry) => entry.name === selected);
 
   function onKeyDown(event: React.KeyboardEvent) {
-    if (event.ctrlKey && event.key.toLowerCase() === 'h') {
+    if (event.ctrlKey && event.key.toLowerCase() === 'l') { event.preventDefault(); setEditingPath(true); }
+    else if (event.ctrlKey && event.key.toLowerCase() === 'h') {
       event.preventDefault();
       setShowHidden((value) => !value);
     } else if (event.key === 'Delete' && selectedEntry && !pending) {
@@ -107,33 +115,34 @@ export default function FilesView({ system, args, windowId }: AppViewProps) {
       <button aria-label="Back" disabled={!back.length} onClick={() => {
         const previous = back.at(-1);
         if (!previous) return;
-        setBack(back.slice(0, -1));
+        setBack(back.slice(0, -1)); setForward(history => [...history, path]);
         go(previous, false);
       }}>←</button>
+      <button aria-label="Forward" disabled={!forward.length} onClick={() => { const next = forward.at(-1); if (!next) return; setForward(forward.slice(0, -1)); setBack(history => [...history, path]); go(next, false); }}>→</button>
       <button aria-label="Up to parent folder" disabled={path === '/'} onClick={() => go(parentOf(path))}>↑</button>
-      <form className="files-path" onSubmit={(event) => { event.preventDefault(); go(typedPath.trim() || '/'); }}>
-        <input aria-label="Location" value={typedPath} onChange={(event) => setTypedPath(event.target.value)} />
-      </form>
+      <div className="files-location" onClick={event => { if (!(event.target as HTMLElement).closest('button, input')) setEditingPath(true); }}>{!editingPath && <nav className="files-breadcrumbs" aria-label="Folder breadcrumbs"><button onClick={() => go('/')}>/</button>{path.split('/').filter(Boolean).map((part, index, parts) => <button key={index} onClick={() => { if (index === parts.length - 1) setEditingPath(true); else go('/' + parts.slice(0, index + 1).join('/')); }}>{part}</button>)}</nav>}<form hidden={!editingPath} className="files-path" onSubmit={(event) => { event.preventDefault(); go(typedPath.trim() || '/'); }}>
+        <input ref={locationInput} aria-label="Location" value={typedPath} onChange={(event) => setTypedPath(event.target.value)} onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); setTypedPath(path); setEditingPath(false); } }} onBlur={() => { setTypedPath(path); setEditingPath(false); }} />
+      </form><button aria-label="Edit location" title="Edit location (Ctrl+L)" onClick={() => setEditingPath(value => !value)}>⌁</button></div>
       <button onClick={() => setPending({ kind: 'new-folder', name: '', error: '' })}>New Folder</button>
-      <button onClick={() => setPending({ kind: 'new-file', name: '', error: '' })}>New File</button>
-      <button
-        disabled={!selectedEntry}
-        onClick={() => selectedEntry && setPending({ kind: 'delete', entry: selectedEntry })}
-      >
-        Delete
-      </button>
+      <button aria-label={presentation === 'icons' ? 'List view' : 'Icon view'} aria-pressed={presentation === 'icons'} title={presentation === 'icons' ? 'Details view' : 'Icons view'} onClick={() => setPresentation(value => value === 'icons' ? 'table' : 'icons')}>{presentation === 'icons' ? '☷' : '▦'}</button>
+      <details className="files-menu"><summary aria-label="More actions" title="More actions">☰</summary><div>
+        <button onClick={() => setPending({ kind: 'new-file', name: '', error: '' })}>New File</button>
+        <button disabled={!selectedEntry} onClick={() => selectedEntry && setPending({ kind: 'delete', entry: selectedEntry })}>Delete</button>
+        <button onClick={() => setShowHidden(value => !value)} aria-pressed={showHidden}>Hidden files</button>
+        <button disabled={!path} onClick={() => void system.openApp('terminal', { cwd: path, from: 'files' }).then(result => { if (!result.ok) setNotice(result.error.message); })}>Open terminal here</button>
+        <button onClick={() => void system.openApp('learn-filesystem').then(result => { if (!result.ok) setNotice(result.error.message); })}>Learn this filesystem ↗</button>
+      </div></details>
     </div>
-    <nav className="files-bar" aria-label="Places">
-      <button onClick={() => go('/')}>Filesystem /</button>
-      <button onClick={() => void system.user().then(user => go(`/home/${user}`))}>Home</button>
-      <button onClick={() => void system.user().then(user => go(`/home/${user}/Documents`))}>Documents folder</button>
-      <button onClick={() => go('/tmp')}>Temporary files</button>
-      <button disabled={!path} onClick={() => void system.openApp('terminal', { cwd: path, from: 'files' }).then(result => { if (!result.ok) setNotice(result.error.message); })}>Open terminal here</button>
-      <button aria-pressed={presentation === 'icons'} onClick={() => setPresentation(value => value === 'icons' ? 'table' : 'icons')}>{presentation === 'icons' ? 'List view' : 'Icon view'}</button>
-      <button onClick={() => setShowHidden(value => !value)} aria-pressed={showHidden}>Hidden files</button>
-      <button onClick={() => void system.openApp('learn-filesystem').then(result => { if (!result.ok) setNotice(result.error.message); })}>Learn this filesystem ↗</button>
-    </nav>
-    <nav className="files-bar files-breadcrumbs" aria-label="Folder breadcrumbs"><button onClick={() => go('/')}>/</button>{path.split('/').filter(Boolean).map((part, index, parts) => <button key={index} onClick={() => go('/' + parts.slice(0, index + 1).join('/'))}>{part}</button>)}<small>Terminal equivalent: <code>cd {shellQuote(path)}</code></small></nav>
+    <div className="files-body">
+      <nav className="files-places" aria-label="Places">
+        <h3>Places</h3>
+        {[['Home', home], ['Desktop', `${home}/Desktop`], ['Documents folder', `${home}/Documents`], ['Downloads', `${home}/Downloads`], ['Music', `${home}/Music`], ['Pictures', `${home}/Pictures`], ['Videos', `${home}/Videos`]].map(([label, target]) => <button key={label} aria-label={label} aria-current={path === target ? 'page' : undefined} onClick={() => go(target!)}><AppIcon name="files"/><span>{label === 'Documents folder' ? <span>Documents</span> : label}</span></button>)}
+        <h3>Devices</h3>
+        <button aria-current={path === '/' ? 'page' : undefined} onClick={() => go('/')}><AppIcon name="files"/>Filesystem /</button>
+        <button aria-current={path === '/tmp' ? 'page' : undefined} onClick={() => go('/tmp')}><AppIcon name="files"/>Temporary files</button>
+      </nav>
+      <div className="files-content">
+
     {selectedEntry && <div className="files-bar"><span>{selectedEntry.owner} · permissions {selectedEntry.mode.toString(8).padStart(3, '0')}</span><button onClick={() => open(selectedEntry)}>{selectedEntry.kind === 'dir' ? 'Open folder' : 'Preview file'}</button>{selectedEntry.kind === 'file' && <button onClick={() => void system.openApp('editor', { path: joinPath(path, selectedEntry.name) })}>Open in Text Editor</button>}</div>}
     {pending && pending.kind !== 'delete' && <NamePrompt
       label={pending.kind === 'new-folder' ? 'Folder name' : 'File name'}
@@ -155,6 +164,8 @@ export default function FilesView({ system, args, windowId }: AppViewProps) {
       ? <p className="files-empty files-error" role="alert">{error}</p>
       : <FileTable entries={visible} selected={selected} onSelect={name => { setSelected(name); setPreviewPath(null); setPreview(null); }} onOpen={open} presentation={presentation} />}
     {preview && <aside className="files-preview" aria-label="File preview"><header><strong>{preview.path}</strong><button onClick={() => { setPreviewPath(null); setPreview(null); }}>Close preview</button><button onClick={() => void system.openApp('editor', { path: preview.path })}>Edit file</button></header><small>Terminal equivalent: <code>cat {shellQuote(preview.path)}</code></small><pre>{preview.content}</pre></aside>}
+      </div>
+    </div>
     <footer className="files-status">
       {loading ? 'Opening folder…' : selectedEntry ? `“${selectedEntry.name}” — ${formatSize(selectedEntry)}` : `${visible.length} items`}
       {showHidden ? ' · showing hidden files' : ' · Ctrl+H shows hidden files'}

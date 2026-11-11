@@ -76,7 +76,7 @@
   right: 16px;
   bottom: 10px;
   margin: 0;
-  color: #666;
+  color: #999;
 }
 
 .power-off {
@@ -254,9 +254,24 @@
 .phone { height: 100%; overflow-y: auto; background: #000; font-family: var(--font-mono); }
 .phone .c-green { color: #4ade80; }
 .phone .c-blue { color: #60a5fa; }
-.phone .c-dim { color: #666; }
+.phone .c-dim { color: #999; }
 .phone-item-label { overflow-wrap: anywhere; }
 @keyframes tux-hop { 50% { transform: translateY(-8px); } }
 @media (prefers-reduced-motion: reduce) { .phone-rescue, .phone-tux svg { animation: none; } }
 
 .bootlog-warn { color: #facc15; }
+
+/* Keep boot controls in GRUB's monochrome palette, including native focus. */
+.grub button {
+  margin-top: 12px;
+  padding: 5px 10px;
+  border: 1px solid #c0c0c0;
+  border-radius: 0;
+  background: #000;
+  color: #c0c0c0;
+}
+.grub button:hover, .grub button:focus-visible {
+  background: #c0c0c0;
+  color: #000;
+  outline-color: #fff;
+}

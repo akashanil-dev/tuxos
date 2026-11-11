@@ -9,6 +9,7 @@ export const manifest: ModuleManifest = {
   contributes: {
     apps: [{
       id: 'files',
+      defaultGeometry: { width:900, height:560 },
       title: 'Files',
       icon: 'files',
       category: 'System',

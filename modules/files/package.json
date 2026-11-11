@@ -11,6 +11,7 @@
   "dependencies": {
     "@tuxos/sdk": "*",
     "@tuxos/system": "*",
-    "react": "^19.1.0"
+    "react": "^19.1.0",
+    "@tuxos/appearance": "*"
   }
 }

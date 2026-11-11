@@ -52,7 +52,7 @@ function fakeService(signedIn: string | null = null) {
   return { client, saves, users };
 }
 
-function setup(service: ReturnType<typeof fakeService>, local = memory(), auth = true) {
+function setup(service: ReturnType<typeof fakeService>, local = memory()) {
   const { storage, use } = switchableStorage(local);
   const accountStorage = service.client.storage();
   const accounts: AccountsWiring = {
@@ -66,8 +66,14 @@ function setup(service: ReturnType<typeof fakeService>, local = memory(), auth =
     modules: [{ manifest: settings.manifest, load: async () => settings }],
   });
   render(<App system={system} accounts={accounts} start="greeter" />);
-  if (auth) fireEvent.click(screen.getByRole('button', { name: /Sign in or create an account/ }));
+
   return { system, local };
+}
+
+async function enterGuest() {
+  const button = await screen.findByRole('button', { name: /Explore as guest|Continue in this browser/ });
+  await waitFor(() => expect(button.hasAttribute('disabled')).toBe(false));
+  fireEvent.click(button);
 }
 
 afterEach(() => {
@@ -151,42 +157,51 @@ describe('accounts', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Leave' }, SLOW));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Log Out' }));
     await waitFor(() => expect(service.client.logout).toHaveBeenCalled());
-    expect(await screen.findByRole('button', { name: 'Explore TuxOS' }, SLOW)).toBeTruthy();
+    expect(await screen.findByLabelText('Password')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Application Launcher' })).toBeNull();
   }, 15_000);
 
   it('explores without an account and retains a local system', async () => {
     const service = fakeService();
-    const { system, local } = setup(service, memory(), false);
-    const explore = await screen.findByRole('button', { name: 'Explore TuxOS' });
-    await waitFor(() => expect((explore as HTMLButtonElement).disabled).toBe(false));
-    expect(screen.queryByLabelText('Password')).toBeNull();
-    fireEvent.click(explore);
+    const { system, local } = setup(service, memory());
+    await enterGuest();
     await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
     await system.dispatch('fs.write', { path: '/home/explorer/note.txt', content: 'local progress' });
     await system.flush();
     expect(JSON.parse(local.values.get('tuxos.save')!).username).toBe('explorer');
     expect(service.saves.size).toBe(0);
-    expect(screen.getByRole('button', { name: 'Save to an account' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Save to an account' })).toBeNull();
+    await system.openApp('settings');
+    expect(await screen.findByRole('button', { name: 'Save to an account' })).toBeTruthy();
   });
+  it('shows a retry after failed guest entry instead of booting in a loop', async () => {
+    const { system } = setup(fakeService(), memory());
+    const boot = vi.spyOn(system, 'boot').mockRejectedValueOnce(new Error('Could not open saved progress'));
+    await enterGuest();
+    expect((await screen.findByRole('alert')).textContent).toContain('Could not open saved progress');
+    expect(boot).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Explore as guest' }));
+    await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
+    expect(boot).toHaveBeenCalledTimes(2);
+  });
+
   it('keeps guest entry available when account discovery never responds', async () => {
     const service = fakeService();
     service.client.me = () => new Promise(() => {});
-    const { local } = setup(service, memory(), false);
-    const explore = screen.getByRole('button', { name: 'Explore TuxOS' });
-    await waitFor(() => expect((explore as HTMLButtonElement).disabled).toBe(false));
-    fireEvent.click(explore);
+    const { local } = setup(service, memory());
+    await enterGuest();
     await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
     expect(local.values.has('tuxos.save')).toBe(true);
   });
 
   it('transfers an explorer guest into a differently named authenticated account with explicit preview and unchanged personal text', async () => {
     const service = fakeService();
-    const { system, local } = setup(service, memory(), false);
-    const explore = await screen.findByRole('button', { name: 'Explore TuxOS' });
-    await waitFor(() => expect((explore as HTMLButtonElement).disabled).toBe(false)); fireEvent.click(explore);
+    const { system, local } = setup(service, memory());
+    await enterGuest();
     await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
     await system.dispatch('fs.write', { path: '/home/explorer/note.txt', content: 'Personal reference: /home/explorer' }); await system.flush();
-    fireEvent.click(screen.getByRole('button', { name: 'Save to an account' }));
+    await system.openApp('settings');
+    fireEvent.click(await screen.findByRole('button', { name: 'Save to an account' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Sign in' }));
     fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'grace' } }); fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'pw' } });
     fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
@@ -225,11 +240,11 @@ describe('accounts', () => {
     const original = remote.values.get('tuxos.save')!;
     const service = fakeService();
     service.saves.set('grace', { data: original, version: 3 });
-    const { system } = setup(service, local, false);
-    const resume = await screen.findByRole('button', { name: 'Resume TuxOS' });
-    fireEvent.click(resume);
+    const { system } = setup(service, local);
+    await enterGuest();
     await screen.findByRole('button', { name: 'Application Launcher' }, SLOW);
-    fireEvent.click(screen.getByRole('button', { name: 'Save to an account' }));
+    await system.openApp('settings');
+    fireEvent.click(await screen.findByRole('button', { name: 'Save to an account' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Sign in' }));
     fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'grace' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'pw' } });

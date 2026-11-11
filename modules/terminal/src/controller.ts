@@ -164,7 +164,7 @@ export class TerminalController {
     this.busy = true;
     const prompt = await this.session.prompt();
     this.editor.columns = this.screen.cols;
-    this.screen.write(this.editor.start(prompt, await this.session.history()));
+    this.screen.write(this.editor.start(colourPrompt(prompt), await this.session.history()));
     const title = titleFor(prompt);
     if (title !== this.title) this.window.setTitle((this.title = title));
     this.busy = false;
@@ -189,7 +189,7 @@ export function formatFeedback(feedback: { correct: boolean; text: string }, col
   const width = Math.max(30, Math.min(cols, 78) - 4);
   const colour = feedback.correct ? GREEN : RED;
   const heading = feedback.correct ? '✓ Correct!' : '✗ Not quite';
-  const next = feedback.correct ? 'Your next task is ready above.' : 'Try again, or type /hint for a nudge.';
+  const next = feedback.correct ? 'Your next task is ready in the lesson window.' : 'Try again, or type /hint for a nudge.';
   const lines = [
     '',
     '',
@@ -224,4 +224,10 @@ export function toTerminal(text: string): string {
 export function titleFor(prompt: string): string {
   const match = /^(.*?):(.*)[$#] $/.exec(prompt);
   return match ? `${match[1]}: ${match[2]}` : 'Terminal';
+}
+
+/** Tuxplore colours: green identity, blue directory, red root prompt. */
+export function colourPrompt(prompt: string): string {
+  const parts = /^(.*?):(.*)([$#]) $/.exec(prompt);
+  return parts ? `\x1b[1;${parts[3] === '#' ? '31' : '32'}m${parts[1]}\x1b[0m:\x1b[1;34m${parts[2]}\x1b[0m${parts[3]} ` : prompt;
 }

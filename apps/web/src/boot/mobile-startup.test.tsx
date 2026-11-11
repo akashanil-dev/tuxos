@@ -29,7 +29,7 @@ it.each(cases)('$name startup behaves correctly', async ({ width, height, touch,
     use: () => {}, localSave: async () => null,
   };
   // Same startup selection as the actual web entry point.
-  render(<App system={system} accounts={accounts} start={isPhone() ? 'phone' : 'greeter'} />);
+  render(<App system={system} accounts={accounts} start={isPhone() ? 'phone' : 'grub'} />);
   if (gated) {
     for (let i = 0; i < 100; i++) await act(async () => { await vi.advanceTimersByTimeAsync(100); });
     expect(screen.getByRole('heading', { name: "Whoa, that's a phone!" })).toBeTruthy();
@@ -37,12 +37,13 @@ it.each(cases)('$name startup behaves correctly', async ({ width, height, touch,
     expect(me).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: /Boot anyway/ }));
   }
-  if (gated) {
+  {
     expect(screen.getByRole('listbox', { name: 'Boot menu' })).toBeTruthy();
     fireEvent.keyDown(window, { key: 'Enter' });
   }
   for (let i = 0; i < 40; i++) await act(async () => { await vi.advanceTimersByTimeAsync(100); });
-  expect(screen.getByRole('button', { name: 'Explore TuxOS' })).toBeTruthy();
+  expect(screen.getByLabelText('Password')).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Application Launcher' })).toBeNull();
   expect(me).toHaveBeenCalledOnce();
   expect(screen.queryByRole('heading', { name: "Whoa, that's a phone!" })).toBeNull();
 });

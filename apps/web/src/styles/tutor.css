@@ -169,8 +169,8 @@
   position: absolute;
   right: 0;
   bottom: calc(100% + 12px);
-  width: min(360px, calc(100vw - 28px));
-  padding: 14px 16px 12px;
+  width: min(400px, calc(100vw - 28px));
+  padding: 20px;
   border: 1px solid var(--line);
   border-radius: 16px 16px 4px 16px;
   background: var(--window-bg);
@@ -199,6 +199,7 @@
 }
 
 .vasu-bubble-hello {
+  padding-right: 28px;
   font-size: 16px;
   font-weight: 700;
 }
@@ -243,9 +244,16 @@
 }
 
 .vasu-bubble-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+  margin-top: 16px;
 }
+.vasu-bubble-actions button { min-width: 0; overflow-wrap: anywhere; }
+.vasu-bubble-actions button.primary { grid-column: 1 / -1; grid-row: 1; }
+.vasu-bubble h3 { margin: 16px 0 10px; font-size: 17px; line-height: 1.35; }
+.vasu-bubble { overflow-x: hidden; overflow-wrap: anywhere; }
+
 
 .vasu-bubble-actions button {
   padding: 7px 12px;
@@ -262,12 +270,22 @@
   color: var(--accent-fg);
 }
 
+.tutor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}
 .tutor-about {
-  padding: 2px 8px !important;
-  border: 1px solid var(--line) !important;
-  border-radius: 999px;
-  color: var(--muted) !important;
-  font-size: 11.5px !important;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface-2);
+  color: var(--window-fg);
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .de-cde .vasu-bubble {
@@ -288,7 +306,7 @@
   bottom: calc(var(--area-bottom, 0px) + 96px);
   display: flex;
   flex-direction: column;
-  width: min(380px, calc(100vw - 28px));
+  width: min(420px, calc(100vw - 28px));
   height: min(520px, calc(100vh - var(--area-top, 0px) - var(--area-bottom, 0px) - 120px));
   overflow: hidden;
   border: 1px solid var(--line);
@@ -308,14 +326,16 @@
 
 .tutor-panel header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  flex-shrink: 0;
   gap: 8px;
-  padding: 10px 14px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--line);
   background: var(--titlebar);
 }
 
 .tutor-panel header span {
+  min-width: 0;
   flex: 1;
   color: var(--muted);
   font-size: 12px;
@@ -329,6 +349,7 @@
 }
 
 .tutor-log {
+  min-height: 0;
   flex: 1;
   margin: 8px 0 0;
   padding: 6px 14px;
@@ -800,16 +821,24 @@
   border: 2px solid #cba6f7;
 }
 
-/* The 3D Vasu (Penguin3D.tsx) fills his button, like the drawn one. */
-.penguin-3d {
-  width: 100%;
-  height: 100%;
-}
-
-.penguin-3d canvas {
-  display: block;
-}
 
 .tutor-nudge p { margin:0 0 6px; }
 .tutor-nudge button, .tutor-shortcuts button { color:inherit; background:transparent; border:1px solid var(--line); border-radius:5px; padding:6px 8px; margin:3px; font:inherit; cursor:pointer; }
 .tutor-shortcuts { display:flex; flex-wrap:wrap; padding:5px 8px; border-top:1px solid var(--line); font-size:12px; }
+
+/* Tuxplore companion gestures. */
+.tux-companion-art { display:block; width:64px; height:74px; animation:tuxplore-idle 3s ease-in-out infinite; }
+.tux-companion-art svg { width:100%; height:100%; }
+.tux-companion-art .tux-eye { transform-box:fill-box; transform-origin:center; animation:tuxplore-blink 5s infinite; }
+.tux-companion-art .tux-pupil { transform:translate(var(--tux-eye-x,0),var(--tux-eye-y,0)); transition:transform .12s; }
+.tux-companion-art.hop { animation:tuxplore-hop .6s ease; }
+@keyframes tuxplore-idle { 50% { transform:translateY(-3px); } }
+@keyframes tuxplore-blink { 0%,94%,100% { transform:none; } 96% { transform:scaleY(.1); } }
+@keyframes tuxplore-hop { 30% { transform:translateY(-26px) rotate(-8deg); } 60% { transform:translateY(0) rotate(4deg); } }
+@media(prefers-reduced-motion:reduce) { .tux-companion-art,.tux-companion-art.hop,.tux-companion-art .tux-eye { animation:none; } .tux-companion-art .tux-pupil { transform:none; transition:none; } }
+
+.vasu-actor.tuxplore-companion { left:auto; right:14px; transition:none; }
+
+.vasu-bubble { max-height:calc(100dvh - 150px); overflow:auto; }
+.vasu-tour-step { color:var(--muted); font-size:12px; }
+.vasu-tour-skip { background:none; border:0; color:var(--muted); font:inherit; text-decoration:underline; padding:10px 0 0; cursor:pointer; }

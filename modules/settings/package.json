@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./manifest": "./src/manifest.ts",
-    "./view": "./src/view.tsx"
+    "./view": "./src/view.tsx",
+    "./session-controls": "./src/session-controls.ts"
   },
   "dependencies": {
     "@tuxos/appearance": "*",

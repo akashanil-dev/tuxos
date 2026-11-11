@@ -13,6 +13,7 @@
     "@tuxos/sdk": "*",
     "@tuxos/system": "*",
     "react": "^19.1.0",
-    "@tuxos/shell": "*"
+    "@tuxos/shell": "*",
+    "@tuxos/appearance": "*"
   }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { LearningLabView } from '@tuxos/course-view';
+import { LinuxLessonPanel } from '@tuxos/course-view';
 import type { LessonStatus } from '@tuxos/lessons';
 import type { AppViewProps } from '@tuxos/system';
 
@@ -15,8 +15,8 @@ export default function LearnLinuxView({ system, args, setCloseGuard }: AppViewP
       if (next) await system.dispatch('learn-linux.start', { lesson: next.id });
     })();
   }, [system, args?.guided]);
-  return <div className="learning-entry">
-    <nav aria-label="Learning activities"><button onClick={() => void system.openApp('learn-adventure')}>Tux’s Adventure</button><button onClick={() => void system.openApp('play')}>Play</button><button aria-current="page">Linux course</button><button onClick={() => void system.openApp('learn-docker')}>Docker</button><button onClick={() => void system.openApp('learn-filesystem')}>Filesystem guide</button></nav>
-    <LearningLabView setCloseGuard={setCloseGuard} system={system} courseId="learn-linux" variant="linux" />
+  return <div className="linux-learning-journal">
+    <div className="learning-journal-actions"><button onClick={() => void system.openApp('learn-linux-terminal')}>Open Terminal</button><span>A dedicated terminal for your Linux lessons</span></div>
+    <LinuxLessonPanel system={system} courseId="learn-linux" detached />
   </div>;
 }

@@ -116,6 +116,4 @@ const tutor = httpTransport('/api/tutor', async (url, init) => {
   if (!ai.status().enabled) throw new Error('AI is turned off. Turn it on in Settings → AI.');
   return fetch(url, { ...init, credentials: ai.status().signedIn ? 'same-origin' : 'omit', headers: { ...init?.headers as Record<string, string>, ...ai.headers() } });
 });
-let fastBoot = true;
-try { fastBoot = localStorage.getItem('tuxos.fast-boot') !== '0'; } catch { /* Start normally when preferences are unavailable. */ }
-createRoot(document.getElementById('root')!).render(<StrictMode><App start={isPhone() ? 'phone' : fastBoot ? 'greeter' : 'grub'} system={system} tutor={tutor} accounts={accounts} /></StrictMode>);
+createRoot(document.getElementById('root')!).render(<StrictMode><App start={isPhone() ? 'phone' : 'grub'} system={system} tutor={tutor} accounts={accounts} /></StrictMode>);
